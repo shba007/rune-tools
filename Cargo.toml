@@ -3,7 +3,7 @@ members = [
     "crates/rune-pdk",
     "plugins/rune-fetch",
     "plugins/rune-fs",
-    "plugins/rune-git",
+    "plugins/rune-git", "plugins/rune-media",
     "plugins/rune-memory", "plugins/rune-sequentialthinking",
     "plugins/rune-time",
 ]

@@ -618,8 +618,19 @@ dependencies = [
 
 [[package]]
 name = "rune-git"
+version = "0.1.1"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rune-media"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "extism-pdk",
  "rune-pdk",
  "serde",

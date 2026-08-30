@@ -7,17 +7,18 @@ use std::path::PathBuf;
 
 #[host_fn("extism:host/user")]
 extern "ExtismHost" {
-    fn host_git_exec(input: String) -> String;
+    fn host_cmd_exec(input: String) -> String;
 }
 
 #[derive(Serialize, Deserialize)]
-struct GitExecRequest {
+struct CmdExecRequest {
+    program: String,
     args: Vec<String>,
     cwd: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
-struct GitExecResponse {
+struct CmdExecResponse {
     success: bool,
     exit_code: Option<i32>,
     stdout: String,
@@ -42,16 +43,17 @@ fn resolve_repo(repo_path: Option<&str>) -> Result<PathBuf, String> {
 
 fn run_git(args: &[&str], repo_path: Option<&str>) -> Result<String, String> {
     let cwd = resolve_repo(repo_path)?;
-    let req = GitExecRequest {
+    let req = CmdExecRequest {
+        program: "git".to_string(),
         args: args.iter().map(|s| s.to_string()).collect(),
         cwd: Some(cwd.to_string_lossy().to_string()),
     };
 
     let raw_req = serde_json::to_string(&req).map_err(|e| e.to_string())?;
     let raw_resp =
-        unsafe { host_git_exec(raw_req) }.map_err(|e| format!("Host execution failed: {:?}", e))?;
+        unsafe { host_cmd_exec(raw_req) }.map_err(|e| format!("Host execution failed: {:?}", e))?;
 
-    let resp: GitExecResponse = serde_json::from_str(&raw_resp)
+    let resp: CmdExecResponse = serde_json::from_str(&raw_resp)
         .map_err(|e| format!("Failed to parse host response: {}", e))?;
 
     if resp.success {
