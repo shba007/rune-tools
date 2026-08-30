@@ -2,7 +2,7 @@
 members = [
     "crates/rune-pdk",
     "plugins/rune-fetch",
-    "plugins/rune-fs",
+    "plugins/rune-fs", "plugins/rune-git",
     "plugins/rune-time",
 ]
 resolver = "2"
