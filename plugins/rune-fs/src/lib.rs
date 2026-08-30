@@ -63,6 +63,16 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     }
 }
 
+#[plugin_fn]
+pub fn mcp_info(_: ()) -> FnResult<String> {
+    let info = json!({
+        "name": env!("CARGO_PKG_NAME"),
+        "version": env!("CARGO_PKG_VERSION"),
+        "description": option_env!("CARGO_PKG_DESCRIPTION")
+    });
+    Ok(serde_json::to_string(&info)?)
+}
+
 /// Exported standard MCP Tool List
 #[plugin_fn]
 pub fn mcp_list_tools(_: ()) -> FnResult<String> {
