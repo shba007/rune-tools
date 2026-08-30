@@ -1,0 +1,9 @@
+[package]
+name = "rune-pdk"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+extism-pdk.workspace = true
+serde.workspace = true
+serde_json.workspace = true
