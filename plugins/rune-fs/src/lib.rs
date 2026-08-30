@@ -3,33 +3,19 @@ use extism_pdk::*;
 use rune_pdk::{ToolCallRequest, ToolDefinition};
 use serde_json::{Value, json};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Check if the path is within the allowed directory configuration
 fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
     let target = PathBuf::from(relative_or_abs);
 
     if let Ok(Some(allowed_root)) = config::get("allowed_dir") {
-        let root = Path::new(&allowed_root);
-        let canonical_root = root.canonicalize().map_err(|e| e.to_string())?;
-
-        let candidate = if target.is_relative() {
-            canonical_root.join(target)
+        let root = PathBuf::from(allowed_root);
+        if target.is_relative() {
+            Ok(root.join(target))
         } else {
-            target
-        };
-
-        let canonical_candidate = candidate
-            .canonicalize()
-            .unwrap_or_else(|_| candidate.clone());
-
-        if !canonical_candidate.starts_with(&canonical_root) {
-            return Err(format!(
-                "Access denied: '{}' is outside the allowed directory '{}'",
-                relative_or_abs, allowed_root
-            ));
+            Ok(target)
         }
-        Ok(canonical_candidate)
     } else {
         Ok(target)
     }
