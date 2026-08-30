@@ -2,7 +2,7 @@
 [package]
 name = "rune-media"
 description = "Comprehensive media, video, audio, gallery, and file downloading toolkit powered by host binaries"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 
