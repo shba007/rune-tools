@@ -4,7 +4,7 @@ members = [
     "plugins/rune-fetch",
     "plugins/rune-fs",
     "plugins/rune-git",
-    "plugins/rune-memory",
+    "plugins/rune-memory", "plugins/rune-sequentialthinking",
     "plugins/rune-time",
 ]
 resolver = "2"
