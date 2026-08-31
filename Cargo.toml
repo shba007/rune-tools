@@ -18,20 +18,21 @@ edition = "2024"
 license = "MIT"
 
 [workspace.dependencies]
-extism-pdk = "1.4.1"
-chrono = { version = "0.4.45", default-features = false, features = [
+extism = "1.30"
+extism-pdk = "1.4"
+chrono = { version = "0.4", default-features = false, features = [
     "clock",
     "serde",
     "std",
 ] }
-chrono-tz = "0.10.4"
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-base64 = "0.23.1"
-walkdir = "2.5.0"
-glob-match = "0.2.1"
-mime_guess = "2.0.5"
-html2text = "0.17.1"
+chrono-tz = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+base64 = "0.23"
+walkdir = "2.5"
+glob-match = "0.2"
+mime_guess = "2.0"
+html2text = "0.17"
 image = { version = "0.25", default-features = false, features = [
     "png",
     "jpeg",
@@ -39,10 +40,9 @@ image = { version = "0.25", default-features = false, features = [
 hayro = "0.7"
 hayro-syntax = "0.7"
 hayro-interpret = "0.7"
-imageproc = { version = "0.27.0", default-features = false, features = [
-    "text",
-] }
-ab_glyph = "0.2.32"
+imageproc = { version = "0.27", default-features = false, features = ["text"] }
+ab_glyph = "0.2"
+tempfile = "3.27"
 
 [profile.release]
 opt-level = "z"

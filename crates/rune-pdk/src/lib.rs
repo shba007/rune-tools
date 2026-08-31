@@ -1,12 +1,16 @@
-// crates/rune-pdk/src/lib.rs
-pub use extism_pdk;
+pub mod testing;
+
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+#[cfg(target_arch = "wasm32")]
+pub use extism_pdk::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
     pub name: String,
     pub version: String,
-    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 }
 
@@ -14,12 +18,11 @@ pub struct PluginInfo {
 pub struct ToolDefinition {
     pub name: String,
     pub description: String,
-    #[serde(rename = "inputSchema", alias = "input_schema")]
-    pub input_schema: serde_json::Value,
+    pub input_schema: Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolCallRequest {
     pub name: String,
-    pub arguments: serde_json::Value,
+    pub arguments: Value,
 }

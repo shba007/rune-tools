@@ -1,0 +1,22 @@
+# plugins/rune-printer/Cargo.toml
+[package]
+name = "rune-print"
+description = "Universal IPP/IPPS printing and eSCL AirScan scanner tool for MCP"
+version = "0.1.5"
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rune-pdk = { path = "../../crates/rune-pdk" }
+extism-pdk.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+image.workspace = true
+hayro.workspace = true
+hayro-syntax.workspace = true
+hayro-interpret.workspace = true
+imageproc.workspace = true
+ab_glyph.workspace = true
