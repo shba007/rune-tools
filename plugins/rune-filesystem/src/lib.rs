@@ -1,4 +1,4 @@
-// plugins/rune-fs/src/lib.rs
+// plugins/rune-filesystem/src/lib.rs
 use base64::Engine;
 use chrono::{DateTime, Utc};
 use extism_pdk::*;
@@ -6,8 +6,15 @@ use glob_match::glob_match;
 use rune_pdk::{ToolCallRequest, ToolDefinition};
 use serde_json::{Value, json};
 use std::fs;
+use std::fs::File;
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+
+/// Hard ceiling per single tool response, well under the WASM linear-memory
+/// wall. Keeps room for JSON framing + (for media) base64 inflation, so a
+/// single call never has to hold an entire large file in guest memory.
+const MAX_CHUNK_BYTES: usize = 512 * 1024; // 512 KiB raw per call
 
 fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
     let target = PathBuf::from(relative_or_abs);
@@ -45,11 +52,6 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .as_str()
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
             let path = resolve_path(path_str)?;
-            let raw = fs::read_to_string(&path)
-                .map_err(|e| format!("Failed to read text file '{}': {}", path.display(), e))?;
-
-            let lines: Vec<&str> = raw.lines().collect();
-            let total_lines = lines.len();
 
             let head = request
                 .arguments
@@ -61,17 +63,64 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .get("tail")
                 .and_then(|v| v.as_u64())
                 .map(|v| v as usize);
+            let line_offset = request
+                .arguments
+                .get("lineOffset")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as usize;
+            let line_limit = request
+                .arguments
+                .get("lineLimit")
+                .and_then(|v| v.as_u64())
+                .map(|v| v as usize)
+                .unwrap_or(2000); // default page size when no head/tail given
 
-            let result_content = if let Some(h) = head {
-                lines.into_iter().take(h).collect::<Vec<_>>().join("\n")
-            } else if let Some(t) = tail {
-                let skip = total_lines.saturating_sub(t);
-                lines.into_iter().skip(skip).collect::<Vec<_>>().join("\n")
-            } else {
-                raw
-            };
+            // `tail` still needs full-file context to find the end; every other
+            // mode streams line-by-line and stops early, so a huge log file
+            // never has to fully exist in guest memory just to read N lines.
+            if let Some(t) = tail {
+                let raw = fs::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read text file '{}': {}", path.display(), e))?;
+                let lines: Vec<&str> = raw.lines().collect();
+                let skip = lines.len().saturating_sub(t);
+                return Ok(json!({
+                    "content": lines[skip..].join("\n"),
+                    "totalLines": lines.len()
+                }));
+            }
 
-            Ok(json!({ "content": result_content }))
+            let file = File::open(&path)
+                .map_err(|e| format!("Failed to open text file '{}': {}", path.display(), e))?;
+            let reader = BufReader::new(file);
+
+            let limit = head.unwrap_or(line_limit);
+            let mut out_lines: Vec<String> = Vec::with_capacity(limit.min(4096));
+            let mut seen = 0usize;
+            let mut yielded = 0usize;
+            let mut has_more = false;
+
+            for line in reader.lines() {
+                let line = line.map_err(|e| format!("Read error: {}", e))?;
+                if seen < line_offset {
+                    seen += 1;
+                    continue;
+                }
+                if yielded >= limit {
+                    has_more = true;
+                    break;
+                }
+                out_lines.push(line);
+                seen += 1;
+                yielded += 1;
+            }
+
+            Ok(json!({
+                "content": out_lines.join("\n"),
+                "lineOffset": line_offset,
+                "linesReturned": yielded,
+                "hasMore": has_more,
+                "nextLineOffset": if has_more { Some(line_offset + yielded) } else { None }
+            }))
         }
 
         "read_media_file" => {
@@ -79,14 +128,45 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .as_str()
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
             let path = resolve_path(path_str)?;
-            let bytes = fs::read(&path)
+
+            let offset = request
+                .arguments
+                .get("offset")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0);
+            let requested_len = request
+                .arguments
+                .get("length")
+                .and_then(|v| v.as_u64())
+                .map(|v| v as usize);
+
+            let mut file = File::open(&path)
+                .map_err(|e| format!("Failed to open media file '{}': {}", path.display(), e))?;
+            let total_size = file
+                .metadata()
+                .map_err(|e| format!("Failed to stat '{}': {}", path.display(), e))?
+                .len();
+
+            file.seek(SeekFrom::Start(offset))
+                .map_err(|e| format!("Seek failed on '{}': {}", path.display(), e))?;
+
+            let chunk_len = requested_len
+                .unwrap_or(MAX_CHUNK_BYTES)
+                .min(MAX_CHUNK_BYTES);
+            let mut buf = vec![0u8; chunk_len];
+            let n = file
+                .read(&mut buf)
                 .map_err(|e| format!("Failed to read media file '{}': {}", path.display(), e))?;
+            buf.truncate(n);
+
+            let end = offset + n as u64;
+            let has_more = end < total_size;
 
             let mime = mime_guess::from_path(&path)
                 .first_or_octet_stream()
                 .to_string();
 
-            let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
+            let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
 
             let media_type = if mime.starts_with("image/") {
                 "image"
@@ -95,6 +175,14 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             } else {
                 "resource"
             };
+
+            let paging = json!({
+                "totalBytes": total_size,
+                "offset": offset,
+                "bytesReturned": n,
+                "hasMore": has_more,
+                "nextOffset": if has_more { Some(end) } else { None }
+            });
 
             if media_type == "resource" {
                 Ok(json!({
@@ -105,7 +193,8 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                             "mimeType": mime,
                             "blob": b64
                         }
-                    }]
+                    }],
+                    "paging": paging
                 }))
             } else {
                 Ok(json!({
@@ -113,7 +202,8 @@ fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                         "type": media_type,
                         "data": b64,
                         "mimeType": mime
-                    }]
+                    }],
+                    "paging": paging
                 }))
             }
         }
@@ -439,24 +529,28 @@ pub fn mcp_list_tools(_: ()) -> FnResult<String> {
     let tools = vec![
         ToolDefinition {
             name: "read_text_file".to_string(),
-            description: "Read the complete contents of a file from the file system as text with optional line range head/tail clipping. Only works within allowed directories.".to_string(),
+            description: "Read a text file as line-based pages. Use 'head'/'tail' for quick previews, or 'lineOffset'/'lineLimit' to page through large files without loading the whole file into memory. Check 'hasMore'/'nextLineOffset' in the response to continue.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
                     "path": { "type": "string", "description": "The file path to read" },
                     "head": { "type": "number", "description": "If provided, returns only the first N lines of the file" },
-                    "tail": { "type": "number", "description": "If provided, returns only the last N lines of the file" }
+                    "tail": { "type": "number", "description": "If provided, returns only the last N lines of the file (reads whole file, use for small files only)" },
+                    "lineOffset": { "type": "number", "description": "0-based line number to start reading from, for paging through large files" },
+                    "lineLimit": { "type": "number", "description": "Max lines to return in this page (default 2000)" }
                 },
                 "required": ["path"]
             }),
         },
         ToolDefinition {
             name: "read_media_file".to_string(),
-            description: "Read a file and return it as a base64-encoded content block with its MIME type. Image and audio files are returned as image/audio content.".to_string(),
+            description: "Read a file (up to 512KB per call) as base64. For files larger than that, call repeatedly with 'offset' from the previous response's 'paging.nextOffset' until 'paging.hasMore' is false.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "path": { "type": "string", "description": "Path to the media/binary file" }
+                    "path": { "type": "string", "description": "Path to the media/binary file" },
+                    "offset": { "type": "number", "description": "Byte offset to start reading from (default 0)" },
+                    "length": { "type": "number", "description": "Bytes to read, capped at 512KB per call" }
                 },
                 "required": ["path"]
             }),

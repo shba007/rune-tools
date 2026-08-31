@@ -2,9 +2,12 @@
 members = [
     "crates/rune-pdk",
     "plugins/rune-fetch",
-    "plugins/rune-fs",
-    "plugins/rune-git", "plugins/rune-media",
-    "plugins/rune-memory", "plugins/rune-sequentialthinking",
+    "plugins/rune-filesystem",
+    "plugins/rune-git",
+    "plugins/rune-media",
+    "plugins/rune-memory",
+    "plugins/rune-print",
+    "plugins/rune-sequentialthinking",
     "plugins/rune-time",
 ]
 resolver = "2"
@@ -29,6 +32,17 @@ walkdir = "2.5.0"
 glob-match = "0.2.1"
 mime_guess = "2.0.5"
 html2text = "0.17.1"
+image = { version = "0.25", default-features = false, features = [
+    "png",
+    "jpeg",
+] }
+hayro = "0.7"
+hayro-syntax = "0.7"
+hayro-interpret = "0.7"
+imageproc = { version = "0.27.0", default-features = false, features = [
+    "text",
+] }
+ab_glyph = "0.2.32"
 
 [profile.release]
 opt-level = "z"
