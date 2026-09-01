@@ -31,7 +31,7 @@
     "description": "Web page fetching and HTML-to-Markdown conversion tool for MCP",
     "versions": {
       "0.2.0": {
-        "url": "https://github.com/shba007/rune-tools/releases/download/v0.2.0/rune-fetch-0.2.0.wasm"
+        "url": "../rune-tools/target/wasm32-wasip1/release/rune_fetch.wasm"
       }
     }
   },
