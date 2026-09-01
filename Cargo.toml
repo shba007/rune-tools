@@ -32,7 +32,7 @@ base64 = "0.23"
 walkdir = "2.5"
 glob-match = "0.2"
 mime_guess = "2.0"
-html2text = "0.17"
+reqwest = { version = "0.13", features = ["blocking", "json"] }
 image = { version = "0.25", default-features = false, features = [
     "png",
     "jpeg",

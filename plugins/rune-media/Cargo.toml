@@ -1,17 +1,21 @@
-# plugins/rune-media/Cargo.toml
 [package]
 name = "rune-media"
 description = "Comprehensive media, video, audio, gallery, and file downloading toolkit powered by host binaries"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 license.workspace = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
-extism-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
