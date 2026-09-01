@@ -577,9 +577,8 @@ tests can't catch (protocol framing bugs).
 ## 10. Compilation & Testing Commands
 
 ```bash
-# Unit, contract, and logic tests for one plugin — works identically for
 # WASM-only and sidecar plugins, since neither needs a WASM toolchain to test
-cargo test -p rune-<name>
+dotenvx run -f ./plugins/rune-<name>/.env -- cargo test -p rune-<name> # -- --nocapture
 
 # All workspace crates
 cargo test --workspace

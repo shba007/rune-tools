@@ -1,0 +1,37 @@
+[package]
+name = "rune-email"
+description = "Universal email client toolkit supporting IMAP and SMTP across Gmail, Outlook, Hostinger, and custom mail servers"
+version = "0.1.1"
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rune-email-native"
+path = "src/bin/native_sidecar.rs"
+
+[dependencies]
+rune-pdk = { path = "../../crates/rune-pdk" }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar = { path = "../../crates/rune-sidecar" }
+imap = { version = "2.4", default-features = false, features = ["native-tls"] }
+native-tls = "0.2"
+lettre = { version = "0.11", default-features = false, features = [
+	"builder",
+	"smtp-transport",
+	"native-tls",
+	"hostname",
+] }
+mail-parser = "0.11"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
