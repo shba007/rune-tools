@@ -1,18 +1,25 @@
 [package]
-name = "rune-media"
-description = "Comprehensive media, video, audio, gallery, and file downloading toolkit powered by host binaries"
-version = "0.1.2"
+name = "rune-video"
+description = "Video streaming, playlist extraction, broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg"
+version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "rune-video-native"
+path = "src/bin/native_sidecar.rs"
+
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar = { path = "../../crates/rune-sidecar" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true
