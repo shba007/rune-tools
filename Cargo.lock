@@ -1198,12 +1198,14 @@ dependencies = [
 
 [[package]]
 name = "rune-git"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
+ "rune-sidecar",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

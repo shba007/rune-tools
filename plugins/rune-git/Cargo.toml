@@ -1,15 +1,27 @@
 [package]
 name = "rune-git"
 description = "Host-backed Git tool drop-in replacement for @modelcontextprotocol/server-git"
-version = "0.1.1"
+version = "0.2.0"
 edition.workspace = true
 license.workspace = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rune-git-native"
+path = "src/bin/native_sidecar.rs"
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
-extism-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar = { path = "../../crates/rune-sidecar" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,9 +1,134 @@
 use rune_pdk::{ToolCallRequest, ToolDefinition};
+use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::collections::HashMap;
+use std::io::{self, BufRead, Write};
+
+/// Trait implemented by native sidecar entry points to expose tool metadata and invocation.
+pub trait SidecarHandler {
+    fn info(&self) -> Value;
+    fn list_tools(&self) -> Vec<ToolDefinition>;
+    fn call_tool(&self, req: ToolCallRequest) -> Result<Value, String>;
+}
+
+#[derive(Deserialize)]
+struct SidecarRpcRequest {
+    #[serde(default)]
+    id: Option<Value>,
+    #[serde(default)]
+    method: Option<String>,
+    #[serde(default)]
+    params: Option<Value>,
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    arguments: Option<Value>,
+}
+
+/// Runs a persistent newline-delimited stdio server for native sidecar binaries.
+pub fn run_stdio<H: SidecarHandler>(handler: H) -> io::Result<()> {
+    let stdin = io::stdin();
+    let mut stdout = io::stdout();
+
+    for line in stdin.lock().lines() {
+        let line = line?;
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        let response = match serde_json::from_str::<SidecarRpcRequest>(trimmed) {
+            Ok(req) => {
+                let id = req.id.clone();
+                let method = req.method.as_deref().unwrap_or("");
+
+                match method {
+                    "info" | "mcp_info" => {
+                        let info_val = handler.info();
+                        format_response(id, Ok(info_val))
+                    }
+                    "list_tools" | "mcp_list_tools" | "tools/list" => {
+                        let tools = handler.list_tools();
+                        format_response(id, Ok(json!(tools)))
+                    }
+                    "call_tool" | "mcp_call_tool" | "tools/call" => {
+                        let tool_req = if let Some(params) = req.params {
+                            if let Ok(r) = serde_json::from_value::<ToolCallRequest>(params.clone())
+                            {
+                                r
+                            } else {
+                                ToolCallRequest {
+                                    name: params
+                                        .get("name")
+                                        .and_then(Value::as_str)
+                                        .unwrap_or_default()
+                                        .to_string(),
+                                    arguments: params
+                                        .get("arguments")
+                                        .cloned()
+                                        .unwrap_or(json!({})),
+                                }
+                            }
+                        } else if let Some(name) = req.name {
+                            ToolCallRequest {
+                                name,
+                                arguments: req.arguments.unwrap_or(json!({})),
+                            }
+                        } else {
+                            ToolCallRequest {
+                                name: String::new(),
+                                arguments: json!({}),
+                            }
+                        };
+                        let result = handler.call_tool(tool_req);
+                        format_response(id, result)
+                    }
+                    _ if req.name.is_some() => {
+                        let tool_req = ToolCallRequest {
+                            name: req.name.unwrap(),
+                            arguments: req.arguments.unwrap_or(json!({})),
+                        };
+                        let result = handler.call_tool(tool_req);
+                        format_response(id, result)
+                    }
+                    unknown => json!({
+                        "status": "error",
+                        "error": format!("Unknown method: {}", unknown)
+                    }),
+                }
+            }
+            Err(e) => json!({
+                "status": "error",
+                "error": format!("Invalid JSON payload: {}", e)
+            }),
+        };
+
+        writeln!(stdout, "{}", serde_json::to_string(&response)?)?;
+        stdout.flush()?;
+    }
+
+    Ok(())
+}
+
+fn format_response(id: Option<Value>, result: Result<Value, String>) -> Value {
+    if let Some(id_val) = id {
+        match result {
+            Ok(val) => json!({ "jsonrpc": "2.0", "id": id_val, "result": val }),
+            Err(err) => json!({
+                "jsonrpc": "2.0",
+                "id": id_val,
+                "error": { "code": -32000, "message": err }
+            }),
+        }
+    } else {
+        match result {
+            Ok(val) => json!({ "status": "success", "result": val }),
+            Err(err) => json!({ "status": "error", "error": err }),
+        }
+    }
+}
 
 /// Parses raw CLI string flags into a key-value dictionary.
-/// Supports `--key value`, `--key=value`, and boolean flags `--key`.
 pub fn parse_cli_args(args: &[String]) -> HashMap<String, String> {
     let mut map = HashMap::new();
     let mut idx = 0;
@@ -26,11 +151,7 @@ pub fn parse_cli_args(args: &[String]) -> HashMap<String, String> {
     map
 }
 
-/// Resolves tool arguments prioritizing CLI values over uppercase environment variables.
-///
-/// Precedence:
-/// 1. CLI flag (e.g., `--max_length 500` or `--max-length=500`)
-/// 2. Uppercase Environment variable (e.g., `MAX_LENGTH=500`)
+/// Resolves tool arguments prioritizing CLI values over uppercase environment variables (`CLI > ENV`).
 pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Result<Value, String> {
     let cli_map = parse_cli_args(cli_args);
     let mut resolved_map = Map::new();
@@ -64,7 +185,6 @@ pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Resu
         }
     }
 
-    // Preserve any ad-hoc CLI flags not declared in explicit properties
     for (k, v) in cli_map {
         if !resolved_map.contains_key(&k) {
             resolved_map.insert(k, Value::String(v));
@@ -90,21 +210,4 @@ fn parse_typed_value(raw: &str, target_type: &str) -> Result<Value, String> {
             .map_err(|e| format!("Failed to parse '{}' as JSON: {}", raw, e)),
         _ => Ok(json!(raw)),
     }
-}
-
-/// Executes a tool dispatch through the resolved arguments pipeline.
-pub fn execute_sidecar<F>(
-    args: &[String],
-    tool_def: ToolDefinition,
-    executor: F,
-) -> Result<Value, String>
-where
-    F: FnOnce(ToolCallRequest) -> Result<Value, String>,
-{
-    let resolved_args = resolve_arguments(args, &tool_def)?;
-    let request = ToolCallRequest {
-        name: tool_def.name,
-        arguments: resolved_args,
-    };
-    executor(request)
 }
