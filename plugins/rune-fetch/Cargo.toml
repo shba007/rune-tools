@@ -1,16 +1,21 @@
 [package]
 name = "rune-fetch"
 description = "Web page fetching and HTML-to-Markdown conversion tool for MCP"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
-extism-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-html2text.workspace = true
+reqwest.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
