@@ -194,6 +194,8 @@ pub fn find_cookie_file_in_dir(dir_path: &Path, url: &str) -> Option<PathBuf> {
     None
 }
 
+// plugins/rune-image/src/operations.rs
+
 pub fn resolve_cookie_arg(params: &ToolCallRequest, url: &str) -> Option<(String, String)> {
     let explicit_file = get_str_arg(&params.arguments, "cookiesFile", "cookies_file");
     if let Some(file) = explicit_file {
@@ -297,10 +299,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         "inspect_image_gallery" => {
             let url = get_str_arg(&request.arguments, "url", "url")
                 .ok_or_else(|| "Missing 'url' parameter".to_string())?;
-
-            if url.trim().is_empty() {
-                return Err("Parameter 'url' cannot be empty".to_string());
-            }
 
             let mut args = vec!["--dump-json"];
             apply_gallerydl_access_args(&mut args, &request, &url, &mut str_storage);
