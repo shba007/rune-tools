@@ -1169,6 +1169,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rune-audio"
+version = "0.1.0"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "rune-sidecar",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "rune-fetch"
 version = "0.2.0"
 dependencies = [
