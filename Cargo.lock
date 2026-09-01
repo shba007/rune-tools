@@ -1209,6 +1209,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rune-image"
+version = "0.1.0"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "rune-sidecar",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "rune-media"
 version = "0.1.2"
 dependencies = [

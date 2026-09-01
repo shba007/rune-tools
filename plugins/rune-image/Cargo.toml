@@ -1,0 +1,27 @@
+[package]
+name = "rune-image"
+description = "Image gallery and social album extraction toolkit powered by gallery-dl"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rune-image-native"
+path = "src/bin/native_sidecar.rs"
+
+[dependencies]
+rune-pdk = { path = "../../crates/rune-pdk" }
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar = { path = "../../crates/rune-sidecar" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
