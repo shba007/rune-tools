@@ -6,7 +6,7 @@ use serde_json::Value;
 #[cfg(target_arch = "wasm32")]
 pub use extism_pdk::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PluginInfo {
     pub name: String,
     pub version: String,
@@ -18,6 +18,7 @@ pub struct PluginInfo {
 pub struct ToolDefinition {
     pub name: String,
     pub description: String,
+    #[serde(rename = "inputSchema", alias = "input_schema")]
     pub input_schema: Value,
 }
 

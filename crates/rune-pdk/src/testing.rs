@@ -112,7 +112,6 @@ where
                 arguments: json!(payload),
             };
 
-            // Assert execution handles adversarial types without panicking
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| execute(req)));
             assert!(
                 result.is_ok(),

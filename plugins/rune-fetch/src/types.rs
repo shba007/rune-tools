@@ -9,10 +9,12 @@ pub struct FetchPayload {
     pub start_index: usize,
     #[serde(default)]
     pub raw: bool,
+    #[serde(default)]
+    pub paginate: bool,
 }
 
 fn default_max_length() -> usize {
-    5000
+    50000
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

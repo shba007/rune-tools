@@ -16,7 +16,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "max_length": {
                     "type": "integer",
-                    "description": "Maximum number of characters to return (default: 5000)"
+                    "description": "Maximum number of characters to return (default: 50000)"
                 },
                 "start_index": {
                     "type": "integer",
@@ -25,6 +25,10 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "raw": {
                     "type": "boolean",
                     "description": "Return raw HTML/content instead of converting to Markdown"
+                },
+                "paginate": {
+                    "type": "boolean",
+                    "description": "Enable cursor pagination with next_start_index"
                 }
             },
             "required": ["url"]

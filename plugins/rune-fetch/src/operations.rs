@@ -1,8 +1,6 @@
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
-use std::time::Duration;
 
-/// Executes tool operations for `rune-fetch`.
 pub fn execute_tool(req: ToolCallRequest) -> Result<Value, String> {
     match req.name.as_str() {
         "fetch" => handle_fetch(&req.arguments),
@@ -10,7 +8,6 @@ pub fn execute_tool(req: ToolCallRequest) -> Result<Value, String> {
     }
 }
 
-/// Validates arguments and executes a real HTTP GET request.
 fn handle_fetch(args: &Value) -> Result<Value, String> {
     let url_val = args
         .get("url")
@@ -38,9 +35,33 @@ fn handle_fetch(args: &Value) -> Result<Value, String> {
         .and_then(|v| v.as_u64())
         .unwrap_or(50_000) as usize;
 
-    // Real HTTP request using blocking client
+    let body = fetch_url(url)?;
+
+    process_content(&body, raw, paginate, start_index, max_length)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn fetch_url(url: &str) -> Result<String, String> {
+    let req = extism_pdk::HttpRequest::new(url)
+        .with_method("GET")
+        .with_header("User-Agent", "rune-fetch/0.1.1");
+
+    let res = extism_pdk::http::request::<()>(&req, None)
+        .map_err(|e| format!("HTTP request failed: {}", e))?;
+
+    let status = res.status_code();
+    if !(200..300).contains(&status) {
+        return Err(format!("HTTP request returned error status: {}", status));
+    }
+
+    String::from_utf8(res.body())
+        .map_err(|e| format!("Failed to parse response body as UTF-8: {}", e))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn fetch_url(url: &str) -> Result<String, String> {
     let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(15))
+        .timeout(std::time::Duration::from_secs(15))
         .user_agent("rune-fetch/0.1.1")
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
@@ -55,14 +76,11 @@ fn handle_fetch(args: &Value) -> Result<Value, String> {
         return Err(format!("HTTP request returned error status: {}", status));
     }
 
-    let body = response
+    response
         .text()
-        .map_err(|e| format!("Failed to read response body: {}", e))?;
-
-    process_content(&body, raw, paginate, start_index, max_length)
+        .map_err(|e| format!("Failed to read response body: {}", e))
 }
 
-/// Converts HTML if necessary, computes character bounds, and handles pagination.
 pub fn process_content(
     raw_content: &str,
     is_raw: bool,
@@ -79,34 +97,25 @@ pub fn process_content(
     let char_vec: Vec<char> = text.chars().collect();
     let total_characters = char_vec.len();
 
-    let (sliced_content, has_more, next_start_index) = if paginate {
-        let start = start_index.min(total_characters);
-        let end = (start + max_length).min(total_characters);
-        let sliced: String = char_vec[start..end].iter().collect();
-        let more = end < total_characters;
-        let next_idx = if more { Value::from(end) } else { Value::Null };
-
-        (sliced, more, next_idx)
-    } else {
-        let start = start_index.min(total_characters);
-        let end = (start + max_length).min(total_characters);
-        let sliced: String = char_vec[start..end].iter().collect();
-
-        (sliced, false, Value::Null)
-    };
-
+    let start = start_index.min(total_characters);
+    let end = (start + max_length).min(total_characters);
+    let sliced_content: String = char_vec[start..end].iter().collect();
     let length = sliced_content.chars().count();
 
     let mut response = json!({
         "contents": sliced_content,
-        "start_index": start_index,
+        "start_index": start,
         "length": length,
         "total_characters": total_characters,
-        "has_more": has_more,
+        "has_more": false,
     });
 
-    if paginate && has_more {
-        response["next_start_index"] = next_start_index;
+    if paginate {
+        let has_more = end < total_characters;
+        response["has_more"] = json!(has_more);
+        if has_more {
+            response["next_start_index"] = json!(end);
+        }
     }
 
     Ok(response)
@@ -119,7 +128,6 @@ fn is_html(content: &str) -> bool {
         || (content.contains('<') && content.contains("</"))
 }
 
-/// Strips HTML tags and normalizes whitespace while preserving line-break structure.
 fn strip_html(html: &str) -> String {
     let mut in_tag = false;
     let mut result = String::with_capacity(html.len());
