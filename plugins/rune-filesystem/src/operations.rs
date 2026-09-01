@@ -11,6 +11,10 @@ use walkdir::WalkDir;
 
 const MAX_CHUNK_BYTES: usize = 512 * 1024;
 
+fn get_param<'a>(args: &'a Value, camel: &str, snake: &str) -> Option<&'a Value> {
+    args.get(camel).or_else(|| args.get(snake))
+}
+
 pub fn normalize_path(path: &Path) -> PathBuf {
     let mut components = Vec::new();
     for component in path.components() {
@@ -32,11 +36,14 @@ pub fn normalize_path(path: &Path) -> PathBuf {
 pub fn get_allowed_root() -> Option<String> {
     #[cfg(target_arch = "wasm32")]
     {
-        extism_pdk::config::get("allowed_dir").ok().flatten()
+        extism_pdk::config::get("allowed_dir")
+            .ok()
+            .flatten()
+            .or_else(|| std::env::var("ALLOWED_DIR").ok())
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        None
+        std::env::var("ALLOWED_DIR").ok()
     }
 }
 
@@ -72,9 +79,13 @@ pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     match request.name.as_str() {
         "read_text_file" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
             let path = resolve_path(path_str)?;
 
             let head = request
@@ -87,14 +98,10 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .get("tail")
                 .and_then(|v| v.as_u64())
                 .map(|v| v as usize);
-            let line_offset = request
-                .arguments
-                .get("lineOffset")
+            let line_offset = get_param(&request.arguments, "lineOffset", "line_offset")
                 .and_then(|v| v.as_u64())
                 .unwrap_or(0) as usize;
-            let line_limit = request
-                .arguments
-                .get("lineLimit")
+            let line_limit = get_param(&request.arguments, "lineLimit", "line_limit")
                 .and_then(|v| v.as_u64())
                 .map(|v| v as usize)
                 .unwrap_or(2000);
@@ -145,9 +152,13 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "read_media_file" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
             let path = resolve_path(path_str)?;
 
             let offset = request
@@ -230,8 +241,10 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "read_multiple_files" => {
-            let paths = request.arguments["paths"]
-                .as_array()
+            let paths = request
+                .arguments
+                .get("paths")
+                .and_then(|v| v.as_array())
                 .ok_or_else(|| "Missing 'paths' array".to_string())?;
 
             let mut out = String::new();
@@ -250,12 +263,22 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "write_file" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
-            let content = request.arguments["content"]
+            let path_str = path_val
                 .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
+
+            let content_val = request
+                .arguments
+                .get("content")
                 .ok_or_else(|| "Missing 'content' parameter".to_string())?;
+            let content = content_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'content' must be a string".to_string())?;
+
             let path = resolve_path(path_str)?;
 
             if let Some(parent) = path.parent() {
@@ -273,18 +296,22 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "edit_file" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
+
             let edits_val = request
                 .arguments
                 .get("edits")
                 .ok_or_else(|| "Missing 'edits' parameter".to_string())?;
             let edits: Vec<TextEdit> = serde_json::from_value(edits_val.clone())
                 .map_err(|e| format!("Invalid edits array: {}", e))?;
-            let dry_run = request
-                .arguments
-                .get("dryRun")
+
+            let dry_run = get_param(&request.arguments, "dryRun", "dry_run")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
 
@@ -319,10 +346,15 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "create_directory" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
             let path = resolve_path(path_str)?;
+
             fs::create_dir_all(&path)
                 .map_err(|e| format!("Failed to create directory '{}': {}", path.display(), e))?;
 
@@ -330,10 +362,15 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "list_directory" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
             let path = resolve_path(path_str)?;
+
             let entries = fs::read_dir(&path)
                 .map_err(|e| format!("Failed to read directory '{}': {}", path.display(), e))?;
 
@@ -352,12 +389,15 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "list_directory_with_sizes" => {
-            let path_str = request.arguments["path"]
-                .as_str()
-                .ok_or_else(|| "Missing 'path' parameter".to_string())?;
-            let sort_by = request
+            let path_val = request
                 .arguments
-                .get("sortBy")
+                .get("path")
+                .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
+
+            let sort_by = get_param(&request.arguments, "sortBy", "sort_by")
                 .and_then(|v| v.as_str())
                 .unwrap_or("name");
             let path = resolve_path(path_str)?;
@@ -401,20 +441,24 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "directory_tree" => {
-            let path_str = request.arguments["path"]
-                .as_str()
-                .ok_or_else(|| "Missing 'path' parameter".to_string())?;
-            let path = resolve_path(path_str)?;
-            let excludes: Vec<String> = request
+            let path_val = request
                 .arguments
-                .get("excludePatterns")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|x| x.as_str().map(|s| s.to_string()))
-                        .collect()
-                })
-                .unwrap_or_default();
+                .get("path")
+                .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
+            let path = resolve_path(path_str)?;
+
+            let excludes: Vec<String> =
+                get_param(&request.arguments, "excludePatterns", "exclude_patterns")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
 
             fn build_tree(dir: &Path, excludes: &[String]) -> Value {
                 let mut children = Vec::new();
@@ -452,12 +496,21 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "move_file" => {
-            let src_str = request.arguments["source"]
-                .as_str()
+            let src_val = request
+                .arguments
+                .get("source")
                 .ok_or_else(|| "Missing 'source' parameter".to_string())?;
-            let dest_str = request.arguments["destination"]
+            let src_str = src_val
                 .as_str()
+                .ok_or_else(|| "Parameter 'source' must be a string".to_string())?;
+
+            let dest_val = request
+                .arguments
+                .get("destination")
                 .ok_or_else(|| "Missing 'destination' parameter".to_string())?;
+            let dest_str = dest_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'destination' must be a string".to_string())?;
 
             let src = resolve_path(src_str)?;
             let dest = resolve_path(dest_str)?;
@@ -473,24 +526,33 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "search_files" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
-            let pattern = request.arguments["pattern"]
+            let path_str = path_val
                 .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
+
+            let pattern_val = request
+                .arguments
+                .get("pattern")
                 .ok_or_else(|| "Missing 'pattern' parameter".to_string())?;
+            let pattern = pattern_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'pattern' must be a string".to_string())?;
+
             let path = resolve_path(path_str)?;
 
-            let excludes: Vec<String> = request
-                .arguments
-                .get("excludePatterns")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|x| x.as_str().map(|s| s.to_string()))
-                        .collect()
-                })
-                .unwrap_or_default();
+            let excludes: Vec<String> =
+                get_param(&request.arguments, "excludePatterns", "exclude_patterns")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
 
             let mut matches = Vec::new();
             for entry in WalkDir::new(&path).into_iter().flatten() {
@@ -507,10 +569,15 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "get_file_info" => {
-            let path_str = request.arguments["path"]
-                .as_str()
+            let path_val = request
+                .arguments
+                .get("path")
                 .ok_or_else(|| "Missing 'path' parameter".to_string())?;
+            let path_str = path_val
+                .as_str()
+                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
             let path = resolve_path(path_str)?;
+
             let meta = fs::metadata(&path)
                 .map_err(|e| format!("Failed to read metadata for '{}': {}", path.display(), e))?;
 
