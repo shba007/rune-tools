@@ -15,21 +15,31 @@ pre_package_bump_hooks = []
 post_package_bump_hooks = []
 
 # Embedded git-hooks script
-# Runs on 'git commit' to validate the commit message format
 [git_hooks.commit-msg]
 script = """#!/bin/sh
 set -e
 
+# 1. Skip checks on merge commits
+if [ -f .git/MERGE_HEAD ] || [ -f "$(git rev-parse --git-path MERGE_HEAD 2>/dev/null)" ]; then
+    exit 0
+fi
+
+# 2. Ensure Cargo and Rust toolchain are visible inside Git Bash
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# 3. Verify conventional commit format first (fails fast if invalid)
+cog verify --file "$1"
+
+# 4. Auto-format code
 echo "Auto-formatting code..."
 cargo fmt --all
 
+# 5. Apply clippy auto-fixes
 echo "Applying Clippy fixes..."
 cargo clippy --workspace --all-targets --fix --allow-dirty --allow-staged
 
-# Stage any automatically fixed files into the current commit
+# 6. Stage modified files into the commit
 git update-index --again
-
-cog verify --file "$1"
 """
 
 [commit_types]
