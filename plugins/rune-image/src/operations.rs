@@ -300,6 +300,10 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let url = get_str_arg(&request.arguments, "url", "url")
                 .ok_or_else(|| "Missing 'url' parameter".to_string())?;
 
+            if url.trim().is_empty() {
+                return Err("Parameter 'url' cannot be empty".to_string());
+            }
+
             let mut args = vec!["--dump-json"];
             apply_gallerydl_access_args(&mut args, &request, &url, &mut str_storage);
             args.push(&url);

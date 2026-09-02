@@ -102,7 +102,7 @@ fn test_live_inspect_video_metadata_e2e() {
 
     let title = metadata["title"].as_str().expect("Expected video title");
     assert!(
-        title.contains("Piyali Deb") || title.contains("FOI Studios"),
+        title.contains("RED CAT PICTURES"),
         "Unexpected title: {}",
         title
     );
