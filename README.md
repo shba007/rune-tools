@@ -1,4 +1,4 @@
-# Rune Ecosystem — Architecture & Contributor Guide
+# Rune Tools - MCP Servers as Plugins
 
 This document is the single source of truth for how `rune-kit` (host) and
 `rune-tools` (plugins) fit together. If you are new to this codebase, read
@@ -36,13 +36,6 @@ model backs a given plugin.
 ## 2. Repository Layout
 
 ```text
-rune-kit/                              # host runtime (native binary `rune`)
-└── crates/
-    ├── rune-kit-core/                 # protocol, runtime, package manager
-    │   └── src/{lib,protocol,runtime,manifest,package,native_sidecar}.rs
-    ├── rune-pdk/                      # shared plugin-side types + test macros
-    └── rune-sidecar/                  # shared native sidecar stdio harness
-
 rune-tools/                            # plugin workspace
 ├── Cargo.toml                         # [workspace] members + shared deps
 └── plugins/
@@ -577,23 +570,21 @@ tests can't catch (protocol framing bugs).
 ## 10. Compilation & Testing Commands
 
 ```bash
-# WASM-only and sidecar plugins, since neither needs a WASM toolchain to test
-dotenvx run -f ./plugins/rune-<name>/.env -- cargo test -p rune-<name> # -- --nocapture
+# Single plugin, if it needs env vars/tokens from its own .env for tests
+dotenvx run -f ./plugins/rune-<name>/.env -- cargo test -p rune-<name> --all-features
 
-# All workspace crates
-cargo test --workspace
+# Whole workspace
+cargo test --workspace --all-features
 
-# Build the WASM binary (only for plugins that still have a cdylib target)
-cargo build -p rune-<name> --target wasm32-wasip1 --release
-# -> target/wasm32-wasip1/release/rune_<name>.wasm
+# Single plugin, both targets
+cargo xtask build rune-<name>
 
-# Build the native sidecar binary (only for plugins with a [[bin]] target)
-cargo build -p rune-<name> --release
-# -> target/release/rune-<name>-native
+# Just one side, if you only need it
+cargo xtask build rune-<name> --wasm-only
+cargo xtask build rune-<name> --native-only
 
-# Build everything across the workspace
-cargo build --workspace --target wasm32-wasip1 --release   # all wasm cdylibs
-cargo build --workspace --release                            # all native sidecar bins
+# Whole workspace, both targets 
+cargo xtask build-all
 ```
 
 ---

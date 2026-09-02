@@ -60,7 +60,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: ⚙️ Build
-        run: cargo build -p ${{ matrix.name }} --release --target wasm32-wasip1
+        run: cargo build -p ${{ matrix.name }} --release --target wasm32-wasip1 --lib
 
       - name: 📦 Package
         run: |
@@ -107,7 +107,7 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: ⚙️ Build
-        run: cargo build -p ${{ matrix.name }} --release --target ${{ matrix.target }} --bin ${{ matrix.bin_name }}
+        run: cargo build -p ${{ matrix.name }} --release --target ${{ matrix.target }} --bin ${{ matrix.bin_name }} --features native
 
       - name: 📦 Package (Unix)
         if: matrix.ext == 'tar.gz'

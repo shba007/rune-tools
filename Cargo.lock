@@ -1442,7 +1442,7 @@ dependencies = [
 
 [[package]]
 name = "rune-audio"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -1454,7 +1454,7 @@ dependencies = [
 
 [[package]]
 name = "rune-email"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -1483,7 +1483,7 @@ dependencies = [
 
 [[package]]
 name = "rune-filesystem"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -1499,7 +1499,7 @@ dependencies = [
 
 [[package]]
 name = "rune-git"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -1511,7 +1511,7 @@ dependencies = [
 
 [[package]]
 name = "rune-image"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -1541,7 +1541,7 @@ dependencies = [
 
 [[package]]
 name = "rune-time"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -1555,7 +1555,7 @@ dependencies = [
 
 [[package]]
 name = "rune-video"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -2430,6 +2430,13 @@ name = "writeable"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
+
+[[package]]
+name = "xtask"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "yoke"

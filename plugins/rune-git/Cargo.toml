@@ -1,7 +1,7 @@
 [package]
 name = "rune-git"
 description = "Host-backed Git tool drop-in replacement for @modelcontextprotocol/server-git"
-version = "0.2.0"
+version = "0.2.1"
 edition.workspace = true
 license.workspace = true
 
@@ -11,6 +11,10 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "rune-git-native"
 path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }

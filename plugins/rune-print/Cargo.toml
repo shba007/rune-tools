@@ -11,6 +11,10 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "rune-print-native"
 path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }

@@ -31,8 +31,28 @@ pub fn mcp_call_tool(input: String) -> extism_pdk::FnResult<String> {
     let result = operations::execute_tool(request);
 
     let output = match result {
-        Ok(val) => json!({ "status": "success", "result": val }),
-        Err(err) => json!({ "status": "error", "error": err }),
+        Ok(val) => {
+            if let Some(content_arr) = val.get("content").and_then(|c| c.as_array()) {
+                json!({
+                    "content": content_arr,
+                    "isError": false
+                })
+            } else if let Some(text_content) = val.get("content").and_then(|c| c.as_str()) {
+                json!({
+                    "content": [{ "type": "text", "text": text_content }],
+                    "isError": false
+                })
+            } else {
+                json!({
+                    "content": [{ "type": "text", "text": serde_json::to_string(&val).unwrap_or_default() }],
+                    "isError": false
+                })
+            }
+        }
+        Err(err) => json!({
+            "content": [{ "type": "text", "text": err }],
+            "isError": true
+        }),
     };
 
     Ok(serde_json::to_string(&output)?)

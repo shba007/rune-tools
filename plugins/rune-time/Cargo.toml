@@ -1,7 +1,7 @@
 [package]
 name = "rune-time"
 description = "Deterministic timezone queries, ISO-8601 formatting, and cross-timezone conversions for AI agents"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 
@@ -11,6 +11,10 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "rune-time-native"
 path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
