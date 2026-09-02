@@ -385,31 +385,30 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                     let mut date_str = None;
                     let mut has_attachments = false;
 
-                    if let Some(header_bytes) = msg.header() {
-                        if let Some(parsed) =
+                    if let Some(header_bytes) = msg.header()
+                        && let Some(parsed) =
                             mail_parser::MessageParser::default().parse(header_bytes)
-                        {
-                            subject = parsed.subject().unwrap_or("(No Subject)").to_string();
-                            from = parsed
-                                .from()
-                                .and_then(|f| f.first())
-                                .map(|a| {
-                                    if let Some(name) = a.name() {
-                                        format!("{} <{}>", name, a.address().unwrap_or(""))
-                                    } else {
-                                        a.address().unwrap_or("").to_string()
-                                    }
-                                })
-                                .unwrap_or_default();
-
-                            if let Some(to_addrs) = parsed.to() {
-                                for a in to_addrs.iter() {
-                                    to.push(a.address().unwrap_or("").to_string());
+                    {
+                        subject = parsed.subject().unwrap_or("(No Subject)").to_string();
+                        from = parsed
+                            .from()
+                            .and_then(|f| f.first())
+                            .map(|a| {
+                                if let Some(name) = a.name() {
+                                    format!("{} <{}>", name, a.address().unwrap_or(""))
+                                } else {
+                                    a.address().unwrap_or("").to_string()
                                 }
+                            })
+                            .unwrap_or_default();
+
+                        if let Some(to_addrs) = parsed.to() {
+                            for a in to_addrs.iter() {
+                                to.push(a.address().unwrap_or("").to_string());
                             }
-                            date_str = parsed.date().map(|d| d.to_rfc3339());
-                            has_attachments = parsed.attachment_count() > 0;
                         }
+                        date_str = parsed.date().map(|d| d.to_rfc3339());
+                        has_attachments = parsed.attachment_count() > 0;
                     }
 
                     summaries.push(MessageHeaderSummary {
@@ -512,31 +511,30 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                     let mut date_str = None;
                     let mut has_attachments = false;
 
-                    if let Some(header_bytes) = msg.header() {
-                        if let Some(parsed) =
+                    if let Some(header_bytes) = msg.header()
+                        && let Some(parsed) =
                             mail_parser::MessageParser::default().parse(header_bytes)
-                        {
-                            subject = parsed.subject().unwrap_or("(No Subject)").to_string();
-                            from = parsed
-                                .from()
-                                .and_then(|f| f.first())
-                                .map(|a| {
-                                    if let Some(name) = a.name() {
-                                        format!("{} <{}>", name, a.address().unwrap_or(""))
-                                    } else {
-                                        a.address().unwrap_or("").to_string()
-                                    }
-                                })
-                                .unwrap_or_default();
-
-                            if let Some(to_addrs) = parsed.to() {
-                                for a in to_addrs.iter() {
-                                    to.push(a.address().unwrap_or("").to_string());
+                    {
+                        subject = parsed.subject().unwrap_or("(No Subject)").to_string();
+                        from = parsed
+                            .from()
+                            .and_then(|f| f.first())
+                            .map(|a| {
+                                if let Some(name) = a.name() {
+                                    format!("{} <{}>", name, a.address().unwrap_or(""))
+                                } else {
+                                    a.address().unwrap_or("").to_string()
                                 }
+                            })
+                            .unwrap_or_default();
+
+                        if let Some(to_addrs) = parsed.to() {
+                            for a in to_addrs.iter() {
+                                to.push(a.address().unwrap_or("").to_string());
                             }
-                            date_str = parsed.date().map(|d| d.to_rfc3339());
-                            has_attachments = parsed.attachment_count() > 0;
                         }
+                        date_str = parsed.date().map(|d| d.to_rfc3339());
+                        has_attachments = parsed.attachment_count() > 0;
                     }
 
                     summaries.push(MessageHeaderSummary {
@@ -786,13 +784,13 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .send(&email_msg)
                 .map_err(|e| format!("SMTP dispatch failed: {}", e))?;
 
-            if config.preset.as_deref() != Some("gmail") {
-                if let Ok(mut imap_session) = connect_imap(&config) {
-                    let sent_box = detect_sent_mailbox(&mut imap_session, config.preset.as_deref());
-                    let raw_bytes = email_msg.formatted();
-                    let _ = imap_session.append(&sent_box, &raw_bytes);
-                    let _ = imap_session.logout();
-                }
+            if config.preset.as_deref() != Some("gmail")
+                && let Ok(mut imap_session) = connect_imap(&config)
+            {
+                let sent_box = detect_sent_mailbox(&mut imap_session, config.preset.as_deref());
+                let raw_bytes = email_msg.formatted();
+                let _ = imap_session.append(&sent_box, &raw_bytes);
+                let _ = imap_session.logout();
             }
 
             Ok(json!({ "status": "sent", "to": to_str }))
@@ -860,16 +858,14 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                     .references(orig_msg_id.clone());
             }
 
-            if reply_all {
-                if let Some(to_addrs) = parsed.to() {
-                    for a in to_addrs.iter() {
-                        if let Some(addr) = a.address() {
-                            if addr != config.from_email && addr != orig_from {
-                                if let Ok(parsed_addr) = addr.parse() {
-                                    email_builder = email_builder.cc(parsed_addr);
-                                }
-                            }
-                        }
+            if reply_all && let Some(to_addrs) = parsed.to() {
+                for a in to_addrs.iter() {
+                    if let Some(addr) = a.address()
+                        && addr != config.from_email
+                        && addr != orig_from
+                        && let Ok(parsed_addr) = addr.parse()
+                    {
+                        email_builder = email_builder.cc(parsed_addr);
                     }
                 }
             }

@@ -172,10 +172,8 @@ pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Resu
 
             let raw_value_opt = if let Some(cli_val) = cli_map.get(prop_name) {
                 Some(cli_val.clone())
-            } else if let Ok(env_val) = std::env::var(&env_key) {
-                Some(env_val)
             } else {
-                None
+                std::env::var(&env_key).ok()
             };
 
             if let Some(raw_val) = raw_value_opt {

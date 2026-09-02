@@ -216,12 +216,12 @@ pub fn find_cookie_file_in_dir(dir_path: &Path, url: &str) -> Option<PathBuf> {
 
     if let Ok(entries) = fs::read_dir(dir_path) {
         for entry in entries.flatten() {
-            if let Ok(ft) = entry.file_type() {
-                if ft.is_file() {
-                    let name = entry.file_name().to_string_lossy().to_lowercase();
-                    if name.ends_with(".txt") && (name.contains(&stem) || name.contains(&domain)) {
-                        return Some(entry.path());
-                    }
+            if let Ok(ft) = entry.file_type()
+                && ft.is_file()
+            {
+                let name = entry.file_name().to_string_lossy().to_lowercase();
+                if name.ends_with(".txt") && (name.contains(&stem) || name.contains(&domain)) {
+                    return Some(entry.path());
                 }
             }
         }
@@ -491,10 +491,10 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                     format!("{}_trimmed.{}", stem, ext)
                 });
 
-            if let Some(parent) = Path::new(&output_file).parent() {
-                if !parent.as_os_str().is_empty() {
-                    let _ = fs::create_dir_all(parent);
-                }
+            if let Some(parent) = Path::new(&output_file).parent()
+                && !parent.as_os_str().is_empty()
+            {
+                let _ = fs::create_dir_all(parent);
             }
 
             let mut args = vec!["-y", "-ss", &start, "-to", &end, "-i", &input_file];

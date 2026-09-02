@@ -281,10 +281,8 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
             let path = resolve_path(path_str)?;
 
-            if let Some(parent) = path.parent() {
-                if !parent.as_os_str().is_empty() {
-                    let _ = fs::create_dir_all(parent);
-                }
+            if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+                let _ = fs::create_dir_all(parent);
             }
 
             fs::write(&path, content)
@@ -421,9 +419,9 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             }
 
             if sort_by == "size" {
-                items.sort_by(|a, b| b.size.cmp(&a.size));
+                items.sort_by_key(|b| std::cmp::Reverse(b.size));
             } else {
-                items.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+                items.sort_by_key(|a| a.name.to_lowercase());
             }
 
             let lines: Vec<String> = items

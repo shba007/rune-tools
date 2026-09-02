@@ -175,12 +175,12 @@ pub fn find_cookie_file_in_dir(dir_path: &Path, url: &str) -> Option<PathBuf> {
 
     if let Ok(entries) = fs::read_dir(dir_path) {
         for entry in entries.flatten() {
-            if let Ok(ft) = entry.file_type() {
-                if ft.is_file() {
-                    let name = entry.file_name().to_string_lossy().to_lowercase();
-                    if name.ends_with(".txt") && (name.contains(&stem) || name.contains(&domain)) {
-                        return Some(entry.path());
-                    }
+            if let Ok(ft) = entry.file_type()
+                && ft.is_file()
+            {
+                let name = entry.file_name().to_string_lossy().to_lowercase();
+                if name.ends_with(".txt") && (name.contains(&stem) || name.contains(&domain)) {
+                    return Some(entry.path());
                 }
             }
         }
@@ -270,10 +270,10 @@ fn parse_gallerydl_output(raw_output: &str) -> Vec<String> {
 fn collect_urls_from_value(val: &Value, urls: &mut Vec<String>) {
     if let Some(arr) = val.as_array() {
         if !arr.is_empty() && arr[0].is_number() {
-            if let Some(s) = arr.get(1).and_then(Value::as_str) {
-                if s.starts_with("http://") || s.starts_with("https://") {
-                    urls.push(s.to_string());
-                }
+            if let Some(s) = arr.get(1).and_then(Value::as_str)
+                && (s.starts_with("http://") || s.starts_with("https://"))
+            {
+                urls.push(s.to_string());
             }
         } else {
             for elem in arr {
@@ -282,11 +282,11 @@ fn collect_urls_from_value(val: &Value, urls: &mut Vec<String>) {
         }
     } else if let Some(obj) = val.as_object() {
         for key in ["url", "file_url", "image", "preview_url", "src"] {
-            if let Some(s) = obj.get(key).and_then(Value::as_str) {
-                if s.starts_with("http://") || s.starts_with("https://") {
-                    urls.push(s.to_string());
-                    break;
-                }
+            if let Some(s) = obj.get(key).and_then(Value::as_str)
+                && (s.starts_with("http://") || s.starts_with("https://"))
+            {
+                urls.push(s.to_string());
+                break;
             }
         }
     }

@@ -131,9 +131,9 @@ fn is_html(content: &str) -> bool {
 fn strip_html(html: &str) -> String {
     let mut in_tag = false;
     let mut result = String::with_capacity(html.len());
-    let mut chars = html.chars().peekable();
+    let chars = html.chars().peekable();
 
-    while let Some(c) = chars.next() {
+    for c in chars {
         match c {
             '<' => in_tag = true,
             '>' => {

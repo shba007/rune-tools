@@ -214,12 +214,10 @@ pub fn find_cookie_file_in_dir(dir_path: &Path, url: &str) -> Option<PathBuf> {
 
     if let Ok(entries) = fs::read_dir(dir_path) {
         for entry in entries.flatten() {
-            if let Ok(ft) = entry.file_type() {
-                if ft.is_file() {
-                    let name = entry.file_name().to_string_lossy().to_lowercase();
-                    if name.ends_with(".txt") && (name.contains(&stem) || name.contains(&domain)) {
-                        return Some(entry.path());
-                    }
+            if entry.file_type().is_ok_and(|ft| ft.is_file()) {
+                let name = entry.file_name().to_string_lossy().to_lowercase();
+                if name.ends_with(".txt") && (name.contains(&stem) || name.contains(&domain)) {
+                    return Some(entry.path());
                 }
             }
         }
