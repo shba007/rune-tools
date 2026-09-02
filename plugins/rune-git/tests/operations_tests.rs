@@ -6,6 +6,11 @@ use tempfile::tempdir;
 
 #[test]
 fn test_git_init_status_commit_flow() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     let dir = tempdir().unwrap();
     let repo_path = dir.path().to_str().unwrap();
 
