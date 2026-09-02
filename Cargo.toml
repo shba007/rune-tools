@@ -40,6 +40,9 @@ mime_guess = "2.0"
 reqwest = { version = "0.13", features = ["blocking", "json"] }
 tempfile = "3.27"
 
+[workspace.dev-dependencies]
+cocogitto = "7.0"
+
 [profile.release]
 opt-level = "z"
 lto = true
