@@ -30,32 +30,26 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: 🧹 Lint Code
-        run: cargo clippy --workspace --all-targets -- -D warnings || echo "Linting failed, but continuing"
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings || echo "Linting failed, but continuing"
 
-      - name: ⚙️ Build Native Targets (rlib/bin)
-        run: cargo build --workspace
+      # Same code path a contributor runs locally (`cargo xtask build <plugin>`),
+      # so CI can never silently drift from what "it builds on my machine"
+      # means. This only proves the native side compiles on Linux —
+      # publish.yml's matrix is what actually produces the macOS/Windows
+      # release binaries.
+      - name: ⚙️ Build All Plugins (wasm + native)
+        run: cargo xtask build-all
 
-      - name: ✅ Test Code
-        run: cargo test --workspace
+      - name: 🛠️ Setup Node (for dotenvx)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 'lts/*'
 
-      # cargo build --workspace --target wasm32-wasip1 would break on any
-      # native-only plugin (e.g. one depending on reqwest's "blocking"
-      # feature, which doesn't compile under wasm32-wasip1). Build only the
-      # packages that actually declare a cdylib target instead.
-      - name: 🔎 Determine wasm-buildable plugins
-        id: wasm_pkgs
-        run: |
-          PKGS=$(cargo metadata --no-deps --format-version 1 \
-            | python3 -c "import json,sys; d=json.load(sys.stdin); print(' '.join(p['name'] for p in d['packages'] if any('cdylib' in t['kind'] for t in p['targets'])))")
-          echo "packages=$PKGS" >> "$GITHUB_OUTPUT"
+      - name: 🛠️ Install dotenvx
+        run: npm install -g @dotenvx/dotenvx
 
-      - name: ⚙️ Build wasm32-wasip1 Targets
-        run: |
-          for pkg in ${{ steps.wasm_pkgs.outputs.packages }}; do
-            echo "::group::Building $pkg for wasm32-wasip1"
-            cargo build -p "$pkg" --target wasm32-wasip1 --release
-            echo "::endgroup::"
-          done
+      - name: ✅ Test All Plugins
+        run: cargo xtask test-all
 
       - name: 🤖 AutoFix Formatting
         run: cargo fmt --all

@@ -1,4 +1,7 @@
-use rune_filesystem::operations::{execute_tool, normalize_path, resolve_path};
+use base64::Engine;
+use rune_filesystem::operations::{
+    execute_tool, normalize_path, resolve_path, resolve_path_with_root,
+};
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::fs;
@@ -162,6 +165,30 @@ fn test_read_text_file_non_utf8_binary_rejection() {
 }
 
 #[test]
+fn test_read_media_file_image() {
+    let dir = tempdir().unwrap();
+    let file = dir.path().join("screenshot.png");
+    // Standard PNG header + dummy payload
+    let payload = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x01];
+    fs::write(&file, &payload).unwrap();
+
+    let req = ToolCallRequest {
+        name: "read_media_file".to_string(),
+        arguments: json!({ "path": file.to_str().unwrap() }),
+    };
+    let res = execute_tool(req).unwrap();
+
+    let expected_b64 = base64::engine::general_purpose::STANDARD.encode(&payload);
+
+    assert_eq!(res["content"][0]["type"], "image");
+    assert_eq!(res["content"][0]["mimeType"], "image/png");
+    assert_eq!(res["content"][0]["data"], expected_b64);
+    assert_eq!(res["paging"]["totalBytes"], 10);
+    assert_eq!(res["paging"]["bytesReturned"], 10);
+    assert_eq!(res["paging"]["hasMore"], false);
+}
+
+#[test]
 fn test_read_media_file_chunk() {
     let dir = tempdir().unwrap();
     let file = dir.path().join("audio.mp3");
@@ -179,6 +206,26 @@ fn test_read_media_file_chunk() {
     assert_eq!(res["paging"]["bytesReturned"], 4);
     assert_eq!(res["paging"]["hasMore"], true);
     assert_eq!(res["paging"]["nextOffset"], 4);
+}
+
+#[test]
+fn test_read_media_file_resource() {
+    let dir = tempdir().unwrap();
+    let file = dir.path().join("archive.zip");
+    let payload = vec![0x50, 0x4B, 0x03, 0x04, 0x05];
+    fs::write(&file, &payload).unwrap();
+
+    let req = ToolCallRequest {
+        name: "read_media_file".to_string(),
+        arguments: json!({ "path": file.to_str().unwrap() }),
+    };
+    let res = execute_tool(req).unwrap();
+
+    let expected_b64 = base64::engine::general_purpose::STANDARD.encode(&payload);
+
+    assert_eq!(res["content"][0]["type"], "resource");
+    assert_eq!(res["content"][0]["resource"]["blob"], expected_b64);
+    assert_eq!(res["paging"]["totalBytes"], 5);
 }
 
 #[test]
@@ -485,6 +532,54 @@ fn test_list_allowed_directories() {
 
     let allowed: Vec<String> = serde_json::from_str(res["content"].as_str().unwrap()).unwrap();
     assert!(!allowed.is_empty());
+}
+
+#[test]
+fn test_resolve_path_strips_redundant_allowed_root() {
+    let root = Some("D:\\Projects\\Practice\\rune-kit\\test-dir");
+
+    // Case A: Full Windows path with backslashes
+    let p1 = resolve_path_with_root(
+        "D:\\Projects\\Practice\\rune-kit\\test-dir\\images\\screenshots",
+        root,
+    )
+    .unwrap();
+    assert_eq!(
+        p1,
+        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
+    );
+
+    // Case B: Mixed slashes
+    let p2 = resolve_path_with_root(
+        "D:/Projects/Practice/rune-kit/test-dir/images/screenshots",
+        root,
+    )
+    .unwrap();
+    assert_eq!(
+        p2,
+        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
+    );
+
+    // Case C: Relative paths
+    let p3 = resolve_path_with_root("./images/screenshots", root).unwrap();
+    assert_eq!(
+        p3,
+        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
+    );
+
+    let p4 = resolve_path_with_root("/images/screenshots", root).unwrap();
+    assert_eq!(
+        p4,
+        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
+    );
+
+    // Case D: Exact root path
+    let p5 = resolve_path_with_root("D:\\Projects\\Practice\\rune-kit\\test-dir", root).unwrap();
+    assert_eq!(p5, PathBuf::from("D:/Projects/Practice/rune-kit/test-dir"));
+
+    // Case E: Path outside root rejected
+    let p6 = resolve_path_with_root("C:\\Windows\\System32", root);
+    assert!(p6.is_err());
 }
 
 #[test]

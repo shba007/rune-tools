@@ -10,6 +10,7 @@ use std::path::{Component, Path, PathBuf};
 use walkdir::WalkDir;
 
 const MAX_CHUNK_BYTES: usize = 512 * 1024;
+const MAX_IMAGE_BYTES: usize = 20 * 1024 * 1024;
 
 fn get_param<'a>(args: &'a Value, camel: &str, snake: &str) -> Option<&'a Value> {
     args.get(camel).or_else(|| args.get(snake))
@@ -47,33 +48,66 @@ pub fn get_allowed_root() -> Option<String> {
     }
 }
 
-pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
-    let clean_str = relative_or_abs
-        .trim_start_matches("./")
-        .trim_start_matches(".\\");
-    let target = PathBuf::from(clean_str);
+fn normalize_separators(p: &str) -> String {
+    p.replace('\\', "/")
+}
 
-    if let Some(allowed_root) = get_allowed_root() {
-        let root = PathBuf::from(allowed_root);
-        let full_path = if target.is_relative() {
-            root.join(target)
+pub fn resolve_path_with_root(
+    relative_or_abs: &str,
+    allowed_root: Option<&str>,
+) -> Result<PathBuf, String> {
+    let clean_input = normalize_separators(relative_or_abs.trim());
+
+    if let Some(allowed_root) = allowed_root {
+        let clean_root = normalize_separators(allowed_root);
+        let root_trimmed = clean_root.trim_end_matches('/');
+        let root_path = PathBuf::from(root_trimmed);
+
+        // 1. If path matches root or starts with root prefix, strip it
+        let relative_part = if clean_input.eq_ignore_ascii_case(root_trimmed) {
+            ""
+        } else if clean_input
+            .to_ascii_lowercase()
+            .starts_with(&format!("{}/", root_trimmed.to_ascii_lowercase()))
+        {
+            &clean_input[root_trimmed.len() + 1..]
+        } else if clean_input.contains(":/") || clean_input.starts_with("//") {
+            // Absolute path pointing to another location or drive
+            return Err(format!(
+                "Access denied: path '{}' is outside allowed directory '{}'",
+                relative_or_abs, allowed_root
+            ));
         } else {
-            target
+            // Relative path (clean up leading ./ or /)
+            clean_input.trim_start_matches("./").trim_start_matches('/')
         };
+
+        let full_path = if relative_part.is_empty() {
+            root_path.clone()
+        } else {
+            root_path.join(relative_part)
+        };
+
         let normalized = normalize_path(&full_path);
-        let normalized_root = normalize_path(&root);
+        let normalized_root = normalize_path(&root_path);
 
         if !normalized.starts_with(&normalized_root) {
             return Err(format!(
-                "Access denied: path '{}' is outside allowed directory",
+                "Access denied: path '{}' escapes allowed directory",
                 relative_or_abs
             ));
         }
 
         Ok(normalized)
     } else {
-        Ok(normalize_path(&target))
+        let clean = clean_input.strip_prefix("./").unwrap_or(&clean_input);
+        Ok(normalize_path(&PathBuf::from(clean)))
     }
+}
+
+pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
+    let allowed = get_allowed_root();
+    resolve_path_with_root(relative_or_abs, allowed.as_deref())
 }
 
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
@@ -160,6 +194,15 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .as_str()
                 .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
             let path = resolve_path(path_str)?;
+            let mime = mime_guess::from_path(&path)
+                .first_or_octet_stream()
+                .to_string();
+            let is_image = mime.starts_with("image/");
+            let max_allowed = if is_image {
+                MAX_IMAGE_BYTES
+            } else {
+                MAX_CHUNK_BYTES
+            };
 
             let offset = request
                 .arguments
@@ -182,9 +225,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             file.seek(SeekFrom::Start(offset))
                 .map_err(|e| format!("Seek failed on '{}': {}", path.display(), e))?;
 
-            let chunk_len = requested_len
-                .unwrap_or(MAX_CHUNK_BYTES)
-                .min(MAX_CHUNK_BYTES);
+            let chunk_len = requested_len.unwrap_or(max_allowed).min(max_allowed);
             let mut buf = vec![0u8; chunk_len];
             let n = file
                 .read(&mut buf)
@@ -193,10 +234,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
             let end = offset + n as u64;
             let has_more = end < total_size;
-
-            let mime = mime_guess::from_path(&path)
-                .first_or_octet_stream()
-                .to_string();
 
             let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
 

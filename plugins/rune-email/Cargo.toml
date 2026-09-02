@@ -1,7 +1,7 @@
 [package]
 name = "rune-email"
 description = "Universal email client toolkit supporting IMAP and SMTP across Gmail, Outlook, Hostinger, and custom mail servers"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 license.workspace = true
 
@@ -11,6 +11,10 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "rune-email-native"
 path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
