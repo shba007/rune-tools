@@ -100,7 +100,7 @@ pub fn resolve_path_with_root(
 
         Ok(normalized)
     } else {
-        let clean = clean_input.trim_start_matches("./").trim_start_matches('/');
+        let clean = clean_input.strip_prefix("./").unwrap_or(&clean_input);
         Ok(normalize_path(&PathBuf::from(clean)))
     }
 }
