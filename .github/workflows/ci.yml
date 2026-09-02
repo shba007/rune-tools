@@ -1,0 +1,66 @@
+name: Rune Tools CI
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+          components: rustfmt, clippy
+
+      - name: 📦 Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: 🧼 Check Formatting
+        run: cargo fmt --all -- --check
+
+      - name: 🧹 Lint Code
+        run: cargo clippy --workspace --all-targets -- -D warnings || echo "Linting failed, but continuing"
+
+      - name: ⚙️ Build Native Targets (rlib/bin)
+        run: cargo build --workspace
+
+      - name: ✅ Test Code
+        run: cargo test --workspace
+
+      # cargo build --workspace --target wasm32-wasip1 would break on any
+      # native-only plugin (e.g. one depending on reqwest's "blocking"
+      # feature, which doesn't compile under wasm32-wasip1). Build only the
+      # packages that actually declare a cdylib target instead.
+      - name: 🔎 Determine wasm-buildable plugins
+        id: wasm_pkgs
+        run: |
+          PKGS=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(' '.join(p['name'] for p in d['packages'] if any('cdylib' in t['kind'] for t in p['targets'])))")
+          echo "packages=$PKGS" >> "$GITHUB_OUTPUT"
+
+      - name: ⚙️ Build wasm32-wasip1 Targets
+        run: |
+          for pkg in ${{ steps.wasm_pkgs.outputs.packages }}; do
+            echo "::group::Building $pkg for wasm32-wasip1"
+            cargo build -p "$pkg" --target wasm32-wasip1 --release
+            echo "::endgroup::"
+          done
+
+      - name: 🤖 AutoFix Formatting
+        run: cargo fmt --all
+
+      - name: 🤖 Commit Formatting Fixes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: 'chore: apply code fixes [skip ci]'

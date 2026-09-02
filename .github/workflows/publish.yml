@@ -1,0 +1,177 @@
+name: Rune Tools Publish
+
+permissions:
+  contents: write
+  attestations: write
+  id-token: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Diffs every plugin's Cargo.toml version against registry/index.json and
+  # emits build matrices containing only versions that aren't published yet.
+  # If nothing changed, has_wasm/has_native are both "false" and the build
+  # jobs below are skipped entirely.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      wasm_matrix: ${{ steps.detect.outputs.wasm_matrix }}
+      native_matrix: ${{ steps.detect.outputs.native_matrix }}
+      has_wasm: ${{ steps.detect.outputs.has_wasm }}
+      has_native: ${{ steps.detect.outputs.has_native }}
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 🔎 Detect publishable plugin versions
+        id: detect
+        run: |
+          RESULT=$(python3 scripts/detect-publishable.py)
+          echo "wasm_matrix=$(echo "$RESULT" | jq -c '.wasm')" >> "$GITHUB_OUTPUT"
+          echo "native_matrix=$(echo "$RESULT" | jq -c '.native')" >> "$GITHUB_OUTPUT"
+          echo "has_wasm=$(echo "$RESULT" | jq '.wasm.include | length > 0')" >> "$GITHUB_OUTPUT"
+          echo "has_native=$(echo "$RESULT" | jq '.native.include | length > 0')" >> "$GITHUB_OUTPUT"
+
+  build-wasm:
+    needs: detect
+    if: needs.detect.outputs.has_wasm == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.wasm_matrix) }}
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v7
+
+      - name: 🛠️ Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: 📦 Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: ⚙️ Build
+        run: cargo build -p ${{ matrix.name }} --release --target wasm32-wasip1
+
+      - name: 📦 Package
+        run: |
+          mkdir -p dist
+          cp target/wasm32-wasip1/release/${{ matrix.artifact_name }}.wasm \
+             dist/${{ matrix.name }}-${{ matrix.version }}.wasm
+
+      - name: 📝 Generate artifact attestation
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/${{ matrix.name }}-${{ matrix.version }}.wasm
+
+      # gh release create is called with `|| true` because multiple wasm/native
+      # matrix jobs for the SAME plugin version may race to create the same
+      # tag; whichever loses the race just uploads to the release the winner
+      # already created. --clobber makes the upload itself idempotent too.
+      - name: ⬆️ Publish release + upload asset
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TAG="${{ matrix.name }}-v${{ matrix.version }}"
+          gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
+          gh release upload "$TAG" dist/${{ matrix.name }}-${{ matrix.version }}.wasm --clobber
+
+  build-native:
+    needs: detect
+    if: needs.detect.outputs.has_native == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.native_matrix) }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v7
+
+      - name: 🛠️ Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: 📦 Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: ⚙️ Build
+        run: cargo build -p ${{ matrix.name }} --release --target ${{ matrix.target }} --bin ${{ matrix.bin_name }}
+
+      - name: 📦 Package (Unix)
+        if: matrix.ext == 'tar.gz'
+        shell: bash
+        run: |
+          mkdir -p dist
+          tar czf dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.tar.gz \
+            -C target/${{ matrix.target }}/release ${{ matrix.bin_name }}
+
+      - name: 📦 Package (Windows)
+        if: matrix.ext == 'zip'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path target/${{ matrix.target }}/release/${{ matrix.bin_name }}.exe `
+            -DestinationPath dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.zip
+
+      - name: 📝 Generate artifact attestation
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.${{ matrix.ext }}
+
+      - name: ⬆️ Publish release + upload asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TAG="${{ matrix.name }}-v${{ matrix.version }}"
+          gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
+          gh release upload "$TAG" "dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.${{ matrix.ext }}" --clobber
+
+  update-registry:
+    needs: [detect, build-wasm, build-native]
+    if: |
+      always() &&
+      needs.detect.result == 'success' &&
+      (needs.build-wasm.result == 'success' || needs.build-wasm.result == 'skipped') &&
+      (needs.build-native.result == 'success' || needs.build-native.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 🏷️ Update registry/index.json
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/update-registry.py
+
+      # [skip ci] on this commit relies on GitHub's built-in skip-ci detection
+      # for push events, so pushing the registry update doesn't re-trigger
+      # this same workflow.
+      - name: 🔀 Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add registry/index.json
+          if git diff --cached --quiet; then
+            echo "No registry changes to commit"
+          else
+            git commit -m "chore(registry): publish new plugin versions [skip ci]"
+            git push
+          fi
