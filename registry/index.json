@@ -77,6 +77,21 @@
       }
     }
   },
+  "rune-time": {
+    "description": "Deterministic timezone queries, ISO-8601 formatting, and cross-timezone conversions for AI agents",
+    "latest": "0.1.0",
+    "versions": {
+      "0.1.0": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.0/rune-time-native-0.1.0-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.0/rune-time-native-0.1.0-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.0/rune-time-native-0.1.0-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.0/rune-time-native-0.1.0-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.0/rune-time-0.1.0.wasm"
+      }
+    }
+  },
   "rune-video": {
     "description": "Video streaming, playlist extraction, broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg",
     "latest": "0.1.0",
