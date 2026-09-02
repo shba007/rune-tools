@@ -3,9 +3,9 @@ use rune_image::{definitions, operations};
 #[cfg(not(target_arch = "wasm32"))]
 use rune_pdk::{ToolCallRequest, ToolDefinition};
 #[cfg(not(target_arch = "wasm32"))]
-use rune_sidecar::{run_stdio, SidecarHandler};
+use rune_sidecar::{SidecarHandler, run_stdio};
 #[cfg(not(target_arch = "wasm32"))]
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[cfg(not(target_arch = "wasm32"))]
 struct ImageSidecarHandler;
