@@ -12,7 +12,7 @@ members = [
     # "plugins/rune-memory",
     # "plugins/rune-print",
     # "plugins/rune-sequentialthinking",
-    # "plugins/rune-time",
+    "plugins/rune-time",
     "plugins/rune-video",
 ]
 resolver = "2"

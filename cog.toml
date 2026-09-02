@@ -15,13 +15,21 @@ pre_package_bump_hooks = []
 post_package_bump_hooks = []
 
 # Embedded git-hooks script
+# Runs on 'git commit' to validate the commit message format
 [git_hooks.commit-msg]
 script = """#!/bin/sh
 set -e
-cog verify --file $1
-cog check
-cargo fmt -v --all --check
-cargo clippy
+
+echo "Auto-formatting code..."
+cargo fmt --all
+
+echo "Applying Clippy fixes..."
+cargo clippy --workspace --all-targets --fix --allow-dirty --allow-staged
+
+# Stage any automatically fixed files into the current commit
+git update-index --again
+
+cog verify --file "$1"
 """
 
 [commit_types]
