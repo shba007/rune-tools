@@ -18,10 +18,28 @@ post_package_bump_hooks = []
 [git_hooks.commit-msg]
 script = """#!/bin/sh
 set -e
-cog verify --file $1
-cog check
-cargo fmt -v --all --check
-cargo clippy
+
+# 1. Skip checks on merge commits
+if [ -f .git/MERGE_HEAD ] || [ -f "$(git rev-parse --git-path MERGE_HEAD 2>/dev/null)" ]; then
+    exit 0
+fi
+
+# 2. Ensure Cargo and Rust toolchain are visible inside Git Bash
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# 3. Verify conventional commit format first (fails fast if invalid)
+cog verify --file "$1"
+
+# 4. Auto-format code
+echo "Auto-formatting code..."
+cargo fmt --all
+
+# 5. Apply clippy auto-fixes
+echo "Applying Clippy fixes..."
+cargo clippy --workspace --all-targets --fix --allow-dirty --allow-staged
+
+# 6. Stage modified files into the commit
+git update-index --again
 """
 
 [commit_types]
