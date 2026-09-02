@@ -80,7 +80,12 @@ fn test_resolve_dir_custom_path() {
 }
 
 #[test]
-fn test_real_inspect_video_metadata_e2e() {
+fn test_live_inspect_video_metadata_e2e() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     let workspace = get_workspace_dir();
     let cookies_dir = workspace.join("cookies");
 
@@ -104,7 +109,12 @@ fn test_real_inspect_video_metadata_e2e() {
 }
 
 #[test]
-fn test_real_download_video_stream_and_trim_e2e() {
+fn test_live_download_video_stream_and_trim_e2e() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     let workspace = get_workspace_dir();
     let output_dir = workspace.join("video");
     let cookies_dir = workspace.join("cookies");

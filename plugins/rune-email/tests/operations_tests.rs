@@ -72,6 +72,11 @@ fn test_unknown_tool_routing() {
 
 #[test]
 fn test_live_verify_email_connection_e2e() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     if std::env::var("EMAIL_USER").is_err() || std::env::var("EMAIL_PASSWORD").is_err() {
         eprintln!("Skipping live test: EMAIL_USER or EMAIL_PASSWORD not set in environment");
         return;
@@ -89,6 +94,11 @@ fn test_live_verify_email_connection_e2e() {
 
 #[test]
 fn test_live_list_mailboxes_e2e() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     if std::env::var("EMAIL_USER").is_err() || std::env::var("EMAIL_PASSWORD").is_err() {
         return;
     }
@@ -109,6 +119,11 @@ fn test_live_list_mailboxes_e2e() {
 
 #[test]
 fn test_live_print_last_emails_e2e() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     if std::env::var("EMAIL_USER").is_err() || std::env::var("EMAIL_PASSWORD").is_err() {
         eprintln!("Skipping live test: EMAIL_USER or EMAIL_PASSWORD not set in environment");
         return;

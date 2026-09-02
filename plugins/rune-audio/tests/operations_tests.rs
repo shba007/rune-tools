@@ -80,7 +80,12 @@ fn test_resolve_dir_custom_path() {
 }
 
 #[test]
-fn test_real_extract_audio_track_e2e() {
+fn test_live_extract_audio_track_e2e() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     let workspace = get_workspace_dir();
     let audio_output_dir = workspace.join("audio");
     let cookies_dir = workspace.join("cookies");
