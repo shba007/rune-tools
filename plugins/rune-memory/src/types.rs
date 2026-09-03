@@ -1,4 +1,3 @@
-// plugins/rune-memory/src/types.rs
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

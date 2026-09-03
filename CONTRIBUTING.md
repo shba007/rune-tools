@@ -53,7 +53,7 @@ rune-tools/                            # plugin workspace
     ├── rune-browser/                   # new, currently disabled in workspace members — classify via §12
     ├── rune-print/                     # HYBRID — WASM renders, native sidecar dispatches (currently disabled, mid-migration)
     ├── rune-memory/                    # WASM-only, pure compute (currently disabled, mid-migration)
-    └── rune-sequentialthinking/        # WASM-only, pure compute (currently disabled, mid-migration)
+    └── rune-sequential-thinking/        # WASM-only, pure compute (currently disabled, mid-migration)
 ```
 
 "Currently disabled" plugins are commented out of the root `Cargo.toml`
@@ -262,7 +262,7 @@ resolve in that case, since there's only one option.
 
 Use this when the plugin's logic is real in-process compute with no
 native library dependency and no external binary to shell out to
-(`rune-filesystem`, `rune-time`, `rune-memory`, `rune-sequentialthinking`
+(`rune-filesystem`, `rune-time`, `rune-memory`, `rune-sequential-thinking`
 are the reference examples).
 
 ### 5.1 Register in workspace `Cargo.toml`
@@ -607,7 +607,6 @@ these four locations must all agree, checked in this order:
 1. Folder name: `plugins/rune-<name>/`
 2. `Cargo.toml` → `[package] name = "rune-<name>"`
 3. Root workspace `Cargo.toml` → `members = [..., "plugins/rune-<name>"]`
-4. Header comment in every source file: `// plugins/rune-<name>/src/<file>.rs`
 
 If the plugin has a native sidecar binary, its `[[bin]] name` **must** be
 exactly `rune-<name>-native`. This isn't just a style preference anymore
@@ -890,7 +889,7 @@ default without doing so first:
   other.
 - **`rune-browser`** — new; not yet classified, and currently disabled in
   the workspace `members` list regardless.
-- **`rune-print`, `rune-memory`, `rune-sequentialthinking`** — already
+- **`rune-print`, `rune-memory`, `rune-sequential-thinking`** — already
   classified (hybrid / wasm-only / wasm-only respectively) but currently
   disabled in the workspace `members` list, mid-migration. Re-enabling
   one is a good opportunity to re-verify its classification still holds

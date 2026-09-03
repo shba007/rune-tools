@@ -1,4 +1,3 @@
-// plugins/rune-image/src/operations.rs
 use crate::types::{CmdExecRequest, CmdExecResponse};
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
@@ -193,8 +192,6 @@ pub fn find_cookie_file_in_dir(dir_path: &Path, url: &str) -> Option<PathBuf> {
 
     None
 }
-
-// plugins/rune-image/src/operations.rs
 
 pub fn resolve_cookie_arg(params: &ToolCallRequest, url: &str) -> Option<(String, String)> {
     let explicit_file = get_str_arg(&params.arguments, "cookiesFile", "cookies_file");

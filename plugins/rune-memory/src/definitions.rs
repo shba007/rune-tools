@@ -1,4 +1,3 @@
-// plugins/rune-memory/src/definitions.rs
 use rune_pdk::ToolDefinition;
 use serde_json::json;
 

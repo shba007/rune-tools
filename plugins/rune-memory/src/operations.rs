@@ -1,4 +1,3 @@
-// plugins/rune-memory/src/operations.rs
 use crate::types::{AddObservation, DeleteObservation, Entity, KnowledgeGraph, Relation};
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};

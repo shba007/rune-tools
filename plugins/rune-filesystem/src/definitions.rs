@@ -1,4 +1,3 @@
-// plugins/rune-filesystem/src/definitions.rs
 use rune_pdk::ToolDefinition;
 use serde_json::json;
 

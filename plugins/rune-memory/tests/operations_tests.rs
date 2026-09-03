@@ -1,4 +1,3 @@
-// plugins/rune-memory/tests/operations_tests.rs
 use rune_memory::operations::execute_tool;
 use rune_pdk::ToolCallRequest;
 use serde_json::json;

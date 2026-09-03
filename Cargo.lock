@@ -1542,6 +1542,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rune-sequential-thinking"
+version = "0.1.0"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "rune-sidecar"
 version = "0.1.0"
 dependencies = [

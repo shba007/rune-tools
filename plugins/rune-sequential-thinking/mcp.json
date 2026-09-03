@@ -1,0 +1,8 @@
+{
+	"mcpServers": {
+		"rune-sequential-thinking": {
+			"command": "rune",
+			"args": ["run", "rune-sequential-thinking"]
+		}
+	}
+}
