@@ -1,6 +1,6 @@
 [package]
 name = "rune-image"
-description = "Image gallery and social album extraction toolkit powered by gallery-dl"
+description = "Image gallery and social album extraction via gallery-dl (Reddit, Instagram, Imgur, Pixiv, and more) with domain-matched cookies, browser sessions, and proxy routing"
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true

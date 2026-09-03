@@ -1,6 +1,6 @@
 [package]
 name = "rune-time"
-description = "Deterministic timezone queries, ISO-8601 formatting, and cross-timezone conversions for AI agents"
+description = "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions."
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true

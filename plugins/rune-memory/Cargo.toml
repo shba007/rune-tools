@@ -1,7 +1,7 @@
 # plugins/rune-memory/Cargo.toml
 [package]
 name = "rune-memory"
-description = "Knowledge graph-based long term memory drop-in replacement for @modelcontextprotocol/server-memory"
+description = "Persistent knowledge-graph memory: typed entities and relations in a JSON file, with batch creation, filtered queries, deletion, and full graph inspection"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true

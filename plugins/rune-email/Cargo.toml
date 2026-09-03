@@ -1,6 +1,6 @@
 [package]
 name = "rune-email"
-description = "Universal email client toolkit supporting IMAP and SMTP across Gmail, Outlook, Hostinger, and custom mail servers"
+description = "Universal IMAP/SMTP email client: mailbox listing, search, full message parsing to Markdown, attachment download, send/reply/draft, flag management, and inter-mailbox moves"
 version = "0.1.2"
 edition.workspace = true
 license.workspace = true
