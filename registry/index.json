@@ -69,8 +69,8 @@
     }
   },
   "rune-git": {
-    "description": "Host-backed Git tool drop-in replacement for @modelcontextprotocol/server-git",
-    "latest": "0.2.1",
+    "description": " Git repository management: status, diff, staging, committing, branching, switching, merging, log inspection, remote management, fetch/pull/push",
+    "latest": "0.2.2",
     "versions": {
       "0.2.0": {
         "native": {
@@ -89,6 +89,15 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.1/rune-git-native-0.2.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.1/rune-git-0.2.1.wasm"
+      },
+      "0.2.2": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.2/rune-git-native-0.2.2-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.2/rune-git-native-0.2.2-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.2/rune-git-native-0.2.2-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.2/rune-git-native-0.2.2-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.2/rune-git-0.2.2.wasm"
       }
     }
   },
@@ -113,6 +122,24 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.1.1/rune-image-native-0.1.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.1.1/rune-image-0.1.1.wasm"
+      }
+    }
+  },
+  "rune-memory": {
+    "description": "Persistent knowledge-graph memory: typed entities and relations in a JSON file, with batch creation, filtered queries, deletion, and full graph inspection",
+    "latest": "0.2.0",
+    "versions": {
+      "0.2.0": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-memory-v0.2.0/rune-memory-0.2.0.wasm"
+      }
+    }
+  },
+  "rune-sequential-thinking": {
+    "description": "Dynamic step-by-step reasoning workspace with progress tracking, hypothesis revision, thought branching, and automatic total adjustment",
+    "latest": "0.1.0",
+    "versions": {
+      "0.1.0": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-sequential-thinking-v0.1.0/rune-sequential-thinking-0.1.0.wasm"
       }
     }
   },
