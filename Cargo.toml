@@ -9,7 +9,7 @@ members = [
     "plugins/rune-filesystem",
     "plugins/rune-git",
     "plugins/rune-image",
-    # "plugins/rune-memory",
+    "plugins/rune-memory",
     # "plugins/rune-print",
     # "plugins/rune-sequentialthinking",
     "plugins/rune-time",

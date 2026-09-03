@@ -660,19 +660,21 @@ the same detection approach the publish pipeline uses (§11) — and drives
 the appropriate `cargo build`/`cargo test` invocations per plugin.
 
 ```bash
-# Single plugin, both targets — one command, real error propagation
-cargo xtask build rune-audio
+# Test Single Plugin
+cargo xtask test rune-<name>
 
-# Just one side, if you only need it
-cargo xtask build rune-audio --wasm-only
-cargo xtask build rune-audio --native-only
-
-# Whole workspace, both targets
-cargo xtask build-all
-
-# Single plugin / whole workspace, tests
-cargo xtask test rune-audio
+# Test Whole Workspace
 cargo xtask test-all
+
+# Build Single plugin in either wasm or native(if available)
+cargo xtask build rune-<name> --wasm-only
+cargo xtask build rune-<name> --native-only
+
+# Build Single plugin, both targets
+cargo xtask build rune-<name>
+
+# Build Whole workspace, both targets
+cargo xtask build-all
 ```
 
 `xtask test`/`test-all` always wraps `cargo test -p <name> --all-features`

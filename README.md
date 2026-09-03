@@ -2,6 +2,7 @@
 
 A collection of MCP servers packaged as plugins, runnable via the `rune` binary (`rune run <plugin-name>`).
 
+
 ## Available Plugins
 
 | Plugin | Description | Tools | Documentation |
@@ -18,3 +19,23 @@ A collection of MCP servers packaged as plugins, runnable via the `rune` binary 
 | `rune-sequentialthinking` | Dynamic step-by-step reasoning workspace with progress tracking, hypothesis revision, thought branching, automatic total adjustment. | `sequentialthinking` | [README](plugins/rune-sequentialthinking/README.md) |
 | `rune-time` | Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions. | `get_current_time`, `convert_time` | [README](plugins/rune-time/README.md) |
 | `rune-video` | Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, ffmpeg. | `inspect_video_metadata`, `download_video_stream`, … | [README](plugins/rune-video/README.md) |
+
+## Development
+
+```bash
+# Test Single Plugin
+cargo xtask test rune-<name>
+
+# Test Whole Workspace
+cargo xtask test-all
+
+# Build Single plugin in either wasm or native(if available)
+cargo xtask build rune-<name> --wasm-only
+cargo xtask build rune-<name> --native-only
+
+# Build Single plugin, both targets
+cargo xtask build rune-<name>
+
+# Build Whole workspace, both targets
+cargo xtask build-all
+```
