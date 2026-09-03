@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "rune-memory": {
+      "command": "rune",
+      "args": ["run", "rune-memory"],
+      "env": {
+        "ALLOWED_DIR": "./test-dir",
+        "MEMORY_FILE": "graph_memory.json"
+      }
+    }
+  }
+}

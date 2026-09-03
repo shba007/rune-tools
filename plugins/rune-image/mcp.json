@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rune-image": {
+      "command": "rune",
+      "args": ["run", "rune-image"],
+      "env": {
+        "COOKIES_DIR": "./test-dir/cookies",
+        "OUTPUT_DIR": "./test-dir/images",
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}
