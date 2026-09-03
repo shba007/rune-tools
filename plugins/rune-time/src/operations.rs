@@ -1,3 +1,4 @@
+use crate::types::{ConvertTimeResponse, CurrentTimeResponse, TimezoneDetails};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Offset, Utc};
 use chrono_tz::Tz;
 use rune_pdk::ToolCallRequest;
@@ -92,12 +93,12 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let now_local = now_utc.with_timezone(&tz);
             let offset = now_local.offset().fix();
 
-            Ok(json!({
-                "timezone": tz.name(),
-                "datetime": now_local.to_rfc3339(),
-                "utc_datetime": now_utc.to_rfc3339(),
-                "utc_offset": offset.to_string(),
-                "timestamp_epoch_seconds": now_utc.timestamp()
+            Ok(json!(CurrentTimeResponse {
+                timezone: tz.name().to_string(),
+                datetime: now_local.to_rfc3339(),
+                utc_datetime: now_utc.to_rfc3339(),
+                utc_offset: offset.to_string(),
+                timestamp_epoch_seconds: now_utc.timestamp(),
             }))
         }
 
@@ -141,18 +142,18 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 - source_dt.offset().fix().local_minus_utc();
             let offset_diff_hours = offset_diff_seconds as f64 / 3600.0;
 
-            Ok(json!({
-                "source": {
-                    "timezone": source_tz.name(),
-                    "datetime": source_dt.to_rfc3339(),
-                    "utc_offset": source_dt.offset().fix().to_string()
+            Ok(json!(ConvertTimeResponse {
+                source: TimezoneDetails {
+                    timezone: source_tz.name().to_string(),
+                    datetime: source_dt.to_rfc3339(),
+                    utc_offset: source_dt.offset().fix().to_string(),
                 },
-                "target": {
-                    "timezone": target_tz.name(),
-                    "datetime": target_dt.to_rfc3339(),
-                    "utc_offset": target_dt.offset().fix().to_string()
+                target: TimezoneDetails {
+                    timezone: target_tz.name().to_string(),
+                    datetime: target_dt.to_rfc3339(),
+                    utc_offset: target_dt.offset().fix().to_string(),
                 },
-                "time_difference_hours": offset_diff_hours
+                time_difference_hours: offset_diff_hours,
             }))
         }
 

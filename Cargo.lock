@@ -1569,7 +1569,6 @@ dependencies = [
  "chrono-tz",
  "extism-pdk",
  "rune-pdk",
- "rune-sidecar",
  "serde",
  "serde_json",
  "tempfile",

@@ -1,5 +1,6 @@
 pub mod definitions;
 pub mod operations;
+pub mod types;
 
 #[cfg(target_arch = "wasm32")]
 use rune_pdk::ToolCallRequest;
