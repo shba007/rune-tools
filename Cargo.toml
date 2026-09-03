@@ -2,6 +2,7 @@
 members = [
     "crates/rune-pdk",
     "crates/rune-sidecar",
+    "plugins/mhb-mconnect",
     "plugins/rune-audio",
     # "plugins/rune-browser",
     "plugins/rune-email",
@@ -11,6 +12,7 @@ members = [
     "plugins/rune-image",
     "plugins/rune-memory",
     # "plugins/rune-print",
+    # "plugins/rune-scan",
     "plugins/rune-sequential-thinking",
     "plugins/rune-time",
     "plugins/rune-video",

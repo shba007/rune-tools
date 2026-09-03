@@ -1,0 +1,4 @@
+# plugins/rune-mhb-mconnect/plugin.toml
+[capabilities]
+network_hosts = ["connect.modesthumanbrands.com"]
+exec = { allowed_binaries = ["mhb-mconnect-native"] }

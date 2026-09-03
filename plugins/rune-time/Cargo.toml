@@ -1,7 +1,7 @@
 [package]
 name = "rune-time"
 description = "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions."
-version = "0.1.1"
+version = "0.2.0"
 edition.workspace = true
 license.workspace = true
 
