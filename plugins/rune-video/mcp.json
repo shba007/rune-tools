@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rune-video": {
+      "command": "rune",
+      "args": ["run", "rune-video"],
+      "env": {
+        "COOKIES_DIR": "./test-dir/cookies",
+        "OUTPUT_DIR": "./test-dir/video",
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}

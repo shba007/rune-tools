@@ -133,5 +133,27 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 }
             }),
         },
+        ToolDefinition {
+            name: "validate_commit_message".to_string(),
+            description: "Validates a commit message against character length constraints and Conventional Commits formatting rules.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "The full commit message (subject and optional body) to validate"
+                    },
+                    "max_subject_length": {
+                        "type": "integer",
+                        "description": "Maximum allowed character count for the subject line (default: 72)"
+                    },
+                    "conventional": {
+                        "type": "boolean",
+                        "description": "Whether to enforce Conventional Commits format (e.g. feat:, fix:) (default: false)"
+                    }
+                },
+                "required": ["message"]
+            }),
+        },
     ]
 }

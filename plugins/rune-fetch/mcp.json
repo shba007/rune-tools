@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "rune-fetch": {
+      "command": "rune",
+      "args": ["run", "rune-fetch"]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rune-audio": {
+      "command": "rune",
+      "args": ["run", "rune-audio"],
+      "env": {
+        "COOKIES_DIR": "./test-dir/cookies",
+        "OUTPUT_DIR": "./test-dir/audio",
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}

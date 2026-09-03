@@ -1,4 +1,3 @@
-// plugins/rune-image/tests/operations_tests.rs
 use rune_image::operations::{
     execute_tool, extract_domain_and_stem, find_cookie_file_in_dir, resolve_cookie_arg, resolve_dir,
 };

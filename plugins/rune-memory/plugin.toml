@@ -1,0 +1,4 @@
+[capabilities]
+network_hosts = []
+filesystem = { mode = "scoped", root_param = "allowed_dir" }
+exec = { allowed_binaries = [] }

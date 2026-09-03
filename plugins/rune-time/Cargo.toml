@@ -1,6 +1,6 @@
 [package]
 name = "rune-time"
-description = "Deterministic timezone queries, ISO-8601 formatting, and cross-timezone conversions for AI agents"
+description = "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions."
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true
@@ -8,23 +8,12 @@ license.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[[bin]]
-name = "rune-time-native"
-path = "src/bin/native_sidecar.rs"
-required-features = ["native"]
-
-[features]
-native = []
-
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
 serde.workspace = true
 serde_json.workspace = true
 chrono = { workspace = true, features = ["serde"] }
 chrono-tz = { version = "0.10", features = ["serde"] }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rune-sidecar = { path = "../../crates/rune-sidecar" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true

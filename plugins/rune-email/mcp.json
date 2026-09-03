@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "rune-email": {
+      "command": "rune",
+      "args": ["run", "rune-email"],
+      "env": {
+        "EMAIL_PRESET": "hostinger",
+        "EMAIL_USER": "contact@yourdomain.com",
+        "EMAIL_PASSWORD": "your_secure_password",
+        "EMAIL_DISPLAY_NAME": "Test User",
+        "OUTPUT_DIR": "./test-dir/attachments",
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}

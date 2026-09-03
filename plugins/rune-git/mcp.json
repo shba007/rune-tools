@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "rune-git": {
+      "command": "rune",
+      "args": ["run", "rune-git"],
+      "env": {
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}

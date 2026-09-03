@@ -1499,7 +1499,7 @@ dependencies = [
 
 [[package]]
 name = "rune-git"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -1522,12 +1522,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "rune-memory"
+version = "0.2.0"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "rune-pdk"
 version = "0.1.0"
 dependencies = [
  "extism-pdk",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "rune-sequential-thinking"
+version = "0.1.0"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
@@ -1547,7 +1569,6 @@ dependencies = [
  "chrono-tz",
  "extism-pdk",
  "rune-pdk",
- "rune-sidecar",
  "serde",
  "serde_json",
  "tempfile",

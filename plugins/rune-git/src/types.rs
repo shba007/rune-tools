@@ -14,3 +14,12 @@ pub struct CmdExecResponse {
     pub stdout: String,
     pub stderr: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CommitValidationReport {
+    pub valid: bool,
+    pub subject: String,
+    pub subject_length: usize,
+    pub body: Option<String>,
+    pub issues: Vec<String>,
+}

@@ -1,6 +1,6 @@
 [package]
 name = "rune-filesystem"
-description = "Sandboxed filesystem tools for MCP"
+description = "Sandboxed filesystem manipulation: line-based reading, multimodal media reads, atomic writes, line edits with dry-run diffs, tree views, glob search, and safe moves within an enforced boundary"
 version = "0.3.1"
 edition.workspace = true
 license.workspace = true

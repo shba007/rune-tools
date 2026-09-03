@@ -1,7 +1,7 @@
 [package]
 name = "rune-git"
-description = "Host-backed Git tool drop-in replacement for @modelcontextprotocol/server-git"
-version = "0.2.1"
+description = " Git repository management: status, diff, staging, committing, branching, switching, merging, log inspection, remote management, fetch/pull/push"
+version = "0.2.2"
 edition.workspace = true
 license.workspace = true
 

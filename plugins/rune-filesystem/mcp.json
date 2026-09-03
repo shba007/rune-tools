@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "rune-filesystem": {
+      "command": "rune",
+      "args": ["run", "rune-filesystem"],
+      "env": {
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}

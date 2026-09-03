@@ -1,6 +1,6 @@
 [package]
 name = "rune-video"
-description = "Video streaming, playlist extraction, broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg"
+description = "Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg."
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true

@@ -61,3 +61,55 @@ fn test_git_missing_commit_message_rejection() {
     assert!(res.is_err());
     assert!(res.unwrap_err().contains("Missing 'message' argument"));
 }
+
+#[test]
+fn test_validate_commit_message_exact_length_check() {
+    let msg = "feat(rune-memory): upgrade to v0.2.0 with observation support, search, and graph inspection";
+    let res = execute_tool(ToolCallRequest {
+        name: "validate_commit_message".to_string(),
+        arguments: json!({
+            "message": msg,
+            "max_subject_length": 100,
+            "conventional": true
+        }),
+    })
+    .unwrap();
+
+    assert_eq!(res["valid"], true);
+    assert_eq!(res["subject_length"], 91);
+    assert_eq!(res["issues"].as_array().unwrap().len(), 0);
+
+    // Default threshold is 72, which 91 exceeds
+    let res_default = execute_tool(ToolCallRequest {
+        name: "validate_commit_message".to_string(),
+        arguments: json!({
+            "message": msg,
+            "conventional": true
+        }),
+    })
+    .unwrap();
+
+    assert_eq!(res_default["valid"], false);
+    assert_eq!(res_default["subject_length"], 91);
+    assert!(
+        res_default["issues"][0]
+            .as_str()
+            .unwrap()
+            .contains("Subject line exceeds 72 characters (actual: 91)")
+    );
+}
+
+#[test]
+fn test_validate_commit_message_conventional_rejection() {
+    let res = execute_tool(ToolCallRequest {
+        name: "validate_commit_message".to_string(),
+        arguments: json!({
+            "message": "bad commit message without type prefix",
+            "conventional": true
+        }),
+    })
+    .unwrap();
+
+    assert_eq!(res["valid"], false);
+    assert!(!res["issues"].as_array().unwrap().is_empty());
+}

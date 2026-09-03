@@ -1,6 +1,6 @@
 [package]
 name = "rune-audio"
-description = "Audio track extraction and music downloader powered by yt-dlp, ffmpeg, and spotdl"
+description = "Audio stream extraction and transcoding (MP3, FLAC, WAV, M4A, Opus), plus music track/album/playlist ingestion with ID3 metadata and synced LRC lyrics via spotdl"
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true
