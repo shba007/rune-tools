@@ -1,4 +1,19 @@
 {
+  "mhb-mconnect": {
+    "description": "Modest Human Brands external interaction API connector for email template management, schema retrieval, and rendering previews.",
+    "latest": "0.1.0",
+    "versions": {
+      "0.1.0": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.0/mhb-mconnect-native-0.1.0-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.0/mhb-mconnect-native-0.1.0-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.0/mhb-mconnect-native-0.1.0-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.0/mhb-mconnect-native-0.1.0-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.0/mhb-mconnect-0.1.0.wasm"
+      }
+    }
+  },
   "rune-audio": {
     "description": "Audio track extraction and music downloader powered by yt-dlp, ffmpeg, and spotdl",
     "latest": "0.1.1",
@@ -144,8 +159,8 @@
     }
   },
   "rune-time": {
-    "description": "Deterministic timezone queries, ISO-8601 formatting, and cross-timezone conversions for AI agents",
-    "latest": "0.1.1",
+    "description": "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions.",
+    "latest": "0.2.0",
     "versions": {
       "0.1.0": {
         "native": {
@@ -164,6 +179,9 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.1/rune-time-native-0.1.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.1.1/rune-time-0.1.1.wasm"
+      },
+      "0.2.0": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.2.0/rune-time-0.2.0.wasm"
       }
     }
   },
