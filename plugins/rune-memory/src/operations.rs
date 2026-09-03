@@ -1,7 +1,7 @@
 // plugins/rune-memory/src/operations.rs
 use crate::types::{AddObservation, DeleteObservation, Entity, KnowledgeGraph, Relation};
 use rune_pdk::ToolCallRequest;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -61,10 +61,10 @@ pub fn load_graph_from_path(path: &Path) -> Result<KnowledgeGraph, String> {
 }
 
 pub fn save_graph_to_path(path: &Path, graph: &KnowledgeGraph) -> Result<(), String> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            let _ = fs::create_dir_all(parent);
-        }
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        let _ = fs::create_dir_all(parent);
     }
     let data = serde_json::to_string_pretty(graph)
         .map_err(|e| format!("Failed to serialize knowledge graph: {}", e))?;

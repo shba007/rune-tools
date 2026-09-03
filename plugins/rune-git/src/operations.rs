@@ -1,3 +1,4 @@
+use crate::types::CommitValidationReport;
 #[cfg(target_arch = "wasm32")]
 use crate::types::{CmdExecRequest, CmdExecResponse};
 use rune_pdk::ToolCallRequest;
@@ -24,6 +25,17 @@ fn get_u64_arg(args: &Value, prop: &str) -> Option<u64> {
     }
     let env_key = prop.to_ascii_uppercase();
     std::env::var(&env_key).ok().and_then(|v| v.parse().ok())
+}
+
+fn get_bool_arg(args: &Value, prop: &str, default: bool) -> bool {
+    if let Some(val) = args.get(prop).and_then(Value::as_bool) {
+        return val;
+    }
+    let env_key = prop.to_ascii_uppercase();
+    std::env::var(&env_key)
+        .ok()
+        .map(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+        .unwrap_or(default)
 }
 
 fn get_array_arg(args: &Value, prop: &str) -> Option<Vec<String>> {
@@ -202,6 +214,108 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let out = run_git(&["init"], repo_ref)?;
             Ok(json!({ "content": out }))
         }
+        "validate_commit_message" | "git_validate_commit_message" => {
+            let message = get_str_arg(&request.arguments, "message")
+                .ok_or_else(|| "Missing 'message' argument".to_string())?;
+            let max_subject_length =
+                get_u64_arg(&request.arguments, "max_subject_length").unwrap_or(72) as usize;
+            let enforce_conventional = get_bool_arg(&request.arguments, "conventional", false);
+
+            let report =
+                validate_commit_message_content(&message, max_subject_length, enforce_conventional);
+            Ok(json!(report))
+        }
         unknown => Err(format!("Unknown git tool: {}", unknown)),
     }
+}
+
+pub fn validate_commit_message_content(
+    message: &str,
+    max_subject_length: usize,
+    enforce_conventional: bool,
+) -> CommitValidationReport {
+    let mut issues = Vec::new();
+    let mut lines = message.lines();
+    let subject = lines.next().unwrap_or("").trim().to_string();
+    let body_lines: Vec<&str> = lines.collect();
+
+    let subject_len = subject.chars().count();
+    if subject.is_empty() {
+        issues.push("Commit subject line cannot be empty".to_string());
+    } else if subject_len > max_subject_length {
+        issues.push(format!(
+            "Subject line exceeds {} characters (actual: {})",
+            max_subject_length, subject_len
+        ));
+    }
+
+    if let Some(first_body_line) = body_lines.first()
+        && !first_body_line.trim().is_empty()
+    {
+        issues.push("Second line must be empty to separate subject from body".to_string());
+    }
+
+    if enforce_conventional
+        && !subject.is_empty()
+        && let Err(err) = check_conventional_format(&subject)
+    {
+        issues.push(err);
+    }
+
+    let body = if body_lines.is_empty() {
+        None
+    } else {
+        let joined = body_lines.join("\n").trim().to_string();
+        if joined.is_empty() {
+            None
+        } else {
+            Some(joined)
+        }
+    };
+
+    CommitValidationReport {
+        valid: issues.is_empty(),
+        subject,
+        subject_length: subject_len,
+        body,
+        issues,
+    }
+}
+
+fn check_conventional_format(subject: &str) -> Result<(), String> {
+    const VALID_TYPES: &[&str] = &[
+        "feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore",
+        "revert",
+    ];
+
+    let (prefix, rest) = subject.split_once(':').ok_or_else(|| {
+        "Missing colon separator in conventional commit format (<type>: <description>)".to_string()
+    })?;
+
+    if !rest.starts_with(' ') || rest.trim().is_empty() {
+        return Err("Missing space after colon or empty description in commit subject".to_string());
+    }
+
+    let raw_prefix = prefix.strip_suffix('!').unwrap_or(prefix);
+    let commit_type = if let Some((c_type, scope_part)) = raw_prefix.split_once('(') {
+        if !scope_part.ends_with(')') || scope_part.len() <= 1 {
+            return Err(
+                "Invalid scope syntax in conventional commit prefix (expected '<type>(<scope>):')"
+                    .to_string(),
+            );
+        }
+        c_type.trim()
+    } else {
+        raw_prefix.trim()
+    };
+
+    if !VALID_TYPES.contains(&commit_type.to_ascii_lowercase().as_str()) {
+        return Err(format!(
+            "Unknown conventional commit type '{}'. Allowed types: {}",
+            commit_type,
+            VALID_TYPES.join(", ")
+        ));
+    }
+
+    Ok(())
 }
