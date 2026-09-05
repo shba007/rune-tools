@@ -158,6 +158,21 @@
       }
     }
   },
+  "rune-slides": {
+    "description": "Iterative markdown-based presentation builder with modular slide management and native PPTX/PDF export.",
+    "latest": "0.1.3",
+    "versions": {
+      "0.1.3": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.3/rune-slides-native-0.1.3-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.3/rune-slides-native-0.1.3-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.3/rune-slides-native-0.1.3-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.3/rune-slides-native-0.1.3-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.3/rune-slides-0.1.3.wasm"
+      }
+    }
+  },
   "rune-time": {
     "description": "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions.",
     "latest": "0.2.0",
