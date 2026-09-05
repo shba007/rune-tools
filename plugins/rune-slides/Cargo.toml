@@ -1,0 +1,33 @@
+[package]
+name = "rune-slides"
+description = "Iterative markdown-based presentation builder with modular slide management and native PPTX/PDF export."
+version = "0.1.3"
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rune-slides-native"
+path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
+
+[dependencies]
+rune-pdk = { path = "../../crates/rune-pdk" }
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar = { path = "../../crates/rune-sidecar" }
+zip = { version = "8.6", default-features = false, features = ["deflate"] }
+printpdf = { version = "0.12.7", features = ["html"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
