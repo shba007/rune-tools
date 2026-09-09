@@ -1,6 +1,6 @@
 ### `rune-fetch`
 
-* **Description:** A web page fetching and HTML-to-Markdown conversion MCP server that retrieves any HTTP/HTTPS URL, converts the response body to clean Markdown (or raw text), and supports character-level pagination for large pages via `start_index` / `next_start_index` cursor semantics.
+* **Description:** A web page fetching MCP server that converts HTML to Markdown (or returns raw text) with character-level pagination via cursor semantics, enabling large pages to be read in sequential chunks.
 
 * **Tool Definitions:** `fetch`
 
@@ -22,34 +22,33 @@
 
 **Environment Variables:**
 
-* *(none required)* — all parameters are passed per-invocation.
+* None. All behavior is controlled per-call via tool parameters.
 
-#### Use Case FCH-01: Fetch a Page as Markdown
+#### Use Case FET-01: Fetch a Page as Markdown
 
-* **Category:** Happy Path
-* **Prompt:** "Fetch 'https://example.com' and give me the content as Markdown."
+* **Prompt:** "Fetch 'https://example.com/article' and give me the content as Markdown."
 * **Expected Tool(s):** `fetch`
 
-#### Use Case FCH-02: Paginate a Large Article
+#### Use Case FET-02: Paginated Read of a Long Page
 
-* **Category:** Granular Options / Pagination
-* **Prompt:** "Fetch 'https://en.wikipedia.org/wiki/Artificial_intelligence', but only from character 50000 onward."
+* **Category:** Pagination / Cursor Semantics
+* **Prompt:** "Fetch 'https://example.com/long-doc'. Read the first 20,000 characters, then continue from the returned cursor for the next 20,000."
 * **Expected Tool(s):** `fetch`
 
-#### Use Case FCH-03: Raw HTML Retrieval
+#### Use Case FET-03: Raw Text Mode
 
-* **Category:** Granular Options / Raw Mode
-* **Prompt:** "Get the raw HTML source of 'https://example.com' without any Markdown conversion."
+* **Category:** Granular Options
+* **Prompt:** "Fetch 'https://example.com/page' as raw text without any HTML-to-Markdown conversion."
 * **Expected Tool(s):** `fetch`
 
-#### Use Case FCH-04: Length-Capped Fetch
+#### Use Case FET-04: Custom Chunk Size
 
-* **Category:** Happy Path / Size Control
-* **Prompt:** "Fetch 'https://news.ycombinator.com' but limit the response to 10,000 characters."
+* **Category:** Granular Options
+* **Prompt:** "Fetch 'https://example.com/small-page' with a max length of 5,000 characters starting from index 0."
 * **Expected Tool(s):** `fetch`
 
-#### Use Case FCH-05: Invalid URL Error Handling
+#### Use Case FET-05: Invalid URL Error Handling
 
 * **Category:** Edge Case / Error Handling
-* **Prompt:** "Fetch 'https://nonexistent-domain-xyz.invalid/page'."
+* **Prompt:** "Fetch 'not-a-valid-url' and show me the content."
 * **Expected Tool(s):** `fetch`

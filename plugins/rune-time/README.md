@@ -1,6 +1,6 @@
 ### `rune-time`
 
-* **Description:** A deterministic timezone query and conversion MCP server built on chrono/chrono-tz. Retrieves the current date and time in UTC alongside any target IANA timezone (with offset details and epoch seconds), and converts flexible ISO-8601 datetime strings between timezones with DST-aware offset computation. Supports RFC 3339, `YYYY-MM-DD HH:MM[:SS]`, slash-separated variants, and date-only inputs (treated as midnight).
+* **Description:** A deterministic time and timezone MCP server built on the IANA `tzdb` database, providing current-time queries, ISO-8601 formatting, and DST-aware cross-timezone conversions. No external binaries required.
 
 * **Tool Definitions:** `get_current_time`, `convert_time`
 
@@ -16,7 +16,7 @@
         "rune-time"
       ],
       "env": {
-        "DEFAULT_TIMEZONE": "America/New_York"
+        "DEFAULT_TIMEZONE": "UTC"
       }
     }
   }
@@ -25,40 +25,30 @@
 
 **Environment Variables:**
 
-* `DEFAULT_TIMEZONE`: Default IANA timezone used by `get_current_time` when no `timezone` parameter is supplied (default: `UTC`).
+* `DEFAULT_TIMEZONE`: IANA timezone name (e.g., `America/New_York`, `Asia/Tokyo`) used when a tool call omits the `timezone` parameter (default: `UTC`).
 
-#### Use Case TIME-01: Current Time in a Target Timezone
+#### Use Case TIME-01: Current Time in UTC
 
-* **Category:** Happy Path / Query
-* **Prompt:** "What's the current date and time in Tokyo? Include the UTC offset."
+* **Prompt:** "What is the current time in UTC?"
 * **Expected Tool(s):** `get_current_time`
 
-#### Use Case TIME-02: Current Time Using the Configured Default
+#### Use Case TIME-02: Local Time with Custom Date Format
 
-* **Category:** Granular Options / Default Timezone
-* **Prompt:** "What time is it right now?" (no timezone specified — falls back to the configured default)
+* **Prompt:** "Show me the current time in Europe/Berlin formatted as 'YYYY-MM-DD HH:mm:ss'."
 * **Expected Tool(s):** `get_current_time`
 
-#### Use Case TIME-03: Cross-Timezone Meeting Conversion
+#### Use Case TIME-03: Cross-Timezone Conversion
 
-* **Category:** Happy Path / Conversion
-* **Prompt:** "Convert '2026-09-02T14:30:00' from America/Los_Angeles to Asia/Tokyo so I can schedule the call."
+* **Prompt:** "What time is it in Tokyo when it's 3:00 PM in New York?"
 * **Expected Tool(s):** `convert_time`
 
-#### Use Case TIME-04: Flexible Datetime Formats
+#### Use Case TIME-04: DST-Aware Conversion Check
 
-* **Category:** Granular Options / Parsing
-* **Prompt:** "What UTC time does midnight on 2026/12/25 in Europe/London correspond to?"
+* **Prompt:** "Convert 2026-03-08 01:30 from America/Chicago to Asia/Kolkata and tell me whether daylight saving applies on that date."
 * **Expected Tool(s):** `convert_time`
 
-#### Use Case TIME-05: Invalid IANA Timezone Rejection
+#### Use Case TIME-05: Invalid Timezone Error Handling
 
-* **Category:** Edge Case / Validation
-* **Prompt:** "Convert '2026-09-02 14:30:00' from 'New York City' to Asia/Tokyo."
-* **Expected Tool(s):** `convert_time`
-
-#### Use Case TIME-06: Ambiguous DST Fallback Handling
-
-* **Category:** Edge Case / DST Overlap
-* **Prompt:** "Convert '2026-11-01 01:30:00' in America/New_York to UTC." (falls inside the fall-back overlap — ambiguous local time)
-* **Expected Tool(s):** `convert_time`
+* **Category:** Edge Case / Error Handling
+* **Prompt:** "Get the current time in timezone 'Mars/Olympus_Mons'."
+* **Expected Tool(s):** `get_current_time`

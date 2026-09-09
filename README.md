@@ -17,6 +17,7 @@ A collection of MCP servers packaged as plugins, runnable via the `rune` binary 
 | `rune-memory` | Persistent knowledge-graph memory: typed entities and relations in a JSON file, batch creation, filtered queries, deletion, full inspection. | `create_entities`, `query_memory`, … | [README](plugins/rune-memory/README.md) |
 | `rune-print` | Native OS printing and eSCL AirScan scanning: printer discovery, spooler dispatch for TXT/PDF/images, flatbed/ADF scans, capability queries. | `printer_list_printers`, `printer_print_document`, … | [README](plugins/rune-print/README.md) |
 | `rune-sequential-thinking` | Dynamic step-by-step reasoning workspace with progress tracking, hypothesis revision, thought branching, automatic total adjustment. | `sequential-thinking` | [README](plugins/rune-sequential-thinking/README.md) |
+| `rune-ssh` | Secure SSH command execution and SFTP file transfers via native sidecar. | `ssh_run_command`, `sftp_upload`, `sftp_download` | [README](plugins/rune-ssh/README.md) |
 | `rune-time` | Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions. | `get_current_time`, `convert_time` | [README](plugins/rune-time/README.md) |
 | `rune-video` | Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, ffmpeg. | `inspect_video_metadata`, `download_video_stream`, … | [README](plugins/rune-video/README.md) |
 

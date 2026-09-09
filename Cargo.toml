@@ -15,6 +15,7 @@ members = [
     # "plugins/rune-scan",
     "plugins/rune-sequential-thinking",
     "plugins/rune-slides",
+    # "plugins/rune-ssh",
     "plugins/rune-time",
     "plugins/rune-video",
     "xtask",
