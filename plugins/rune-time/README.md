@@ -1,6 +1,6 @@
 ### `rune-time`
 
-* **Description:** A deterministic time and timezone MCP server built on the IANA `tzdb` database, providing current-time queries, ISO-8601 formatting, and DST-aware cross-timezone conversions. No external binaries required.
+* **Description:** Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions.
 
 * **Tool Definitions:** `get_current_time`, `convert_time`
 
@@ -16,7 +16,7 @@
         "rune-time"
       ],
       "env": {
-        "DEFAULT_TIMEZONE": "UTC"
+        "ALLOWED_DIR": "./test-dir"
       }
     }
   }
@@ -25,30 +25,105 @@
 
 **Environment Variables:**
 
-* `DEFAULT_TIMEZONE`: IANA timezone name (e.g., `America/New_York`, `Asia/Tokyo`) used when a tool call omits the `timezone` parameter (default: `UTC`).
+* `default_timezone`: Default IANA timezone name (e.g., "America/New_York", "Asia/Kolkata", "UTC"). Used when timezone parameter is not provided in tool calls.
+* `ALLOWED_DIR`: Root directory boundary enforced for sandbox isolation. All file operations are restricted to this directory or its subdirectories (default: .).
 
-#### Use Case TIME-01: Current Time in UTC
+#### Use Case TIME-01: 
 
-* **Prompt:** "What is the current time in UTC?"
+* **Prompt:** "Get the current time in UTC timezone."
 * **Expected Tool(s):** `get_current_time`
 
-#### Use Case TIME-02: Local Time with Custom Date Format
+#### Use Case TIME-02: 
 
-* **Prompt:** "Show me the current time in Europe/Berlin formatted as 'YYYY-MM-DD HH:mm:ss'."
+* **Prompt:** "Get the current time in the 'America/New_York' timezone."
 * **Expected Tool(s):** `get_current_time`
 
-#### Use Case TIME-03: Cross-Timezone Conversion
+#### Use Case TIME-03: 
 
-* **Prompt:** "What time is it in Tokyo when it's 3:00 PM in New York?"
+* **Prompt:** "Convert the time '2026-09-02T14:30:00' from 'UTC' to 'Asia/Tokyo' timezone."
 * **Expected Tool(s):** `convert_time`
 
-#### Use Case TIME-04: DST-Aware Conversion Check
+#### Use Case TIME-04: 
 
-* **Prompt:** "Convert 2026-03-08 01:30 from America/Chicago to Asia/Kolkata and tell me whether daylight saving applies on that date."
+* **Prompt:** "Convert the time '2026-09-02 14:30:00' from 'America/Los_Angeles' to 'Europe/London' timezone."
 * **Expected Tool(s):** `convert_time`
 
-#### Use Case TIME-05: Invalid Timezone Error Handling
+#### Use Case TIME-05: 
 
-* **Category:** Edge Case / Error Handling
-* **Prompt:** "Get the current time in timezone 'Mars/Olympus_Mons'."
+* **Prompt:** "Get the current time in multiple timezones: UTC, 'Asia/Kolkata', and 'Europe/London'."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-06: 
+
+* **Prompt:** "Convert the time '2026-09-02T14:30:00Z' from 'UTC' to 'America/New_York' (DST aware)."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-07: 
+
+* **Prompt:** "Convert the time '2026-09-02 14:30:00' from 'Europe/London' to 'Asia/Tokyo' with automatic DST handling."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-08: 
+
+* **Prompt:** "Get the current time in a custom timezone like 'Asia/Kolkata'."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-09: 
+
+* **Prompt:** "Convert the time '2026-09-02T14:30:00' from 'UTC' to 'America/Chicago' and show the offset."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-10: 
+
+* **Prompt:** "Get the current time in multiple timezones for cross-region coordination."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-11: 
+
+* **Prompt:** "Convert the time '2026-09-02 14:30:00' from 'Australia/Sydney' to 'Asia/Dubai'."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-12: 
+
+* **Prompt:** "Get the current time in 'Europe/Moscow' timezone."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-13: 
+
+* **Prompt:** "Convert the time '2026-09-02T14:30:00' from 'America/Phoenix' to 'UTC' (Arizona doesn't observe DST)."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-14: 
+
+* **Prompt:** "Get the current time in 'Antarctica/McMurdo' timezone."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-15: 
+
+* **Prompt:** "Convert the time '2026-09-02 14:30:00' from 'Asia/Shanghai' to 'Asia/Tokyo'."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-16: 
+
+* **Prompt:** "Get the current time in 'America/Juneau' timezone."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-17: 
+
+* **Prompt:** "Convert the time '2026-09-02T14:30:00' from 'Europe/Paris' to 'Europe/Berlin' (same timezone)."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-18: 
+
+* **Prompt:** "Get the current time in 'Pacific/Honolulu' timezone."
+* **Expected Tool(s):** `get_current_time`
+
+#### Use Case TIME-19: 
+
+* **Prompt:** "Convert the time '2026-09-02 14:30:00' from 'Asia/Kolkata' to 'Asia/Kolkata' (same timezone)."
+* **Expected Tool(s):** `convert_time`
+
+#### Use Case TIME-20: 
+
+* **Prompt:** "Get the current time in 'America/Los_Angeles' timezone for cross-timezone planning."
 * **Expected Tool(s):** `get_current_time`

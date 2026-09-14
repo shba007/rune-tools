@@ -1,6 +1,6 @@
 ### `rune-email`
 
-* **Description:** A universal email client MCP server supporting full IMAP and SMTP operations across Gmail, Outlook, Hostinger, and custom mail servers. Provides mailbox listing, paginated message retrieval, multi-criteria search, full message parsing to Markdown, attachment extraction, sending with attachments/CC/BCC, threaded replies preserving Message-ID headers, draft creation via IMAP APPEND, flag management, and inter-mailbox moves.
+* **Description:** Universal IMAP/SMTP email client: mailbox listing, search, full message parsing to Markdown, attachment download, send/reply/draft, flag management, and inter-mailbox moves.
 
 * **Tool Definitions:** `verify_email_connection`, `list_mailboxes`, `list_messages`, `search_messages`, `read_message`, `download_attachment`, `send_email`, `reply_email`, `draft_email`, `manage_message_flags`, `move_message`
 
@@ -16,10 +16,7 @@
         "rune-email"
       ],
       "env": {
-        "EMAIL_PRESET": "gmail",
-        "EMAIL_USER": "user@gmail.com",
-        "EMAIL_PASSWORD": "your-app-password",
-        "OUTPUT_DIR": "./test-dir/email-out"
+        "ALLOWED_DIR": "./test-dir"
       }
     }
   }
@@ -33,75 +30,104 @@
 * `EMAIL_PASSWORD`: Account password or App Password for authentication. Also read from `IMAP_PASSWORD` or `SMTP_PASSWORD` as fallbacks.
 * `EMAIL_DISPLAY_NAME`: Display name appended to the From header on outgoing mail (optional).
 * `OUTPUT_DIR`: Default directory where downloaded attachments are saved (default: `.`).
+* `ALLOWED_DIR`: Root directory boundary enforced for sandbox isolation. All file operations are restricted to this directory or its subdirectories (default: .).
 
 #### Use Case EML-01: Verify Mail Server Connectivity
 
-* **Category:** Happy Path / Diagnostics
 * **Prompt:** "Check that my Gmail IMAP and SMTP connections are working."
 * **Expected Tool(s):** `verify_email_connection`
 
 #### Use Case EML-02: List All Mailboxes
 
-* **Category:** Happy Path
 * **Prompt:** "Show me all the folders and mailboxes available on my mail server."
 * **Expected Tool(s):** `list_mailboxes`
 
 #### Use Case EML-03: Fetch Latest Unread Messages
 
-* **Category:** Happy Path / Inbox
 * **Prompt:** "List the 10 most recent unread emails in my inbox."
 * **Expected Tool(s):** `list_messages`
 
 #### Use Case EML-04: Search by Sender and Date
 
-* **Category:** Granular Options / Search
 * **Prompt:** "Find all emails from 'alice@example.com' sent after 2026-01-01."
 * **Expected Tool(s):** `search_messages`
 
 #### Use Case EML-05: Read Full Email with Attachments Metadata
 
-* **Category:** Happy Path / Reading
 * **Prompt:** "Read the full content of email UID 4521 in my inbox, including all headers and attachment info."
 * **Expected Tool(s):** `read_message`
 
 #### Use Case EML-06: Download an Attachment to Disk
 
-* **Category:** Happy Path / Attachments
 * **Prompt:** "Download the first attachment from email UID 4521 and save it to './test-dir/attachments'."
 * **Expected Tool(s):** `download_attachment`
 
 #### Use Case EML-07: Send a New Email with Attachment
 
-* **Category:** Happy Path / Sending
 * **Prompt:** "Send an email to 'bob@example.com' with subject 'Report' and body 'Q3 numbers attached', attaching the file './reports/q3.pdf'."
 * **Expected Tool(s):** `send_email`
 
 #### Use Case EML-08: Threaded Reply Preserving Headers
 
-* **Category:** Happy Path / Replying
 * **Prompt:** "Reply to email UID 4521 with 'Thanks, I will review this and get back to you.' Keep it in the same thread."
 * **Expected Tool(s):** `reply_email`
 
 #### Use Case EML-09: Save a Draft Without Sending
 
-* **Category:** Happy Path / Drafting
 * **Prompt:** "Create a draft email to 'team@example.com' with subject 'Meeting Notes' and body 'Will share before Friday.' but don't send it yet."
 * **Expected Tool(s):** `draft_email`
 
 #### Use Case EML-10: Mark Message as Starred
 
-* **Category:** Happy Path / Flags
 * **Prompt:** "Star the email with UID 4521 in my inbox."
 * **Expected Tool(s):** `manage_message_flags`
 
 #### Use Case EML-11: Move Email to Archive
 
-* **Category:** Happy Path / Organization
 * **Prompt:** "Move email UID 300 from INBOX to the Archive folder."
 * **Expected Tool(s):** `move_message`
 
 #### Use Case EML-12: Invalid Credentials Error Handling
 
-* **Category:** Edge Case / Error Handling
 * **Prompt:** "List my inbox messages" (with an incorrect password configured).
 * **Expected Tool(s):** `list_messages`
+
+#### Use Case EML-13: Search by Subject Keyword
+
+* **Prompt:** "Find all emails with 'Project' in the subject from the last month."
+* **Expected Tool(s):** `search_messages`
+
+#### Use Case EML-14: Read Multiple Messages
+
+* **Prompt:** "Read the full content of emails with UIDs 4520, 4521, and 4522."
+* **Expected Tool(s):** `read_message`
+
+#### Use Case EML-15: Download All Attachments
+
+* **Prompt:** "Download all attachments from the latest 5 messages in INBOX."
+* **Expected Tool(s):** `download_attachment`
+
+#### Use Case EML-16: Send Email with Multiple Recipients
+
+* **Prompt:** "Send a notification to 'team@project.com', 'manager@project.com', and 'client@project.com' with subject 'Deadline Extension'."
+* **Expected Tool(s):** `send_email`
+
+#### Use Case EML-17: Draft Email with CC and BCC
+
+* **Prompt:** "Create a draft email to 'colleague@project.com' with subject 'Follow-up' and CC 'supervisor@project.com', BCC 'secretary@project.com'."
+* **Expected Tool(s):** `draft_email`
+
+#### Use Case EML-18: Search by Date Range
+
+* **Prompt:** "Find emails sent between 2026-01-01 and 2026-01-31 in the Sent folder."
+* **Expected Tool(s):** `search_messages`
+
+#### Use Case EML-19: Read with Attachment Filtering
+
+* **Prompt:** "Read email with UID 4521 and only show messages with attachments."
+* **Expected Tool(s):** `read_message`
+
+#### Use Case EML-20: Move Multiple Emails
+
+* **Prompt:** "Move all emails from INBOX to Trash that are older than 30 days."
+* **Expected Tool(s):** `move_message`

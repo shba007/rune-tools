@@ -27,3 +27,11 @@ pub struct ToolCallRequest {
     pub name: String,
     pub arguments: Value,
 }
+
+// crates/rune-pdk — shared by every plugin, never redefined locally
+#[derive(Serialize, Deserialize)]
+pub struct Page<T> {
+    pub items: T,
+    pub cursor: Option<String>, // opaque continuation token
+    pub has_more: bool,
+}

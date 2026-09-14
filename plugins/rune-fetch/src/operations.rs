@@ -44,7 +44,10 @@ fn handle_fetch(args: &Value) -> Result<Value, String> {
 fn fetch_url(url: &str) -> Result<String, String> {
     let req = extism_pdk::HttpRequest::new(url)
         .with_method("GET")
-        .with_header("User-Agent", "rune-fetch/0.1.1");
+        .with_header(
+            "User-Agent",
+            concat!("rune-fetch/", env!("CARGO_PKG_VERSION")),
+        );
 
     let res = extism_pdk::http::request::<()>(&req, None)
         .map_err(|e| format!("HTTP request failed: {}", e))?;
@@ -62,7 +65,7 @@ fn fetch_url(url: &str) -> Result<String, String> {
 fn fetch_url(url: &str) -> Result<String, String> {
     let client = reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
-        .user_agent("rune-fetch/0.1.1")
+        .user_agent(concat!("rune-fetch/", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
 
@@ -84,7 +87,7 @@ fn fetch_url(url: &str) -> Result<String, String> {
 pub fn process_content(
     raw_content: &str,
     is_raw: bool,
-    paginate: bool,
+    _paginate: bool,
     start_index: usize,
     max_length: usize,
 ) -> Result<Value, String> {
@@ -102,20 +105,17 @@ pub fn process_content(
     let sliced_content: String = char_vec[start..end].iter().collect();
     let length = sliced_content.chars().count();
 
+    let has_more = end < total_characters;
     let mut response = json!({
         "contents": sliced_content,
         "start_index": start,
         "length": length,
         "total_characters": total_characters,
-        "has_more": false,
+        "has_more": has_more,
     });
 
-    if paginate {
-        let has_more = end < total_characters;
-        response["has_more"] = json!(has_more);
-        if has_more {
-            response["next_start_index"] = json!(end);
-        }
+    if has_more {
+        response["next_start_index"] = json!(end);
     }
 
     Ok(response)
