@@ -1,4 +1,4 @@
-# Rune Ecosystem - Agent Documentation
+# Rune Tool - Agent Documentation
 
 ## Overview
 
@@ -18,11 +18,22 @@ serialization tax for a pass-through.
 Both models expose the same contract to `rune-kit`: `info`, plus a
 list+read/call/get pair for each MCP primitive a plugin actually supports
 (`list_tools`/`call_tool`, `list_resources`/`read_resource`,
-`list_prompts`/`get_prompt` — see !!2). `rune-kit-core::McpRouter` treats
-every plugin uniformly via a `PluginInstance` enum (!!5) — from the MCP
-client's point of view, namespacing and dispatch behave identically
-regardless of which model backs a given plugin, and regardless of which
-which subset of primitives it implements.
+`list_prompts`/`get_prompt` — see §1.2). `rune-kit-core::McpRouter` treats
+every plugin uniformly via a `PluginInstance` enum (documented in
+`AGENTS.md`, the `rune-kit` companion to this doc — `PluginInstance` is a
+host-runtime type, not something this repo owns) — from the MCP client's
+point of view, namespacing and dispatch behave identically regardless of
+which model backs a given plugin, and regardless of which subset of
+primitives it implements.
+
+**Status update, confirmed against `rune-kit-core` as of this revision:**
+`McpRouter`'s `resources/list`, `resources/read`, `prompts/list`, and
+`prompts/get` routing is no longer aspirational — it's implemented and
+live on the host side (previously these were hardcoded to return empty
+arrays). §5 and §10.1 below describe what this does and doesn't mean for
+plugins in *this* repo: the routing exists, but no plugin here has adopted
+it yet — don't read "the host can route resources" as "plugins currently
+have resources."
 
 ## 1. Core Architecture
 
@@ -61,19 +72,19 @@ which one you're building before writing `definitions.rs`:
 ```text
 rune-tools/
 ├── .cargo/
-│   └── config.toml                    # [alias] xtask — see !!11
+│   └── config.toml                    # [alias] xtask — see §3.1
 ├── Cargo.toml                         # [workspace] members + shared deps
-├── xtask/                             # build/test orchestrator — see !!11
+├── xtask/                             # build/test orchestrator — see §3.1
 └── plugins/
     ├── rune-filesystem/                # WASM-only (pure compute: fs walk, paging)
     ├── rune-time/                      # WASM-only (pure compute)
     ├── rune-fetch/                     # WASM-only (HTML→Markdown, network via host_fn)
-    ├── rune-git/                       # candidate for native sidecar — review (see !!14)
+    ├── rune-git/                       # candidate for native sidecar — review (see §8)
     ├── rune-audio/                     # NATIVE SIDECAR (yt-dlp/ffmpeg/spotdl)
     ├── rune-video/                     # NATIVE SIDECAR (yt-dlp/ffmpeg/streamlink)
     ├── rune-image/                     # NATIVE SIDECAR (gallery-dl and similar)
-    ├── rune-email/                     # execution model unconfirmed — classify via !!14
-    ├── rune-browser/                   # new, currently disabled in workspace members — classify via !!14
+    ├── rune-email/                     # execution model unconfirmed — classify via §8
+    ├── rune-browser/                   # new, currently disabled in workspace members — classify via §8
     ├── rune-print/                     # HYBRID — WASM renders, native sidecar dispatches (currently disabled, mid-migration)
     ├── rune-memory/                    # WASM-only, pure compute (currently disabled, mid-migration)
     └── rune-sequential-thinking/       # WASM-only, pure compute (currently disabled, mid-migration)
@@ -85,12 +96,12 @@ rune-tools/
 
 ```text
 plugins/rune-<name>/
-├── Cargo.toml                  # see !!7/!!8 for WASM-only vs sidecar config
-├── .env                        # always present, even if empty — see !!12
+├── Cargo.toml                  # see §7.1/§7.2 for WASM-only vs sidecar config
+├── .env                        # always present, even if empty — see §2.4
 ├── src/
 │   ├── lib.rs                  # WASM FFI boundary ONLY — gated #[cfg(target_arch = "wasm32")]
 │   ├── bin/
-│   │   └── native_sidecar.rs   # native entry point — ONLY present for sidecar plugins (!!8)
+│   │   └── native_sidecar.rs   # native entry point — ONLY present for sidecar plugins (§7.2)
 │   ├── definitions.rs          # pure tool/resource/prompt schemas — see note below
 │   ├── operations.rs           # pure tool/resource/prompt execution — see note below
 │   └── types.rs                # request/response deserialization structs
@@ -292,6 +303,15 @@ fn host_exec(req: ExecRequest) -> ExecResponse;  # allowlist-controlled only
 
 ## 5. Resource & Prompt Support
 
+**Host-side status (confirmed, not aspirational):** `rune-kit-core`'s
+`McpRouter` now actually implements `resources/list` / `resources/read` /
+`prompts/list` / `prompts/get` routing — this used to be hardcoded to return
+empty arrays and was documented here as a future architecture-document idea.
+It no longer is one. What follows in this section is still accurate for how
+a plugin *would* implement these, but the gap it's closing is "no plugin in
+this repo has adopted it yet," not "the host can't route it yet." See §10.1
+for the current adoption state.
+
 ### 5.1 Primitive Design Principles
 
 **Resource Convention**:
@@ -471,7 +491,7 @@ Walk through in order; stop at the first match.
    binaries**, with little real compute happening in the plugin itself
    (`ffmpeg`, `yt-dlp`, `git`)? → **Native sidecar** — the WASM layer would
    only be relaying arguments through `host_cmd_exec` anyway, which is
-   both unnecessary overhead and the exact generic-exec surface !!5.4
+   both unnecessary overhead and the exact generic-exec surface §4.1
    deprecates.
 
 3. **Does most of the value come from in-process pure compute** (parsing,
@@ -524,9 +544,16 @@ Walk through in order; stop at the first match.
 ### 10.1 Implementation Gaps
 
 #### Resources and Prompts
-- **Current State**: All examined plugins are tools-only
-- **Architecture Document**: Indicates future support planned
-- **Next Steps**: Implement `resources/list`/`prompts/list` when plugins evolve
+- **Current State**: Host-side routing (`McpRouter` in `rune-kit-core`) is
+  now implemented — `resources/list`, `resources/read`, `prompts/list`,
+  `prompts/get` all work end-to-end if a plugin defines them. What's still
+  true: every plugin examined in this repo remains tools-only in practice.
+  The gap is plugin adoption, not host support.
+- **Next Steps**: Pick one low-risk plugin (a WASM-only one, per §7.1, to
+  keep the blast radius small) and implement `resource_definitions()`/
+  `read_resource()` per §5.2 as a first real end-to-end test of the routing
+  — that will surface any rough edges in the URI-namespacing convention
+  (§5.1) that a design read-through can't.
 
 #### Capability Manifest Completeness
 - **Current State**: Basic capabilities defined
@@ -546,8 +573,11 @@ Walk through in order; stop at the first match.
 - **Impact**: Affects build configuration and security posture
 
 #### Resource/Prompt Implementation
-- **Action**: Determine if tools-only pattern meets requirements
-- **Goal**: Decide whether to implement full primitive support
+- **Action**: Now that host-side routing is confirmed live (§5), pick a
+  candidate plugin and implement it end-to-end rather than continuing to
+  treat this as an open research question
+- **Goal**: Validate the §5.1 URI/namespacing conventions against a real
+  plugin, not just the design doc
 - **Impact**: Expands plugin capabilities and client integration
 
 ## 11. Development Workflow

@@ -18,6 +18,7 @@ members = [
     # "plugins/rune-ssh",
     "plugins/rune-time",
     "plugins/rune-video",
+    "plugins/rune-demo",
     "xtask",
 ]
 resolver = "2"

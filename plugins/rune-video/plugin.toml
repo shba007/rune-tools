@@ -1,0 +1,8 @@
+[plugin]
+name = "rune-video"
+description = "Video streaming and processing using ffmpeg, streamlink, and yt-dlp."
+version = "0.1.0"
+authors = ["Rune Contributors"]
+license = "MIT"
+capabilities = { network_hosts = [], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = ["ffmpeg", "streamlink", "yt-dlp"] } }
+documentation = "https://github.com/rune-ecosystem/code-tools/blob/main/plugins/rune-video/README.md"

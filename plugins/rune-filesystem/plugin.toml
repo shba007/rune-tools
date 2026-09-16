@@ -1,0 +1,8 @@
+[plugin]
+name = "rune-filesystem"
+description = "Filesystem operations including directory walking, file paging, and path manipulation."
+version = "0.1.0"
+authors = ["Rune Contributors"]
+license = "MIT"
+capabilities = { network_hosts = [], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [] } }
+documentation = "https://github.com/rune-ecosystem/code-tools/blob/main/plugins/rune-filesystem/README.md"
