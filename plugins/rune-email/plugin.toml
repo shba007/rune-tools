@@ -2,7 +2,9 @@
 name = "rune-email"
 description = "Email utilities and management tools."
 version = "0.1.0"
-authors = ["Rune Contributors"]
+authors = ["Shirsendu Bairagi"]
 license = "MIT"
-capabilities = { network_hosts = [], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [] } }
-documentation = "https://github.com/rune-ecosystem/code-tools/blob/main/plugins/rune-email/README.md"
+capabilities = { network_hosts = [
+], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
+] } }
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-email/README.md"

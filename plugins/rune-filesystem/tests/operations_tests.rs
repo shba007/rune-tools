@@ -536,49 +536,33 @@ fn test_list_allowed_directories() {
 
 #[test]
 fn test_resolve_path_strips_redundant_allowed_root() {
-    let root = Some("D:\\Projects\\Practice\\rune-kit\\test-dir");
+    let root = Some("D:/Projects/Public/rune/code-kit/test-dir/cookies");
 
     // Case A: Full Windows path with backslashes
-    let p1 = resolve_path_with_root(
-        "D:\\Projects\\Practice\\rune-kit\\test-dir\\images\\screenshots",
-        root,
-    )
-    .unwrap();
+    let p1 =
+        resolve_path_with_root("D:\\Projects\\Public\\rune\\code-kit\\test-dir", root).unwrap();
     assert_eq!(
         p1,
-        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
+        PathBuf::from("D:/Projects/Public/rune/code-kit/test-dir")
     );
 
     // Case B: Mixed slashes
-    let p2 = resolve_path_with_root(
-        "D:/Projects/Practice/rune-kit/test-dir/images/screenshots",
-        root,
-    )
-    .unwrap();
-    assert_eq!(
-        p2,
-        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
-    );
+    let p2 = resolve_path_with_root("../code-kit/test-dir\\images\\screenshots", root).unwrap();
+    assert_eq!(p2, PathBuf::from("../code-kit/test-dir/images/screenshots"));
 
     // Case C: Relative paths
     let p3 = resolve_path_with_root("./images/screenshots", root).unwrap();
-    assert_eq!(
-        p3,
-        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
-    );
+    assert_eq!(p3, PathBuf::from("../code-kit/test-dir/images/screenshots"));
 
     let p4 = resolve_path_with_root("/images/screenshots", root).unwrap();
-    assert_eq!(
-        p4,
-        PathBuf::from("D:/Projects/Practice/rune-kit/test-dir/images/screenshots")
-    );
+    assert_eq!(p4, PathBuf::from("../code-kit/test-dir/images/screenshots"));
 
     // Case D: Exact root path
-    let p5 = resolve_path_with_root("D:\\Projects\\Practice\\rune-kit\\test-dir", root).unwrap();
-    assert_eq!(p5, PathBuf::from("D:/Projects/Practice/rune-kit/test-dir"));
+    let p5 = resolve_path_with_root("../code-kit/test-dir", root).unwrap();
+    assert_eq!(p5, PathBuf::from("../code-kit/test-dir"));
 
     // Case E: Path outside root rejected
-    let p6 = resolve_path_with_root("C:\\Windows\\System32", root);
+    let p6 = resolve_path_with_root("C:/Windows/System32", root);
     assert!(p6.is_err());
 }
 

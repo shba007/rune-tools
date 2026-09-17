@@ -2,7 +2,12 @@
 name = "rune-audio"
 description = "Audio track extraction using yt-dlp, ffmpeg, and spotdl for podcast and audio content management."
 version = "0.1.0"
-authors = ["Rune Contributors"]
+authors = ["Shirsendu Bairagi"]
 license = "MIT"
-capabilities = { network_hosts = [], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = ["ffmpeg", "yt-dlp", "spotdl"] } }
-documentation = "https://github.com/rune-ecosystem/code-tools/blob/main/plugins/rune-audio/README.md"
+capabilities = { network_hosts = [
+], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
+	"ffmpeg",
+	"yt-dlp",
+	"spotdl",
+] } }
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-audio/README.md"

@@ -2,7 +2,10 @@
 name = "rune-image"
 description = "Image processing and retrieval using gallery-dl and similar tools."
 version = "0.1.0"
-authors = ["Rune Contributors"]
+authors = ["Shirsendu Bairagi"]
 license = "MIT"
-capabilities = { network_hosts = [], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = ["gallery-dl"] } }
-documentation = "https://github.com/rune-ecosystem/code-tools/blob/main/plugins/rune-image/README.md"
+capabilities = { network_hosts = [
+], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
+	"gallery-dl",
+] } }
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-image/README.md"

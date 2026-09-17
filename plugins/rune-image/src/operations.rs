@@ -1,8 +1,15 @@
-use crate::types::{CmdExecRequest, CmdExecResponse};
+use crate::types::{CmdExecRequest, CmdExecResponse, CompareImagesResponse, ComparisonStats};
+use image::GenericImage;
+use image::GenericImageView;
+use image::{DynamicImage, Rgba};
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+// SVG rasterization constants
+const DEFAULT_SVG_WIDTH: u32 = 800;
+const DEFAULT_SVG_HEIGHT: u32 = 800;
 
 #[cfg(target_arch = "wasm32")]
 #[extism_pdk::host_fn("extism:host/user")]
@@ -289,6 +296,148 @@ fn collect_urls_from_value(val: &Value, urls: &mut Vec<String>) {
     }
 }
 
+fn compare_images_pixel_by_pixel(
+    img1: &DynamicImage,
+    img2: &DynamicImage,
+    threshold: f64,
+) -> (DynamicImage, ComparisonStats) {
+    let (width1, height1) = img1.dimensions();
+    let (width2, height2) = img2.dimensions();
+
+    let target_width = width1.max(width2);
+    let target_height = height1.max(height2);
+
+    let img1_resized = image::imageops::resize(
+        img1,
+        target_width,
+        target_height,
+        image::imageops::FilterType::Lanczos3,
+    );
+    let img2_resized = image::imageops::resize(
+        img2,
+        target_width,
+        target_height,
+        image::imageops::FilterType::Lanczos3,
+    );
+
+    let mut diff_img = DynamicImage::new_rgb8(target_width, target_height);
+    let mut matching_pixels = 0usize;
+    let mut differing_pixels = 0usize;
+
+    for y in 0..target_height {
+        for x in 0..target_width {
+            let pixel1 = img1_resized.get_pixel(x, y);
+            let pixel2 = img2_resized.get_pixel(x, y);
+
+            let r1 = pixel1[0] as i32;
+            let g1 = pixel1[1] as i32;
+            let b1 = pixel1[2] as i32;
+
+            let r2 = pixel2[0] as i32;
+            let g2 = pixel2[1] as i32;
+            let b2 = pixel2[2] as i32;
+
+            let dr = (r1 - r2).abs();
+            let dg = (g1 - g2).abs();
+            let db = (b1 - b2).abs();
+
+            // Calculate Euclidean distance
+            let distance = ((dr * dr + dg * dg + db * db) as f64).sqrt();
+            let max_diff = distance / 255.0;
+
+            if max_diff < threshold {
+                matching_pixels += 1;
+                diff_img.put_pixel(x, y, Rgba([50, 200, 50, 255])); // Green for match
+            } else {
+                differing_pixels += 1;
+                let intensity = (max_diff * 255.0) as u8;
+                diff_img.put_pixel(
+                    x,
+                    y,
+                    Rgba([intensity, 255 - intensity, 255 - intensity, 255]),
+                ); // Red/blue for difference
+            }
+        }
+    }
+
+    let stats = ComparisonStats {
+        width: target_width,
+        height: target_height,
+        pixels_compared: matching_pixels + differing_pixels,
+        matching_pixels,
+        differing_pixels,
+    };
+
+    (diff_img, stats)
+}
+
+fn rasterize_svg(_svg_path: &str, _width: u32, _height: u32) -> Result<DynamicImage, String> {
+    // Try to load SVG directly with image crate
+    // Note: image crate doesn't have native SVG support in all cases
+    // This is a fallback that works for simple SVGs
+
+    match image::open(_svg_path) {
+        Ok(img) => {
+            // Image was loaded successfully
+            Ok(img)
+        }
+        Err(_e) => {
+            // If image crate can't load SVG, provide clear error message
+            Err("SVG file could not be loaded. The image crate doesn't support SVG natively. For full SVG support, please install rsvg-convert system tool or use a pure Rust SVG library.".to_string())
+        }
+    }
+}
+
+fn is_svg_file(path: &str) -> bool {
+    path.to_lowercase().ends_with(".svg")
+}
+
+fn generate_diff_image(
+    img1: &DynamicImage,
+    img2: &DynamicImage,
+    threshold: f64,
+) -> (DynamicImage, ComparisonStats) {
+    compare_images_pixel_by_pixel(img1, img2, threshold)
+}
+
+fn load_and_convert_image(
+    path: &str,
+    default_width: u32,
+    default_height: u32,
+) -> Result<(DynamicImage, u32, u32), String> {
+    if is_svg_file(path) {
+        let (width, height) = if path.contains("width=") && path.contains("height=") {
+            // Parse dimensions from path if available
+            let width_part = path.split("width=").nth(1).unwrap_or("");
+            let height_part = path.split("height=").nth(1).unwrap_or("");
+
+            let width_str = width_part
+                .split(" ")
+                .next()
+                .unwrap_or(&default_width.to_string())
+                .to_string();
+            let width_val: u32 = width_str.parse().unwrap_or(default_width);
+
+            let height_str = height_part
+                .split(" ")
+                .next()
+                .unwrap_or(&default_height.to_string())
+                .to_string();
+            let height_val: u32 = height_str.parse().unwrap_or(default_height);
+
+            (width_val, height_val)
+        } else {
+            (default_width, default_height)
+        };
+        let img = rasterize_svg(path, width, height)?;
+        Ok((img, width, height))
+    } else {
+        let img = image::open(path).map_err(|e| format!("Failed to open image: {}", e))?;
+        let (width, height) = img.dimensions();
+        Ok((img, width, height))
+    }
+}
+
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     let mut str_storage: Vec<String> = Vec::new();
 
@@ -343,6 +492,80 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
             let out = run_binary("gallery-dl", &args, None)?;
             Ok(json!({ "status": "success", "output": out }))
+        }
+
+        "compare_images" => {
+            let image1_path = get_str_arg(&request.arguments, "image1_path", "image1Path")
+                .ok_or_else(|| "Missing 'image1_path' parameter".to_string())?;
+
+            let image2_path = get_str_arg(&request.arguments, "image2_path", "image2Path")
+                .ok_or_else(|| "Missing 'image2_path' parameter".to_string())?;
+
+            let output_path = get_str_arg(&request.arguments, "output_path", "outputPath")
+                .unwrap_or_else(|| "./diff.png".to_string());
+
+            let algorithm = get_str_arg(&request.arguments, "algorithm", "Algorithm")
+                .unwrap_or_else(|| "rms".to_string());
+
+            let threshold_str = get_str_arg(&request.arguments, "threshold", "Threshold")
+                .unwrap_or_else(|| "0.0".to_string());
+
+            let threshold: f64 = threshold_str
+                .parse()
+                .map_err(|_| "Invalid threshold value. Must be a number between 0.0 and 1.0")?;
+
+            // Use minimum threshold of 0.001 to account for floating point precision in pixel comparisons
+            let effective_threshold = threshold.max(0.001);
+
+            // Validate threshold before loading images
+            if effective_threshold > 1.0 {
+                return Err("Threshold must be between 0.0 and 1.0".to_string());
+            }
+
+            if image1_path.trim().is_empty() || image2_path.trim().is_empty() {
+                return Err("Image paths cannot be empty".to_string());
+            }
+
+            // Check if files exist
+            if !Path::new(&image1_path).exists() {
+                return Err(format!("Image1 path does not exist: {}", image1_path));
+            }
+            if !Path::new(&image2_path).exists() {
+                return Err(format!("Image2 path does not exist: {}", image2_path));
+            }
+
+            // Load and convert images
+            let (img1, _width1, _height1) =
+                load_and_convert_image(&image1_path, DEFAULT_SVG_WIDTH, DEFAULT_SVG_HEIGHT)?;
+            let (img2, _width2, _height2) =
+                load_and_convert_image(&image2_path, DEFAULT_SVG_WIDTH, DEFAULT_SVG_HEIGHT)?;
+
+            // Compare images
+            let (diff_image, stats) = generate_diff_image(&img1, &img2, threshold);
+
+            // Save diff image
+            let output_path_resolved = PathBuf::from(&output_path).to_string_lossy().to_string();
+
+            let _ = fs::create_dir_all(
+                PathBuf::from(&output_path_resolved)
+                    .parent()
+                    .unwrap_or(Path::new(".")),
+            );
+            diff_image
+                .save(&output_path_resolved)
+                .map_err(|e| format!("Failed to save diff image: {}", e))?;
+
+            // Calculate match percentage
+            let match_percentage =
+                (stats.matching_pixels as f64 / stats.pixels_compared as f64) * 100.0;
+
+            Ok(json!(CompareImagesResponse {
+                match_percentage,
+                differences_found: stats.differing_pixels,
+                output_path: output_path_resolved,
+                algorithm_used: algorithm,
+                comparison_stats: stats
+            }))
         }
 
         unknown => Err(format!("Unknown tool: {}", unknown)),

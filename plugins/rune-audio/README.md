@@ -43,7 +43,7 @@
 
 #### Use Case AUD-03: 
 
-* **Prompt:** "Convert the audio from 'https://www.youtube.com/shorts/EqvgsORpbOU' into Opus format and explicitly load cookies from '.\test-dir\cookies\youtube.txt'."
+* **Prompt:** "Convert the audio from 'https://www.youtube.com/shorts/EqvgsORpbOU' into Opus format and explicitly load cookies from '../test-dir/cookies/youtube.txt'."
 * **Expected Tool(s):** `extract_audio_track`
 
 #### Use Case AUD-04: 

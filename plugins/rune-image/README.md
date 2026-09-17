@@ -1,8 +1,8 @@
 ### `rune-image`
 
-* **Description:** An image gallery and social album extraction MCP server powered by gallery-dl. Supports inspecting and downloading multi-image collections from Reddit, Instagram, Imgur, Pixiv, and other supported platforms with automatic domain-matched cookie handling, browser session cookie loading, and proxy routing.
+* **Description:** An image gallery and social album extraction MCP server powered by gallery-dl. Supports inspecting and downloading multi-image collections from Reddit, Instagram, Imgur, Pixiv, and other supported platforms with automatic domain-matched cookie handling, browser session cookie loading, and proxy routing. Also includes image comparison capabilities to detect visual differences between images, with support for both raster formats (PNG, JPEG, GIF, WebP) and SVG vector graphics (automatically rasterized for comparison).
 
-* **Tool Definitions:** `inspect_image_gallery`, `download_image_collection`
+* **Tool Definitions:** `inspect_image_gallery`, `download_image_collection`, `compare_images`
 
 * **MCP Configuration:**
 
@@ -66,3 +66,45 @@
 * **Category:** Edge Case / Error Handling
 * **Prompt:** "Inspect the image gallery at 'https://example.com/not-a-gallery'."
 * **Expected Tool(s):** `inspect_image_gallery`
+
+#### Use Case IMG-07: Compare Two Images for Visual Differences
+
+* **Category:** Image Comparison / Visual Regression Testing
+* **Prompt:** "Compare the original screenshot at '/path/to/original.png' with the edited version at '/path/to/edited.png' and show me where they differ."
+* **Expected Tool(s):** `compare_images`
+* **Parameters:**
+  * `image1_path`: Path to the first image
+  * `image2_path`: Path to the second image
+  * `output_path`: Path for the difference image (optional, defaults to './diff.png')
+  * `algorithm`: Comparison method - 'rms' for pixel-by-pixel, 'mssim' for structural similarity, 'perceptual' for human-perceived differences (optional, defaults to 'rms')
+  * `threshold`: Tolerance for minor differences (0.0-1.0, optional, defaults to 0.0)
+* **Expected Output:** JSON with match percentage, differences found, and path to the diff image showing mismatches in red/green coloring
+
+#### Use Case IMG-08: Image Comparison with Tolerance
+
+* **Category:** Granular Options / Threshold
+* **Prompt:** "Compare two images allowing for minor compression artifacts with threshold 0.1."
+* **Expected Tool(s):** `compare_images`
+* **Parameters:** `image1_path`, `image2_path`, `threshold: 0.1`
+* **Expected Output:** Comparison results showing matching pixels within the tolerance threshold
+
+#### Use Case IMG-09: Compare SVG Vector Graphics
+
+* **Category:** Image Comparison / Vector Support
+* **Prompt:** "Compare two SVG vector graphics at '/path/to/icon1.svg' and '/path/to/icon2.svg' to detect visual differences."
+* **Expected Tool(s):** `compare_images`
+* **Parameters:**
+  * `image1_path`: Path to the first SVG file (e.g., `/path/to/icon1.svg`)
+  * `image2_path`: Path to the second SVG file (e.g., `/path/to/icon2.svg`)
+  * `algorithm`: Comparison method - 'rms' for pixel-by-pixel (optional, defaults to 'rms')
+  * `output_path`: Path for the difference image (optional, defaults to './diff.png')
+* **Expected Output:** JSON with match percentage, differences found, and path to the diff image showing mismatches in red/green coloring
+* **Notes:** SVG files are automatically rasterized to 800x800 pixels for comparison. If width/height attributes are specified in the SVG file or URL, those dimensions are used.
+
+#### Use Case IMG-10: Mixed Raster and SVG Comparison
+
+* **Category:** Image Comparison / Mixed Formats
+* **Prompt:** "Compare a raster PNG screenshot at '/path/to/screenshot.png' with an SVG diagram at '/path/to/diagram.svg' to find differences."
+* **Expected Tool(s):** `compare_images`
+* **Parameters:** `image1_path`, `image2_path`, `algorithm: 'rms'`
+* **Expected Output:** Comparison results showing where the raster and vector graphics differ
