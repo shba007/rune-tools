@@ -589,6 +589,10 @@ fn test_compare_images_empty_path() {
 
 #[test]
 fn test_compare_real_png_with_svg() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
     // Test comparing actual PNG and SVG files from test directory
     // Use absolute paths to avoid relative path issues
     let png_path = r"D:\Projects\Public\rune\code-kit\test-dir\head.png";
@@ -648,6 +652,10 @@ fn test_compare_real_png_with_svg() {
 
 #[test]
 fn test_compare_same_png_file() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
     // Test comparing the same PNG file with itself
     // This verifies that the comparison tool handles same-file comparisons correctly
     let png_path = r"D:\Projects\Public\rune\code-kit\test-dir\head.png";
