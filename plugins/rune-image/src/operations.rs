@@ -1,4 +1,7 @@
-use crate::types::{CmdExecRequest, CmdExecResponse, CompareImagesResponse, ComparisonStats};
+use crate::types::{
+    CmdExecRequest, CmdExecResponse, CompareImagesResponse, ComparisonStats, ConvertImageResponse,
+    ImageMetadataResponse,
+};
 use image::GenericImage;
 use image::GenericImageView;
 use image::{DynamicImage, Rgba};
@@ -371,25 +374,142 @@ fn compare_images_pixel_by_pixel(
     (diff_img, stats)
 }
 
-fn rasterize_svg(_svg_path: &str, _width: u32, _height: u32) -> Result<DynamicImage, String> {
-    // Try to load SVG directly with image crate
-    // Note: image crate doesn't have native SVG support in all cases
-    // This is a fallback that works for simple SVGs
-
-    match image::open(_svg_path) {
-        Ok(img) => {
-            // Image was loaded successfully
-            Ok(img)
-        }
-        Err(_e) => {
-            // If image crate can't load SVG, provide clear error message
-            Err("SVG file could not be loaded. The image crate doesn't support SVG natively. For full SVG support, please install rsvg-convert system tool or use a pure Rust SVG library.".to_string())
-        }
+fn rasterize_svg(svg_path: &str, width: u32, height: u32) -> Result<DynamicImage, String> {
+    // The `image` crate has no SVG decoder, so we rasterize with `resvg`
+    // (pure Rust, no system libraries needed -- works in wasm32 and native).
+    if width == 0 || height == 0 {
+        return Err(format!(
+            "Failed to convert SVG '{}': target dimensions must be non-zero, got {}x{}",
+            svg_path, width, height
+        ));
     }
+
+    let svg_data =
+        fs::read(svg_path).map_err(|e| format!("Failed to convert SVG '{}': {}", svg_path, e))?;
+
+    let options = resvg::usvg::Options::default();
+    let tree = resvg::usvg::Tree::from_data(&svg_data, &options)
+        .map_err(|e| format!("Failed to convert SVG '{}': {}", svg_path, e))?;
+
+    let svg_size = tree.size();
+    let (svg_width, svg_height) = (svg_size.width(), svg_size.height());
+    if svg_width <= 0.0 || svg_height <= 0.0 {
+        return Err(format!(
+            "Failed to convert SVG '{}': document has zero intrinsic size",
+            svg_path
+        ));
+    }
+
+    let mut pixmap = resvg::tiny_skia::Pixmap::new(width, height).ok_or_else(|| {
+        format!(
+            "Failed to convert SVG '{}': could not allocate a {}x{} canvas",
+            svg_path, width, height
+        )
+    })?;
+
+    // Scale the SVG's own coordinate space to fill the requested raster size.
+    let transform = resvg::tiny_skia::Transform::from_scale(
+        width as f32 / svg_width,
+        height as f32 / svg_height,
+    );
+
+    resvg::render(&tree, transform, &mut pixmap.as_mut());
+
+    // tiny-skia stores premultiplied-alpha pixels; `image` expects straight
+    // alpha, so we demultiply each pixel on the way out.
+    let raw_pixels: Vec<u8> = pixmap
+        .pixels()
+        .iter()
+        .flat_map(|p| {
+            let c = p.demultiply();
+            [c.red(), c.green(), c.blue(), c.alpha()]
+        })
+        .collect();
+
+    let buf = image::RgbaImage::from_raw(width, height, raw_pixels).ok_or_else(|| {
+        format!(
+            "Failed to convert SVG '{}': rasterized buffer size mismatch",
+            svg_path
+        )
+    })?;
+
+    Ok(DynamicImage::ImageRgba8(buf))
 }
 
 fn is_svg_file(path: &str) -> bool {
     path.to_lowercase().ends_with(".svg")
+}
+
+/// Builds a vtracer `Config` from optional tool arguments, layered on top of
+/// vtracer's own defaults (color mode, spline curves, stacked hierarchy --
+/// already tuned for photos/color art, not just line drawings).
+fn build_trace_config(args: &Value) -> vtracer::Config {
+    let mut config = vtracer::Config::default();
+
+    if let Some(v) = get_str_arg(args, "traceColorMode", "trace_color_mode") {
+        config.color_mode = match v.to_lowercase().as_str() {
+            "binary" | "bw" => vtracer::ColorMode::Binary,
+            _ => vtracer::ColorMode::Color,
+        };
+    }
+
+    if let Some(v) = get_str_arg(args, "traceHierarchical", "trace_hierarchical") {
+        config.hierarchical = match v.to_lowercase().as_str() {
+            "cutout" => vtracer::Hierarchical::Cutout,
+            _ => vtracer::Hierarchical::Stacked,
+        };
+    }
+
+    if let Some(v) = get_str_arg(args, "traceCurveMode", "trace_curve_mode") {
+        config.mode = match v.to_lowercase().as_str() {
+            "polygon" => visioncortex::PathSimplifyMode::Polygon,
+            "none" | "pixel" => visioncortex::PathSimplifyMode::None,
+            _ => visioncortex::PathSimplifyMode::Spline,
+        };
+    }
+
+    if let Some(v) =
+        get_str_arg(args, "colorPrecision", "color_precision").and_then(|s| s.parse::<i32>().ok())
+    {
+        config.color_precision = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "filterSpeckle", "filter_speckle").and_then(|s| s.parse::<usize>().ok())
+    {
+        config.filter_speckle = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "layerDifference", "layer_difference").and_then(|s| s.parse::<i32>().ok())
+    {
+        config.layer_difference = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "cornerThreshold", "corner_threshold").and_then(|s| s.parse::<i32>().ok())
+    {
+        config.corner_threshold = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "lengthThreshold", "length_threshold").and_then(|s| s.parse::<f64>().ok())
+    {
+        config.length_threshold = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "spliceThreshold", "splice_threshold").and_then(|s| s.parse::<i32>().ok())
+    {
+        config.splice_threshold = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "maxIterations", "max_iterations").and_then(|s| s.parse::<usize>().ok())
+    {
+        config.max_iterations = v;
+    }
+    if let Some(v) =
+        get_str_arg(args, "pathPrecision", "path_precision").and_then(|s| s.parse::<u32>().ok())
+    {
+        config.path_precision = Some(v);
+    }
+
+    config
 }
 
 fn generate_diff_image(
@@ -540,8 +660,14 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let (img2, _width2, _height2) =
                 load_and_convert_image(&image2_path, DEFAULT_SVG_WIDTH, DEFAULT_SVG_HEIGHT)?;
 
-            // Compare images
-            let (diff_image, stats) = generate_diff_image(&img1, &img2, threshold);
+            // Compare images. Note: we intentionally pass `effective_threshold`
+            // here, not the raw `threshold`. With the raw threshold (which
+            // defaults to 0.0) and a strict `<` comparison, even pixels with
+            // zero difference would fail `0.0 < 0.0` and be counted as
+            // "differing" -- which made comparing a file against itself
+            // report a 0% match. `effective_threshold` floors this at 0.001
+            // specifically to absorb that floating-point edge case.
+            let (diff_image, stats) = generate_diff_image(&img1, &img2, effective_threshold);
 
             // Save diff image
             let output_path_resolved = PathBuf::from(&output_path).to_string_lossy().to_string();
@@ -565,6 +691,165 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 output_path: output_path_resolved,
                 algorithm_used: algorithm,
                 comparison_stats: stats
+            }))
+        }
+
+        "get_image_metadata" => {
+            let image_path = get_str_arg(&request.arguments, "image_path", "imagePath")
+                .ok_or_else(|| "Missing 'image_path' parameter".to_string())?;
+
+            if image_path.trim().is_empty() {
+                return Err("Parameter 'image_path' cannot be empty".to_string());
+            }
+
+            if !Path::new(&image_path).exists() {
+                return Err(format!("Image path does not exist: {}", image_path));
+            }
+
+            let img =
+                image::open(&image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+
+            let (width, height) = img.dimensions();
+
+            // Get format from image extension or default
+            let format_str = Path::new(&image_path)
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.to_uppercase())
+                .unwrap_or_else(|| "Unknown".to_string());
+
+            let color_type = match img {
+                DynamicImage::ImageRgba8(_) => "RGBA".to_string(),
+                DynamicImage::ImageRgb8(_) => "RGB".to_string(),
+                DynamicImage::ImageLuma8(_) => "Luma".to_string(),
+                DynamicImage::ImageLumaA8(_) => "Luma with Alpha".to_string(),
+                DynamicImage::ImageRgb16(_) => "RGB16".to_string(),
+                DynamicImage::ImageRgba16(_) => "RGBA16".to_string(),
+                _ => "Unknown".to_string(),
+            };
+            let has_alpha = matches!(
+                img,
+                DynamicImage::ImageRgba8(_)
+                    | DynamicImage::ImageLumaA8(_)
+                    | DynamicImage::ImageRgba16(_)
+            );
+            let file_metadata = std::fs::metadata(&image_path)
+                .map_err(|e| format!("Failed to get file metadata: {}", e))?;
+            let file_size = file_metadata.len();
+
+            Ok(json!(ImageMetadataResponse {
+                format: format_str,
+                width,
+                height,
+                color_type,
+                has_alpha,
+                bit_depth: 8, // Simplified - could be enhanced
+                file_size,
+                dimensions: format!("{}x{}", width, height),
+                metadata: json!({})
+            }))
+        }
+
+        "convert_image_format" => {
+            let input_path = get_str_arg(&request.arguments, "input_path", "inputPath")
+                .ok_or_else(|| "Missing 'input_path' parameter".to_string())?;
+
+            let output_format = get_str_arg(&request.arguments, "output_format", "outputFormat")
+                .ok_or_else(|| "Missing 'output_format' parameter".to_string())?
+                .to_lowercase();
+
+            let _quality = get_str_arg(&request.arguments, "quality", "quality")
+                .and_then(|q| q.parse().ok())
+                .unwrap_or(0.9);
+
+            if input_path.trim().is_empty() || output_format.trim().is_empty() {
+                return Err("Input path and output format cannot be empty".to_string());
+            }
+
+            if !Path::new(&input_path).exists() {
+                return Err(format!("Input path does not exist: {}", input_path));
+            }
+
+            let input_ext = Path::new(&input_path)
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.to_lowercase())
+                .unwrap_or_else(|| "unknown".to_string());
+
+            let output_path = if let Some(parent) = Path::new(&input_path).parent() {
+                parent.join(format!(
+                    "{}_converted.{}",
+                    Path::new(&input_path)
+                        .file_stem()
+                        .unwrap_or_default()
+                        .to_str()
+                        .unwrap_or("output"),
+                    output_format
+                ))
+            } else {
+                PathBuf::from(format!(
+                    "{}_converted.{}",
+                    Path::new(&input_path)
+                        .file_stem()
+                        .unwrap_or_default()
+                        .to_str()
+                        .unwrap_or("output"),
+                    output_format
+                ))
+            };
+
+            // SVG to raster conversion
+            if input_ext == "svg" {
+                if !["png", "jpeg", "jpg", "gif", "webp"].contains(&output_format.as_str()) {
+                    return Err(format!(
+                        "SVG can only be converted to raster formats: png, jpeg, gif, webp. Got: {}",
+                        output_format
+                    ));
+                }
+
+                // Use rasterize_svg function (already implemented)
+                let rasterized = rasterize_svg(&input_path, 800, 800)?;
+
+                let ext = match output_format.as_str() {
+                    "jpeg" | "jpg" => "jpeg",
+                    _ => &output_format,
+                };
+
+                rasterized
+                    .save(output_path.with_extension(ext))
+                    .map_err(|e| format!("Failed to save converted image: {}", e))?;
+            } else if output_format == "svg" {
+                // Raster to SVG vectorization via vtracer. Unlike potrace,
+                // vtracer has a color clustering pipeline, so it's suited to
+                // photos and colored art, not just black & white line work.
+                let config = build_trace_config(&request.arguments);
+                vtracer::convert_image_to_svg(Path::new(&input_path), &output_path, config)
+                    .map_err(|e| format!("Failed to vectorize image to SVG: {}", e))?;
+            } else {
+                // Raster to raster conversion. Only open with `image::open`
+                // here (not for SVG above): the `image` crate has no SVG
+                // decoder, so calling it unconditionally on an SVG file
+                // used to fail before this branch was even reached.
+                let img = image::open(&input_path)
+                    .map_err(|e| format!("Failed to open input image: {}", e))?;
+
+                // The image crate handles format detection based on file extension
+                img.save(&output_path)
+                    .map_err(|e| format!("Failed to save converted image: {}", e))?;
+            }
+
+            let message = if output_format == "svg" {
+                "Image vectorized to SVG successfully".to_string()
+            } else {
+                "Image converted successfully".to_string()
+            };
+
+            Ok(json!(ConvertImageResponse {
+                success: true,
+                output_path: output_path.to_string_lossy().to_string(),
+                input_format: input_ext,
+                output_format,
+                message
             }))
         }
 

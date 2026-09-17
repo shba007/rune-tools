@@ -101,5 +101,87 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "required": ["image1_path", "image2_path"]
             }),
         },
+        ToolDefinition {
+            name: "get_image_metadata".to_string(),
+            description: "Extracts detailed metadata from an image file including format, dimensions, color space, compression, and other technical details.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "image_path": {
+                        "type": "string",
+                        "description": "Path to the image file"
+                    }
+                },
+                "required": ["image_path"]
+            }),
+        },
+        ToolDefinition {
+            name: "convert_image_format".to_string(),
+            description: "Converts an image from one format to another. Supports conversion between raster formats (PNG, JPEG, GIF, WebP), SVG-to-raster rasterization, and raster-to-SVG vectorization (via vtracer, suited to photos and color art -- not just black & white line drawings).".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "input_path": {
+                        "type": "string",
+                        "description": "Path to the input image file"
+                    },
+                    "output_format": {
+                        "type": "string",
+                        "description": "Target format: 'png', 'jpeg', 'gif', 'webp', or 'svg'. SVG input can be converted to any raster format; raster input can be vectorized to 'svg'."
+                    },
+                    "quality": {
+                        "type": "number",
+                        "description": "Output quality (0.0-1.0) for lossy formats like JPEG. Defaults to 0.9.",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                    },
+                    "trace_color_mode": {
+                        "type": "string",
+                        "description": "Raster-to-SVG only. 'color' (default, keeps full color -- best for photos) or 'binary' (single color, faster, best for line art)."
+                    },
+                    "trace_hierarchical": {
+                        "type": "string",
+                        "description": "Raster-to-SVG only. 'stacked' (default) layers shapes; 'cutout' avoids overlapping shapes. Only applies in color mode."
+                    },
+                    "trace_curve_mode": {
+                        "type": "string",
+                        "description": "Raster-to-SVG only. Curve fitting: 'spline' (default, smooth curves), 'polygon' (straight segments), or 'none' (pixel-aligned, good for pixel art)."
+                    },
+                    "color_precision": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Significant bits per RGB channel; higher preserves more color detail. Defaults to 6."
+                    },
+                    "filter_speckle": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Discards traced patches smaller than this many pixels, to suppress noise. Defaults to 4."
+                    },
+                    "layer_difference": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Color difference threshold between gradient layers. Defaults to 16."
+                    },
+                    "corner_threshold": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Minimum angle (degrees) to treat a point as a corner rather than smoothing it. Defaults to 60."
+                    },
+                    "length_threshold": {
+                        "type": "number",
+                        "description": "Raster-to-SVG only. Subdivides curves until segments are shorter than this length. Range [3.5, 10]. Defaults to 4.0."
+                    },
+                    "splice_threshold": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Minimum angle displacement (degrees) to splice a spline. Defaults to 45."
+                    },
+                    "max_iterations": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Maximum smoothing iterations. Defaults to 10."
+                    },
+                    "path_precision": {
+                        "type": "integer",
+                        "description": "Raster-to-SVG only. Decimal places used in the output path coordinates. Defaults to 2."
+                    }
+                },
+                "required": ["input_path", "output_format"]
+            }),
+        },
     ]
 }

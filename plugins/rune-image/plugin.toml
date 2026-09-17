@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-image"
-description = "Image processing and retrieval using gallery-dl and similar tools."
+description = "A MCP server for multi-platform image extraction, visual comparison, and flexible format conversion including SVG and raster files."
 version = "0.1.0"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"

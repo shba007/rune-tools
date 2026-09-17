@@ -45,3 +45,25 @@ pub struct CompareImagesResponse {
     pub algorithm_used: String,
     pub comparison_stats: ComparisonStats,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImageMetadataResponse {
+    pub format: String,
+    pub width: u32,
+    pub height: u32,
+    pub color_type: String,
+    pub has_alpha: bool,
+    pub bit_depth: u8,
+    pub file_size: u64,
+    pub dimensions: String,
+    pub metadata: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvertImageResponse {
+    pub success: bool,
+    pub output_path: String,
+    pub input_format: String,
+    pub output_format: String,
+    pub message: String,
+}

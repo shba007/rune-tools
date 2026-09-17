@@ -623,7 +623,6 @@ fn test_compare_real_png_with_svg() {
     if res.is_ok() {
         // Success case - comparison worked
         let result = res.unwrap();
-        println!("PNG vs SVG comparison result: {:?}", result);
 
         // Verify output path is returned
         assert!(
@@ -669,7 +668,6 @@ fn test_compare_same_png_file() {
     // The comparison should complete successfully
     if res.is_ok() {
         let result = res.unwrap();
-        println!("Same file comparison result: {:?}", result);
 
         // Verify the comparison produced a result
         assert!(
