@@ -117,8 +117,8 @@
     }
   },
   "rune-image": {
-    "description": "Image gallery and social album extraction toolkit powered by gallery-dl",
-    "latest": "0.1.1",
+    "description": "A MCP server for multi-platform image extraction, visual comparison, and flexible format conversion including SVG and raster files.",
+    "latest": "0.2.0",
     "versions": {
       "0.1.0": {
         "native": {
@@ -137,6 +137,15 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.1.1/rune-image-native-0.1.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.1.1/rune-image-0.1.1.wasm"
+      },
+      "0.2.0": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.0/rune-image-native-0.2.0-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.0/rune-image-native-0.2.0-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.0/rune-image-native-0.2.0-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.0/rune-image-native-0.2.0-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.0/rune-image-0.2.0.wasm"
       }
     }
   },
