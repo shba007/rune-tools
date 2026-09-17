@@ -27,3 +27,27 @@ pub struct ToolCallRequest {
     pub name: String,
     pub arguments: Value,
 }
+
+// crates/rune-pdk — shared by every plugin, never redefined locally
+#[derive(Serialize, Deserialize)]
+pub struct Page<T> {
+    pub items: T,
+    pub cursor: Option<String>, // opaque continuation token
+    pub has_more: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourceDefinition {
+    pub uri: String,
+    pub name: String,
+    pub description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mime_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PromptDefinition {
+    pub name: String,
+    pub description: String,
+    pub args: serde_json::Value,
+}

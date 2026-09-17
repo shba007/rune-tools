@@ -1,0 +1,11 @@
+[plugin]
+name = "rune-image"
+description = "A MCP server for multi-platform image extraction, visual comparison, and flexible format conversion including SVG and raster files."
+version = "0.1.0"
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+capabilities = { network_hosts = [
+], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
+	"gallery-dl",
+] } }
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-image/README.md"

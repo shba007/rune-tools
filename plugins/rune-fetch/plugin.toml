@@ -1,0 +1,3 @@
+[capabilities]
+network_hosts = ["*"]   # open-network plugin: fetching arbitrary user-supplied URLs is its purpose (same convention as rune-print / rune-scan)
+exec = { allowed_binaries = [] }

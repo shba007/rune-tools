@@ -101,6 +101,8 @@ fn test_plugin(name: &str) -> bool {
             "-p",
             name,
             "--all-features",
+            "--",
+            "--show-output",
         ],
     )
 }

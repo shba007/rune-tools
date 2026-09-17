@@ -1,6 +1,6 @@
 ### `rune-sequential-thinking`
 
-* **Description:** A dynamic step-by-step reasoning and thought branching MCP server that provides a structured thinking workspace for AI agents. Supports sequential thought tracking with progress indicators, hypothesis revision (correcting previous thoughts), alternative branch exploration from any prior thought node, and automatic total-thoughts adjustment when reasoning exceeds initial estimates.
+* **Description:** A structured reasoning workspace MCP server that lets an agent plan, track, and revise multi-step problem solving. Supports total-step estimation, per-step progress tracking, hypothesis revision, thought branching, and automatic total adjustment.
 
 * **Tool Definitions:** `sequential-thinking`
 
@@ -22,34 +22,32 @@
 
 **Environment Variables:**
 
-* *(none required)* — all parameters are passed per-invocation.
+* None. All state is passed per-call via the tool parameters.
 
-#### Use Case STT-01: Linear Step-by-Step Problem Solving
+#### Use Case SEQ-01: Initialize a Reasoning Plan
 
-* **Category:** Happy Path / Sequential
-* **Prompt:** "I need to solve a complex math problem. Start thinking through it step by step, beginning with understanding the problem statement."
+* **Prompt:** "Start a sequential thinking session for 'design a caching layer for our API'. Estimate 6 steps and list the first step."
 * **Expected Tool(s):** `sequential-thinking`
 
-#### Use Case STT-02: Revising a Previous Hypothesis
+#### Use Case SEQ-02: Record a Step and Advance
 
-* **Category:** Granular Options / Revision
-* **Prompt:** "Wait — my second assumption was wrong. Let me revise thought #2: the boundary condition should be at x=0, not x=1."
+* **Prompt:** "Mark step 2 of my current reasoning plan as complete with the note 'schema validated', then show the next step."
 * **Expected Tool(s):** `sequential-thinking`
 
-#### Use Case STT-03: Branch to Explore an Alternative Path
+#### Use Case SEQ-03: Revise a Hypothesis Mid-Plan
 
-* **Category:** Granular Options / Branching
-* **Prompt:** "Let me branch off from thought #4 and explore the alternative approach using dynamic programming instead of recursion. Call this branch 'dp-approach'."
+* **Category:** Hypothesis Revision
+* **Prompt:** "My assumption in step 3 about the cache backend was wrong — replace it with 'use Redis with TTL eviction' and update the remaining steps accordingly."
 * **Expected Tool(s):** `sequential-thinking`
 
-#### Use Case STT-04: Dynamic Total Adjustment
+#### Use Case SEQ-04: Branch Into an Alternative Path
 
-* **Category:** Happy Path / Adaptive
-* **Prompt:** "I estimated 5 steps but I'm on step 7 and still need more analysis. Continue with the next thought, updating the total."
+* **Category:** Thought Branching
+* **Prompt:** "Branch off step 4 and explore an alternative approach using in-process LRU cache instead of a distributed store."
 * **Expected Tool(s):** `sequential-thinking`
 
-#### Use Case STT-05: Empty Thought Rejection
+#### Use Case SEQ-05: Adjust Total Step Count
 
-* **Category:** Edge Case / Validation
-* **Prompt:** "Add a thought with empty text content."
+* **Category:** Automatic Total Adjustment
+* **Prompt:** "The plan is growing — add 3 more steps to the total and re-estimate completion."
 * **Expected Tool(s):** `sequential-thinking`
