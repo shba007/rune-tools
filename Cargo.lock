@@ -2906,20 +2906,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rune-demo"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "extism-pdk",
- "reqwest",
- "rune-pdk",
- "rune-sidecar",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
 name = "rune-email"
 version = "0.1.2"
 dependencies = [
