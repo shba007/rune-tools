@@ -1,7 +1,7 @@
 [package]
 name = "rune-image"
 description = "A MCP server for multi-platform image extraction, visual comparison, and flexible format conversion including SVG and raster files."
-version = "0.2.0"
+version = "0.2.1"
 edition.workspace = true
 license.workspace = true
 
@@ -22,12 +22,7 @@ serde.workspace = true
 serde_json.workspace = true
 image = { version = "0.25", features = ["png", "jpeg", "gif", "webp"] }
 image-compare = "0.5"
-# Pure-Rust SVG rasterization (no system libraries required, so it works in
-# both the wasm32 plugin and the native sidecar).
 resvg = { version = "0.48", default-features = false }
-# Pure-Rust raster-to-SVG vectorization. Unlike potrace (binary-only input,
-# needs the `potrace` system binary), vtracer has a color pipeline suited to
-# photos and doesn't require shelling out to an external tool.
 vtracer = "0.6.5"
 # vtracer's `Config.mode` field is typed `visioncortex::PathSimplifyMode`;
 # pinned to the version vtracer 0.6.5 itself depends on so the types match.

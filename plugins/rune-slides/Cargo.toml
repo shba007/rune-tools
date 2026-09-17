@@ -1,7 +1,7 @@
 [package]
 name = "rune-slides"
 description = "Iterative markdown-based presentation builder with modular slide management and native PPTX/PDF export."
-version = "0.1.3"
+version = "0.1.4"
 edition.workspace = true
 license.workspace = true
 
