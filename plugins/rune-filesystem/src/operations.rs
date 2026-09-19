@@ -63,6 +63,26 @@ pub fn resolve_path_with_root(
         let root_trimmed = clean_root.trim_end_matches('/');
         let root_path = PathBuf::from(root_trimmed);
 
+        // Check if this is an absolute path
+        let is_absolute = clean_input.contains(":/") || clean_input.starts_with("//");
+
+        if is_absolute {
+            // For absolute paths, check if they're within the allowed directory
+            if !clean_input
+                .to_ascii_lowercase()
+                .starts_with(&format!("{}/", root_trimmed.to_ascii_lowercase()))
+                && clean_input != root_trimmed
+            {
+                return Err(format!(
+                    "Access denied: path '{}' is outside allowed directory '{}'",
+                    relative_or_abs, allowed_root
+                ));
+            }
+            // Path is within allowed directory, use it as-is (already absolute)
+            let normalized = normalize_path(&PathBuf::from(&clean_input));
+            return Ok(normalized);
+        }
+
         // 1. If path matches root or starts with root prefix, strip it
         let relative_part = if clean_input.eq_ignore_ascii_case(root_trimmed) {
             ""
@@ -71,12 +91,6 @@ pub fn resolve_path_with_root(
             .starts_with(&format!("{}/", root_trimmed.to_ascii_lowercase()))
         {
             &clean_input[root_trimmed.len() + 1..]
-        } else if clean_input.contains(":/") || clean_input.starts_with("//") {
-            // Absolute path pointing to another location or drive
-            return Err(format!(
-                "Access denied: path '{}' is outside allowed directory '{}'",
-                relative_or_abs, allowed_root
-            ));
         } else {
             // Relative path (clean up leading ./ or /)
             clean_input.trim_start_matches("./").trim_start_matches('/')

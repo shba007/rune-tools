@@ -310,3 +310,205 @@ fn default_target_fps() -> u32 {
 fn default_draw_call_limit() -> u32 {
     150
 }
+
+// --- Optimized Declarative Orchestration Workflow Types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PipelineStep {
+    #[serde(alias = "type")]
+    pub r#type: String,
+    #[serde(default)]
+    pub params: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompileDeclarativeBundleParams {
+    pub engine: String,
+    pub theme: String,
+    pub pipeline: Vec<PipelineStep>,
+    #[serde(default)]
+    pub assets: Option<serde_json::Value>,
+    #[serde(default)]
+    pub ui_config: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompileDeclarativeBundleResult {
+    pub status: String,
+    pub html_document: String,
+    pub bundle_size_bytes: u32,
+    pub validation_report: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchPipelineExecutorParams {
+    pub steps: Vec<PipelineStep>,
+    pub input_state: serde_json::Value,
+    #[serde(default)]
+    pub parallel: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchPipelineExecutorResult {
+    pub status: String,
+    pub outputs: serde_json::Value,
+    pub execution_order: Vec<String>,
+    pub total_time_ms: u64,
+    pub errors: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PatchAstNodeParams {
+    pub file_path: String,
+    pub node_type: String,
+    pub node_name: String,
+    pub operation: String,
+    pub new_value: serde_json::Value,
+    #[serde(default)]
+    pub context: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PatchAstNodeResult {
+    pub status: String,
+    pub file_path: String,
+    pub changes_made: Vec<String>,
+    pub new_content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidateHeadlessRuntimeParams {
+    pub html_bundle: String,
+    pub test_cases: Vec<String>,
+    #[serde(default)]
+    pub timeout_ms: u64,
+    #[serde(default)]
+    pub headless: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidateHeadlessRuntimeResult {
+    pub status: String,
+    pub passed: bool,
+    pub console_errors: Vec<String>,
+    pub console_warnings: Vec<String>,
+    pub performance_metrics: serde_json::Value,
+    pub screenshot_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CacheTemplateRegistryParams {
+    pub template_name: String,
+    pub template_type: String,
+    #[serde(default)]
+    pub custom_config: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CacheTemplateRegistryResult {
+    pub status: String,
+    pub template: String,
+    pub cache_hit: bool,
+    pub template_size_bytes: u32,
+}
+
+// --- Gameplay & Experience Enhancement Types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InputScriptEvent {
+    #[serde(alias = "time")]
+    pub time_ms: u64,
+    #[serde(default)]
+    pub keys_down: Vec<String>,
+    #[serde(default)]
+    pub keys_up: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulateVirtualPlaytestParams {
+    pub html_bundle: String,
+    #[serde(default)]
+    pub input_script: Vec<InputScriptEvent>,
+    #[serde(default)]
+    pub metrics_to_track: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigureCameraControllerParams {
+    pub camera_mode: String, // "follow_rail" | "spring_arm" | "cockpit" | "isometric"
+    #[serde(default)]
+    pub target_entity_id: String,
+    pub damping: serde_json::Value,
+    pub dynamic_fov: serde_json::Value,
+    pub look_ahead: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeedbackChannel {
+    pub name: String,
+    #[serde(default)]
+    pub intensity_scale: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventMapping {
+    pub trigger: String,
+    pub intensity_metric: String,
+    pub action: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SynthesizeGameFeelSystemParams {
+    pub feedback_channels: Vec<FeedbackChannel>,
+    pub event_mappings: Vec<EventMapping>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TunableParameter {
+    pub key: String,
+    pub path: String,
+    pub r#type: String, // "number" | "boolean" | "select"
+    pub min: f64,
+    pub max: f64,
+    pub step: f64,
+    pub default: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TuneGameplayParametersParams {
+    pub harness_type: String, // "tweakpane" | "dat_gui" | "headless_config"
+    pub tunable_registry: Vec<TunableParameter>,
+    #[serde(default)]
+    pub preset_profiles: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InputVariable {
+    pub name: String,
+    pub domain: [f64; 2],
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BalanceMechanicEconomyParams {
+    pub input_variables: Vec<InputVariable>,
+    pub target_metric: String, // "comfort_score" | "tip_reward" | "streak_decay"
+    pub curve_type: String,    // "exponential" | "logarithmic" | "sigmoid" | "piecewise"
+    #[serde(default)]
+    pub forgiveness_window_sec: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterialDef {
+    pub material_id: String,
+    pub r#type: String,
+    #[serde(default)]
+    pub shaders: Option<serde_json::Value>,
+    #[serde(default)]
+    pub uniforms: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuditShaderAndMaterialPipelineParams {
+    pub scene_materials: Vec<MaterialDef>,
+    pub environment_features: serde_json::Value,
+}

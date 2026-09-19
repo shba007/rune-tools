@@ -2936,7 +2936,7 @@ dependencies = [
 
 [[package]]
 name = "rune-filesystem"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -2952,7 +2952,7 @@ dependencies = [
 
 [[package]]
 name = "rune-game-engine"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
