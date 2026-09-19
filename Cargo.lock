@@ -2951,6 +2951,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rune-game-engine"
+version = "0.1.0"
+dependencies = [
+ "extism-pdk",
+ "rune-pdk",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "rune-git"
 version = "0.2.3"
 dependencies = [

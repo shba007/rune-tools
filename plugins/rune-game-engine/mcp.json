@@ -1,0 +1,9 @@
+{
+	"mcpServers": {
+		"dev-rune-game=engine": {
+			"command": "D:/Projects/Public/rune/code-kit/target/debug/rune.exe",
+			"args": ["run", "rune_game_engine"],
+			"env": {}
+		}
+	}
+}
