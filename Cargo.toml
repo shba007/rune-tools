@@ -4,7 +4,7 @@ members = [
     "crates/rune-sidecar",
     "plugins/mhb-mconnect",
     "plugins/rune-audio",
-    # "plugins/rune-browser",
+    "plugins/rune-browser",
     "plugins/rune-email",
     "plugins/rune-fetch",
     "plugins/rune-filesystem",
