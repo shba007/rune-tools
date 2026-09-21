@@ -181,33 +181,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match method {
             "initialize" => {
                 // Support configuration passed dynamically in initialize params
-                if let Some(params) = req.get("params") {
-                    if let Some(opts) = params
+                if let Some(params) = req.get("params")
+                    && let Some(opts) = params
                         .get("initializationOptions")
                         .or_else(|| params.get("env"))
+                {
+                    if let Some(url) = opts
+                        .get("FIGMA_WS_URL")
+                        .or_else(|| opts.get("ws_url"))
+                        .or_else(|| opts.get("wsUrl"))
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
                     {
-                        if let Some(url) = opts
-                            .get("FIGMA_WS_URL")
-                            .or_else(|| opts.get("ws_url"))
-                            .or_else(|| opts.get("wsUrl"))
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.trim())
-                            .filter(|s| !s.is_empty())
-                        {
-                            let mut u = current_ws_url.lock().await;
-                            *u = url.to_string();
-                        }
+                        let mut u = current_ws_url.lock().await;
+                        *u = url.to_string();
+                    }
 
-                        if let Some(ch) = opts
-                            .get("FIGMA_CHANNEL")
-                            .or_else(|| opts.get("channel"))
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.trim())
-                            .filter(|s| !s.is_empty())
-                        {
-                            let mut c = current_channel.lock().await;
-                            *c = ch.to_string();
-                        }
+                    if let Some(ch) = opts
+                        .get("FIGMA_CHANNEL")
+                        .or_else(|| opts.get("channel"))
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                    {
+                        let mut c = current_channel.lock().await;
+                        *c = ch.to_string();
                     }
                 }
 
@@ -299,18 +298,18 @@ async fn dispatch_command_to_figma(
     current_channel: &Arc<Mutex<String>>,
     current_ws_url: &Arc<Mutex<String>>,
 ) -> Result<Value, String> {
-    if command == "join_channel" {
-        if let Some(new_ch) = params.get("channel").and_then(|v| v.as_str()) {
-            let mut ch = current_channel.lock().await;
-            *ch = new_ch.to_string();
-            let join_msg = json!({
-                "type": "join",
-                "channel": new_ch,
-                "id": "switch_channel"
-            });
-            let _ = ws_tx.send(join_msg.to_string());
-            return Ok(json!({ "message": format!("Joined channel '{}'", new_ch) }));
-        }
+    if command == "join_channel"
+        && let Some(new_ch) = params.get("channel").and_then(|v| v.as_str())
+    {
+        let mut ch = current_channel.lock().await;
+        *ch = new_ch.to_string();
+        let join_msg = json!({
+            "type": "join",
+            "channel": new_ch,
+            "id": "switch_channel"
+        });
+        let _ = ws_tx.send(join_msg.to_string());
+        return Ok(json!({ "message": format!("Joined channel '{}'", new_ch) }));
     }
 
     let req_id = uuid_or_random();

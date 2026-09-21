@@ -3,9 +3,10 @@ use serde_json::{Value, json};
 
 pub fn rgba_to_hex(val: &Value) -> String {
     if let Some(s) = val.as_str()
-        && s.starts_with('#') {
-            return s.to_string();
-        }
+        && s.starts_with('#')
+    {
+        return s.to_string();
+    }
 
     let r = val.get("r").and_then(|v| v.as_f64()).unwrap_or(0.0);
     let g = val.get("g").and_then(|v| v.as_f64()).unwrap_or(0.0);
