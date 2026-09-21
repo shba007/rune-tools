@@ -1,0 +1,31 @@
+[package]
+name = "rune-figma"
+version = "0.1.1"
+edition.workspace = true
+license.workspace = true
+description = "Native Figma MCP server connecting to TalkToFigma / cursor-talk-to-figma-socket"
+
+[lib]
+crate-type = ["rlib"]
+
+[[bin]]
+name = "rune-figma-native"
+path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+default = []
+native = ["dep:tokio", "dep:tokio-tungstenite", "dep:futures-util"]
+
+[dependencies]
+rune-pdk = { path = "../../crates/rune-pdk" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio = { version = "1", features = ["full"], optional = true }
+tokio-tungstenite = { version = "0.21", features = [
+	"connect",
+], optional = true }
+futures-util = { version = "0.3", optional = true }
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -1,14 +1,30 @@
-use rune_pdk::{ToolCallRequest, ToolDefinition};
+use rune_pdk::{PromptDefinition, ResourceDefinition, ToolCallRequest, ToolDefinition};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 
-/// Trait implemented by native sidecar entry points to expose tool metadata and invocation.
+/// Trait implemented by native sidecar entry points to expose tool, resource, and prompt handling.
 pub trait SidecarHandler {
     fn info(&self) -> Value;
     fn list_tools(&self) -> Vec<ToolDefinition>;
     fn call_tool(&self, req: ToolCallRequest) -> Result<Value, String>;
+
+    fn list_resources(&self) -> Vec<ResourceDefinition> {
+        vec![]
+    }
+
+    fn read_resource(&self, _uri: &str) -> Result<Value, String> {
+        Err("Resources not supported by this sidecar".to_string())
+    }
+
+    fn list_prompts(&self) -> Vec<PromptDefinition> {
+        vec![]
+    }
+
+    fn get_prompt(&self, _name: &str, _args: Value) -> Result<Value, String> {
+        Err("Prompts not supported by this sidecar".to_string())
+    }
 }
 
 #[derive(Deserialize)]
@@ -23,6 +39,8 @@ struct SidecarRpcRequest {
     name: Option<String>,
     #[serde(default)]
     arguments: Option<Value>,
+    #[serde(default)]
+    uri: Option<String>,
 }
 
 /// Runs a persistent newline-delimited stdio server for native sidecar binaries.
@@ -83,6 +101,51 @@ pub fn run_stdio<H: SidecarHandler>(handler: H) -> io::Result<()> {
                         let result = handler.call_tool(tool_req);
                         format_response(id, result)
                     }
+                    "list_resources" | "mcp_list_resources" | "resources/list" => {
+                        let resources = handler.list_resources();
+                        format_response(id, Ok(json!(resources)))
+                    }
+                    "read_resource" | "mcp_read_resource" | "resources/read" => {
+                        let uri = req
+                            .uri
+                            .or_else(|| {
+                                req.params
+                                    .as_ref()
+                                    .and_then(|p| p.get("uri"))
+                                    .and_then(Value::as_str)
+                                    .map(ToString::to_string)
+                            })
+                            .unwrap_or_default();
+                        let result = handler.read_resource(&uri);
+                        format_response(id, result)
+                    }
+                    "list_prompts" | "mcp_list_prompts" | "prompts/list" => {
+                        let prompts = handler.list_prompts();
+                        format_response(id, Ok(json!(prompts)))
+                    }
+                    "get_prompt" | "mcp_get_prompt" | "prompts/get" => {
+                        let prompt_name = req
+                            .name
+                            .or_else(|| {
+                                req.params
+                                    .as_ref()
+                                    .and_then(|p| p.get("name"))
+                                    .and_then(Value::as_str)
+                                    .map(ToString::to_string)
+                            })
+                            .unwrap_or_default();
+                        let args = req
+                            .arguments
+                            .or_else(|| {
+                                req.params
+                                    .as_ref()
+                                    .and_then(|p| p.get("arguments"))
+                                    .cloned()
+                            })
+                            .unwrap_or(json!({}));
+                        let result = handler.get_prompt(&prompt_name, args);
+                        format_response(id, result)
+                    }
                     _ if req.name.is_some() => {
                         let tool_req = ToolCallRequest {
                             name: req.name.unwrap(),
@@ -91,15 +154,13 @@ pub fn run_stdio<H: SidecarHandler>(handler: H) -> io::Result<()> {
                         let result = handler.call_tool(tool_req);
                         format_response(id, result)
                     }
-                    unknown => json!({
-                        "status": "error",
-                        "error": format!("Unknown method: {}", unknown)
-                    }),
+                    unknown => format_response(id, Err(format!("Unknown method: {}", unknown))),
                 }
             }
             Err(e) => json!({
-                "status": "error",
-                "error": format!("Invalid JSON payload: {}", e)
+                "jsonrpc": "2.0",
+                "id": Value::Null,
+                "error": { "code": -32700, "message": format!("Invalid JSON payload: {}", e) }
             }),
         };
 
@@ -151,7 +212,7 @@ pub fn parse_cli_args(args: &[String]) -> HashMap<String, String> {
     map
 }
 
-/// Resolves tool arguments prioritizing CLI values over uppercase environment variables (`CLI > ENV`).
+/// Resolves tool arguments prioritizing CLI values over environment variables (`CLI > ENV`) (§2.5).
 pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Result<Value, String> {
     let cli_map = parse_cli_args(cli_args);
     let mut resolved_map = Map::new();
@@ -168,12 +229,15 @@ pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Resu
                 .and_then(Value::as_str)
                 .unwrap_or("string");
 
-            let env_key = prop_name.to_ascii_uppercase();
-
             let raw_value_opt = if let Some(cli_val) = cli_map.get(prop_name) {
                 Some(cli_val.clone())
             } else {
-                std::env::var(&env_key).ok()
+                let upper = prop_name.to_ascii_uppercase();
+                let lower = prop_name.to_ascii_lowercase();
+                std::env::var(&upper)
+                    .or_else(|_| std::env::var(&lower))
+                    .or_else(|_| std::env::var(prop_name))
+                    .ok()
             };
 
             if let Some(raw_val) = raw_value_opt {

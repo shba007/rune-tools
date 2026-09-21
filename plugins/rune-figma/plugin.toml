@@ -1,0 +1,12 @@
+[plugin]
+name = "rune-figma"
+version = "0.1.0"
+execution_model = "native"
+description = "TalkToFigma MCP integration: inspect, create, mutate, and annotate Figma designs"
+
+[capabilities]
+network_hosts = ["localhost", "127.0.0.1", "0.0.0.0"]
+filesystem = { mode = "scoped", root_param = "image_dir" }
+exec = { allowed_binaries = [] }
+
+[dependencies.binaries]

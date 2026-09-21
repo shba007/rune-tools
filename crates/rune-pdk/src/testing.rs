@@ -1,4 +1,4 @@
-use crate::{ToolCallRequest, ToolDefinition};
+use crate::{PromptDefinition, ResourceDefinition, ToolCallRequest, ToolDefinition};
 use serde_json::{Value, json};
 use std::collections::HashMap;
 
@@ -44,6 +44,40 @@ pub fn assert_valid_tool_definitions(tools: &[ToolDefinition]) {
                 );
             }
         }
+    }
+}
+
+pub fn assert_valid_resource_definitions(resources: &[ResourceDefinition]) {
+    for res in resources {
+        assert!(!res.uri.trim().is_empty(), "Resource URI cannot be empty");
+        assert!(!res.name.trim().is_empty(), "Resource name cannot be empty");
+        assert!(
+            !res.description.trim().is_empty(),
+            "Resource '{}' must have a description",
+            res.uri
+        );
+    }
+}
+
+pub fn assert_valid_prompt_definitions(prompts: &[PromptDefinition]) {
+    for prompt in prompts {
+        assert!(
+            !prompt.name.trim().is_empty(),
+            "Prompt name cannot be empty"
+        );
+        assert!(
+            prompt
+                .name
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c == '_'),
+            "Prompt '{}' must be lowercase snake_case",
+            prompt.name
+        );
+        assert!(
+            !prompt.description.trim().is_empty(),
+            "Prompt '{}' must have a description",
+            prompt.name
+        );
     }
 }
 
@@ -101,10 +135,22 @@ where
             Some(p) => p,
             None => continue,
         };
+        let required = schema
+            .get("required")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+
+        let mut base_payload = HashMap::new();
+        for (name, spec) in props {
+            if required.iter().any(|r| r.as_str() == Some(name)) {
+                base_payload.insert(name.clone(), mock_valid_value(name, spec));
+            }
+        }
 
         for (prop_name, prop_spec) in props {
             let invalid_val = mock_invalid_value(prop_spec);
-            let mut payload = HashMap::new();
+            let mut payload = base_payload.clone();
             payload.insert(prop_name.clone(), invalid_val);
 
             let req = ToolCallRequest {
@@ -186,6 +232,31 @@ macro_rules! test_plugin_contract {
         fn test_invalid_types_rejection() {
             let tools = $tool_fn();
             $crate::testing::assert_invalid_types_rejected(&tools, $exec_fn);
+        }
+    };
+
+    ($tool_fn:path, $exec_fn:path, resources: $res_fn:path, $read_res_fn:path) => {
+        $crate::test_plugin_contract!($tool_fn, $exec_fn);
+
+        #[test]
+        fn test_resources_validity() {
+            let resources = $res_fn();
+            $crate::testing::assert_valid_resource_definitions(&resources);
+        }
+
+        #[test]
+        fn test_resources_routable() {
+            let resources = $res_fn();
+            for resource in resources {
+                let res = $read_res_fn(&resource.uri);
+                if let Err(err) = res {
+                    assert!(
+                        !err.starts_with("Unknown resource"),
+                        "Resource '{}' is listed in resource_definitions but not handled in read_resource",
+                        resource.uri
+                    );
+                }
+            }
         }
     };
 }

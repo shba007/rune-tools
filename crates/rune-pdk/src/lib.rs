@@ -41,13 +41,79 @@ pub struct ResourceDefinition {
     pub uri: String,
     pub name: String,
     pub description: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "mimeType",
+        alias = "mime_type",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub mime_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourceReadRequest {
+    pub uri: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PromptArgument {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PromptDefinition {
     pub name: String,
     pub description: String,
-    pub args: serde_json::Value,
+    #[serde(rename = "arguments", alias = "args", default)]
+    pub arguments: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PromptGetRequest {
+    pub name: String,
+    #[serde(default)]
+    pub arguments: Option<Value>,
+}
+
+/// Status of host-provisioned binary dependencies (§13.5).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum BinaryProvisionStatus {
+    Installed,
+    Provisioning,
+    Missing,
+    UnsupportedPlatform,
+}
+
+/// Diagnostic report entry for host-managed external executables.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BinaryStatus {
+    pub name: String,
+    pub status: BinaryProvisionStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+/// Resolves configuration parameters uniformly across WASM and Native environments (§2.5).
+pub fn get_config(key: &str) -> Option<String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        extism_pdk::config::get(key).ok().flatten()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let upper = key.to_ascii_uppercase();
+        let lower = key.to_ascii_lowercase();
+        std::env::var(&upper)
+            .or_else(|_| std::env::var(&lower))
+            .or_else(|_| std::env::var(key))
+            .ok()
+    }
 }

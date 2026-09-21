@@ -7,6 +7,7 @@ members = [
     "plugins/rune-browser",
     "plugins/rune-email",
     "plugins/rune-fetch",
+    "plugins/rune-figma",
     "plugins/rune-filesystem",
     "plugins/rune-git",
     "plugins/rune-image",
