@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-figma"
-version = "0.1.0"
+version = "0.1.1"
 execution_model = "native"
 description = "TalkToFigma MCP integration: inspect, create, mutate, and annotate Figma designs"
 

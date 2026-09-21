@@ -3333,14 +3333,12 @@ dependencies = [
 
 [[package]]
 name = "rune-fetch"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
- "reqwest 0.13.4",
  "rune-pdk",
  "serde",
  "serde_json",
- "tempfile",
 ]
 
 [[package]]

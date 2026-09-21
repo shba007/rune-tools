@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "rune-figma": {
+      "command": "rune",
+      "args": ["run", "rune-figma"]
+    }
+  }
+}

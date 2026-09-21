@@ -10,9 +10,6 @@ extern "ExtismHost" {
     fn host_cmd_exec(input: String) -> String;
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::io::{Read, Write};
-
 fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
     if let Some(val) = args
         .get(camel)
@@ -119,7 +116,10 @@ fn run_binary_raw(req: &CmdExecRequest) -> Result<CmdExecResponse, String> {
 
 pub fn run_binary(program: &str, args: &[&str], cwd: Option<&str>) -> Result<String, String> {
     // Ensure binary exists before executing
-    ensure_binary_exists(program, get_binary_download_url(program))?;
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        ensure_binary_exists(program, get_binary_download_url(program))?;
+    }
 
     let req = CmdExecRequest {
         program: program.to_string(),
@@ -699,6 +699,7 @@ fn ensure_binary_exists(binary_name: &str, download_url: String) -> Result<(), S
     Ok(())
 }
 
+#[allow(dead_code)]
 fn get_ytdlp_download_url() -> String {
     match std::env::consts::OS {
         "windows" => {
@@ -711,6 +712,7 @@ fn get_ytdlp_download_url() -> String {
     }
 }
 
+#[allow(dead_code)]
 fn get_streamlink_download_url() -> String {
     match std::env::consts::OS {
         "windows" => {
@@ -726,6 +728,7 @@ fn get_streamlink_download_url() -> String {
     }
 }
 
+#[allow(dead_code)]
 fn get_ffmpeg_download_url() -> String {
     match std::env::consts::OS {
         "windows" => "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string(),
@@ -734,6 +737,7 @@ fn get_ffmpeg_download_url() -> String {
     }
 }
 
+#[allow(dead_code)]
 fn get_binary_download_url(program: &str) -> String {
     match program {
         "yt-dlp" => get_ytdlp_download_url(),

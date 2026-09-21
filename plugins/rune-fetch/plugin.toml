@@ -1,3 +1,12 @@
+[plugin]
+name = "rune-fetch"
+version = "0.3.0"
+execution_model = "wasm"
+description = "Fetches a URL from the internet and extracts contents as Markdown"
+
 [capabilities]
-network_hosts = ["*"]   # open-network plugin: fetching arbitrary user-supplied URLs is its purpose (same convention as rune-print / rune-scan)
+network_hosts = ["*"]
+filesystem = { mode = "none" }
 exec = { allowed_binaries = [] }
+
+[dependencies.binaries]
