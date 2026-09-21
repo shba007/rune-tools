@@ -10,6 +10,9 @@ extern "ExtismHost" {
     fn host_cmd_exec(input: String) -> String;
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+use std::io::{Read, Write};
+
 fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
     if let Some(val) = args
         .get(camel)
@@ -115,6 +118,9 @@ fn run_binary_raw(req: &CmdExecRequest) -> Result<CmdExecResponse, String> {
 }
 
 pub fn run_binary(program: &str, args: &[&str], cwd: Option<&str>) -> Result<String, String> {
+    // Ensure binary exists before executing
+    ensure_binary_exists(program, get_binary_download_url(program))?;
+
     let req = CmdExecRequest {
         program: program.to_string(),
         args: args.iter().map(|s| s.to_string()).collect(),
@@ -510,5 +516,229 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         unknown => Err(format!("Unknown tool: {}", unknown)),
+    }
+}
+
+// =========================================================================
+// Helper Functions for Binary Download
+// =========================================================================
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_binary_path(binary_name: &str) -> std::path::PathBuf {
+    let base = std::env::var("ALLOWED_DIR")
+        .or_else(|_| std::env::var("OUTPUT_DIR"))
+        .unwrap_or_else(|_| ".".to_string());
+    std::path::PathBuf::from(&base).join(binary_name)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn download_binary(binary_name: &str, download_url: String) -> Result<(), String> {
+    use std::io::Write;
+
+    let binary_path = get_binary_path(binary_name);
+    let dir = binary_path.parent().ok_or("Invalid binary path")?;
+    fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    // Download binary
+    let response = reqwest::blocking::get(&download_url)
+        .map_err(|e| format!("Failed to download {}: {}", binary_name, e))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "Failed to download {}: HTTP {}",
+            binary_name,
+            response.status()
+        ));
+    }
+
+    // Detect if this is a zip file (FFmpeg) or direct binary
+    if download_url.ends_with(".zip") {
+        let zip_path = dir.join(".tmp.zip");
+        let file = fs::File::create(&zip_path)
+            .map_err(|e| format!("Failed to create temp file: {}", e))?;
+
+        // Copy data from response to file in chunks to handle large files
+        let mut reader = std::io::BufReader::new(response);
+        let mut writer = std::io::BufWriter::new(file);
+        std::io::copy(&mut reader, &mut writer)
+            .map_err(|e| format!("Failed to write binary: {}", e))?;
+
+        drop(writer);
+        // File is automatically dropped when function returns
+
+        println!(
+            "Downloaded {}: {:.1} MB",
+            binary_name,
+            zip_path.metadata().unwrap().len() as f64 / 1024.0 / 1024.0
+        );
+
+        // Extract zip file
+        extract_zip_file(&zip_path, &binary_path)?;
+    } else {
+        let bytes = response
+            .bytes()
+            .map_err(|e| format!("Failed to read response: {}", e))?;
+
+        let mut file = fs::File::create(&binary_path)
+            .map_err(|e| format!("Failed to create binary file: {}", e))?;
+
+        file.write_all(&bytes)
+            .map_err(|e| format!("Failed to write binary: {}", e))?;
+
+        println!(
+            "Downloaded {}: {:.1} MB",
+            binary_name,
+            bytes.len() as f64 / 1024.0 / 1024.0
+        );
+    }
+
+    // Make executable on Unix-like systems
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = fs::metadata(&binary_path).unwrap().permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&binary_path, perms).ok();
+    }
+
+    Ok(())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn extract_zip_file(zip_path: &Path, extract_to: &Path) -> Result<(), String> {
+    use std::io::Read;
+    use zip::ZipArchive;
+
+    let file = fs::File::open(zip_path).map_err(|e| format!("Failed to open zip file: {}", e))?;
+    let mut archive =
+        ZipArchive::new(file).map_err(|e| format!("Failed to open zip archive: {}", e))?;
+
+    // Find the binary executable in the zip
+    let mut found_binary = false;
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Failed to read zip entry {}: {}", i, e))?;
+
+        let outpath = match file.name() {
+            path => path.to_string(),
+        };
+
+        // Look for ffmpeg.exe or similar binary
+        if outpath.ends_with("/ffmpeg.exe") || outpath.ends_with("/ffmpeg") {
+            let expanded_path = extract_to.join(&outpath);
+            if let Some(parent) = expanded_path.parent() {
+                fs::create_dir_all(parent).ok();
+            }
+            let mut buffer = Vec::new();
+            file.read_to_end(&mut buffer)
+                .map_err(|e| format!("Failed to read zip entry {}: {}", outpath, e))?;
+
+            // For Windows, we need to copy the binary to the parent directory without .exe extension
+            // since we call it as "ffmpeg" not "ffmpeg.exe"
+            #[cfg(windows)]
+            {
+                let binary_name = extract_to
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string();
+                let binary_path = extract_to.join(&binary_name);
+                fs::write(&binary_path, &buffer).map_err(|e| {
+                    format!("Failed to write file {}: {}", binary_path.display(), e)
+                })?;
+            }
+
+            // Make executable on Unix-like systems
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let mut perms = fs::metadata(&expanded_path).unwrap().permissions();
+                perms.set_mode(0o755);
+                fs::set_permissions(&expanded_path, perms).ok();
+            }
+
+            found_binary = true;
+        }
+    }
+
+    // Clean up temp zip file
+    let _ = fs::remove_file(zip_path);
+
+    if !found_binary {
+        return Err("No binary found in zip file".to_string());
+    }
+
+    Ok(())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn ensure_binary_exists(binary_name: &str, download_url: String) -> Result<(), String> {
+    let binary_path = get_binary_path(binary_name);
+
+    if !binary_path.exists() {
+        println!("{} binary not found. Downloading...", binary_name);
+        match download_binary(binary_name, download_url) {
+            Ok(_) => {
+                // Verify binary is executable
+                if !std::process::Command::new(&binary_path)
+                    .arg("--version")
+                    .output()
+                    .is_ok()
+                {
+                    return Err(format!(
+                        "Downloaded {} binary is not executable.",
+                        binary_name
+                    ));
+                }
+            }
+            Err(e) => return Err(format!("Failed to download {}: {}", binary_name, e)),
+        }
+    }
+
+    Ok(())
+}
+
+fn get_ytdlp_download_url() -> String {
+    match std::env::consts::OS {
+        "windows" => {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string()
+        }
+        "linux" | "macos" => {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp".to_string()
+        }
+        _ => "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string(),
+    }
+}
+
+fn get_streamlink_download_url() -> String {
+    match std::env::consts::OS {
+        "windows" => {
+            "https://github.com/streamlink/streamlink/releases/latest/download/streamlink.exe"
+                .to_string()
+        }
+        "linux" | "macos" => {
+            "https://github.com/streamlink/streamlink/releases/latest/download/streamlink"
+                .to_string()
+        }
+        _ => "https://github.com/streamlink/streamlink/releases/latest/download/streamlink.exe"
+            .to_string(),
+    }
+}
+
+fn get_ffmpeg_download_url() -> String {
+    match std::env::consts::OS {
+        "windows" => "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string(),
+        "linux" | "macos" => "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz".to_string(),
+        _ => "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string(),
+    }
+}
+
+fn get_binary_download_url(program: &str) -> String {
+    match program {
+        "yt-dlp" => get_ytdlp_download_url(),
+        "streamlink" => get_streamlink_download_url(),
+        "ffmpeg" => get_ffmpeg_download_url(),
+        _ => get_ytdlp_download_url(),
     }
 }

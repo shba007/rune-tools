@@ -3,9 +3,9 @@ use rune_browser::{definitions, operations};
 #[cfg(not(target_arch = "wasm32"))]
 use rune_pdk::{ToolCallRequest, ToolDefinition};
 #[cfg(not(target_arch = "wasm32"))]
-use rune_sidecar::{run_stdio, SidecarHandler};
+use rune_sidecar::{SidecarHandler, run_stdio};
 #[cfg(not(target_arch = "wasm32"))]
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[cfg(not(target_arch = "wasm32"))]
 struct BrowserSidecarHandler;
@@ -33,30 +33,25 @@ impl SidecarHandler for BrowserSidecarHandler {
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
 
-    // One-shot execution flag called by WASM host_cmd_exec
+    // One-shot execution invoked by WASM host_cmd_exec
     if args.len() >= 3 && args[1] == "--exec" {
         let raw_payload = &args[2];
         let request: ToolCallRequest = match serde_json::from_str(raw_payload) {
             Ok(req) => req,
             Err(e) => {
-                let err_resp =
-                    json!({ "status": "error", "error": format!("Invalid JSON request: {}", e) });
-                println!("{}", err_resp);
+                println!("{}", json!({ "status": "error", "error": format!("Invalid JSON request: {}", e) }));
                 return Ok(());
             }
         };
 
         match operations::execute_tool(request) {
             Ok(val) => println!("{}", serde_json::to_string(&val).unwrap()),
-            Err(err) => {
-                let err_resp = json!({ "status": "error", "error": err });
-                println!("{}", err_resp);
-            }
+            Err(err) => println!("{}", json!({ "status": "error", "error": err })),
         }
         return Ok(());
     }
 
-    // Default MCP Stdio Server Mode
+    // Default persistent stdio MCP mode
     run_stdio(BrowserSidecarHandler)
 }
 

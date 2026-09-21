@@ -65,3 +65,43 @@ pub struct CDPResponse {
     pub result: serde_json::Value,
     pub session_id: String,
 }
+
+#[derive(Debug, Clone)]
+pub struct BrowserBinaryConfig {
+    pub binary_name: String,
+    pub download_url: String,
+    pub platforms: Vec<PlatformConfig>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PlatformConfig {
+    pub os: String,
+    pub binary_name: String,
+    pub download_url: String,
+}
+
+impl Default for BrowserBinaryConfig {
+    fn default() -> Self {
+        Self {
+            binary_name: "agent-browser".to_string(),
+            download_url: "https://github.com/vercel-labs/agent-browser/releases/latest/download/agent-browser".to_string(),
+            platforms: vec![
+                PlatformConfig {
+                    os: "windows".to_string(),
+                    binary_name: "agent-browser.exe".to_string(),
+                    download_url: "https://github.com/vercel-labs/agent-browser/releases/latest/download/agent-browser.exe".to_string(),
+                },
+                PlatformConfig {
+                    os: "linux".to_string(),
+                    binary_name: "agent-browser".to_string(),
+                    download_url: "https://github.com/vercel-labs/agent-browser/releases/latest/download/agent-browser-linux".to_string(),
+                },
+                PlatformConfig {
+                    os: "macos".to_string(),
+                    binary_name: "agent-browser".to_string(),
+                    download_url: "https://github.com/vercel-labs/agent-browser/releases/latest/download/agent-browser-macos".to_string(),
+                },
+            ],
+        }
+    }
+}

@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // Use temp directory directly instead of tempdir()
-const TEST_TEMP_DIR: &str = "D:/Projects/Public/rune/code-tools/temp";
+const TEST_TEMP_DIR: &str = "D:/Projects/Public/rune/code-kit/temp";
 
 // Create temp directory before any tests run
 #[test]
@@ -628,34 +628,34 @@ fn test_resolve_path_relative_prefix() {
 
 #[test]
 fn test_resolve_path_strips_redundant_allowed_root() {
-    let root = Some("D:/Projects/Public/rune/code-kit/test-dir/cookies");
+    let root = Some("D:/Projects/Public/rune/code-kit/temp/cookies");
 
     let p1 = resolve_path_with_root("index.html", root).unwrap();
     assert_eq!(
         p1,
-        PathBuf::from("D:/Projects/Public/rune/code-kit/test-dir/cookies/index.html")
+        PathBuf::from("D:/Projects/Public/rune/code-kit/temp/cookies/index.html")
     );
 
     let p2 = resolve_path_with_root("images/screenshots", root).unwrap();
     assert_eq!(
         p2,
-        PathBuf::from("D:/Projects/Public/rune/code-kit/test-dir/cookies/images/screenshots")
+        PathBuf::from("D:/Projects/Public/rune/code-kit/temp/cookies/images/screenshots")
     );
 
     let p3 = resolve_path_with_root("./images/screenshots", root).unwrap();
     assert_eq!(
         p3,
-        PathBuf::from("D:/Projects/Public/rune/code-kit/test-dir/cookies/images/screenshots")
+        PathBuf::from("D:/Projects/Public/rune/code-kit/temp/cookies/images/screenshots")
     );
 
     let p4 = resolve_path_with_root(
-        "D:/Projects/Public/rune/code-kit/test-dir/cookies/photo.png",
+        "D:/Projects/Public/rune/code-kit/temp/cookies/photo.png",
         root,
     )
     .unwrap();
     assert_eq!(
         p4,
-        PathBuf::from("D:/Projects/Public/rune/code-kit/test-dir/cookies/photo.png")
+        PathBuf::from("D:/Projects/Public/rune/code-kit/temp/cookies/photo.png")
     );
 
     let p5 = resolve_path_with_root("C:/Windows/System32", root);

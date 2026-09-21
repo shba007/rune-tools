@@ -21,8 +21,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_session_stop".to_string(),
-            description: "Stops a persistent browser session and cleans up resources."
-                .to_string(),
+            description: "Stops a persistent browser session and cleans up resources.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -33,8 +32,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_session_list".to_string(),
-            description: "Lists all active browser sessions."
-                .to_string(),
+            description: "Lists all active browser sessions.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {}
@@ -73,8 +71,9 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_click".to_string(),
-            description: "Clicks an element using an accessibility ref, semantic role, or CSS selector."
-                .to_string(),
+            description:
+                "Clicks an element using an accessibility ref, semantic role, or CSS selector."
+                    .to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -88,8 +87,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_fill".to_string(),
-            description: "Types text into a form input or textarea."
-                .to_string(),
+            description: "Types text into a form input or textarea.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -103,8 +101,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_select_option".to_string(),
-            description: "Selects an option in a dropdown element."
-                .to_string(),
+            description: "Selects an option in a dropdown element.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -118,8 +115,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_hover".to_string(),
-            description: "Hovers mouse over an element."
-                .to_string(),
+            description: "Hovers mouse over an element.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -174,8 +170,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         // Diagnostics Tools
         ToolDefinition {
             name: "browser_console_messages".to_string(),
-            description: "Retrieves console log messages from the browser."
-                .to_string(),
+            description: "Retrieves console log messages from the browser.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -187,8 +182,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_network_requests".to_string(),
-            description: "Retrieves network request information from the browser."
-                .to_string(),
+            description: "Retrieves network request information from the browser.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -201,8 +195,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         // CDP Tools (for connecting to existing browser)
         ToolDefinition {
             name: "browser_cdp_connect".to_string(),
-            description: "Connects to an existing Chrome DevTools session."
-                .to_string(),
+            description: "Connects to an existing Chrome DevTools session.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -214,8 +207,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_cdp_request".to_string(),
-            description: "Sends a CDP request to the connected browser."
-                .to_string(),
+            description: "Sends a CDP request to the connected browser.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -228,8 +220,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "browser_cdp_disconnect".to_string(),
-            description: "Disconnects from a CDP session."
-                .to_string(),
+            description: "Disconnects from a CDP session.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {

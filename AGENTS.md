@@ -84,7 +84,7 @@ rune-tools/
     ├── rune-video/                     # NATIVE SIDECAR (yt-dlp/ffmpeg/streamlink)
     ├── rune-image/                     # NATIVE SIDECAR (gallery-dl and similar)
     ├── rune-email/                     # execution model unconfirmed — classify via §8
-    ├── rune-browser/                   # new, currently disabled in workspace members — classify via §8
+    ├── rune-browser/                   # NATIVE SIDECAR (agent-browser via host_cmd_exec)
     ├── rune-print/                     # HYBRID — WASM renders, native sidecar dispatches (currently disabled, mid-migration)
     ├── rune-memory/                    # WASM-only, pure compute (currently disabled, mid-migration)
     └── rune-sequential-thinking/       # WASM-only, pure compute (currently disabled, mid-migration)
@@ -519,7 +519,7 @@ Walk through in order; stop at the first match.
 | rune-video | Video streaming (ffmpeg/streamlink) | NATIVE |
 | rune-image | Image processing (gallery-dl) | NATIVE |
 | rune-email | Email utilities | Unconfirmed |
-| rune-browser | Browser utilities | Unconfirmed |
+| rune-browser | Browser utilities | NATIVE |
 | rune-print | Print utilities (hybrid) | HYBRID |
 | rune-memory | Knowledge graph storage | WASM |
 | rune-sequential-thinking | Sequential thinking workflows | WASM |
@@ -531,10 +531,9 @@ Walk through in order; stop at the first match.
 ### 9.2 Plugin Development Status
 
 **Currently Enabled** (in workspace `Cargo.toml` `members`):
-- `mhb-mconnect`, `rune-audio`, `rune-email`, `rune-fetch`, `rune-filesystem`, `rune-git`, `rune-image`, `rune-memory`, `rune-sequential-thinking`, `rune-slides`, `rune-time`, `rune-video`
+- `mhb-mconnect`, `rune-audio`, `rune-browser`, `rune-email`, `rune-fetch`, `rune-filesystem`, `rune-git`, `rune-image`, `rune-memory`, `rune-sequential-thinking`, `rune-slides`, `rune-time`, `rune-video`
 
 **Currently Disabled** (commented out in workspace `Cargo.toml` `members`):
-- `rune-browser`: Awaiting execution model classification
 - `rune-print`: Mid-migration from WASM to hybrid native
 - `rune-scan`: eSCL AirScan scanner client (driverless)
 - `rune-ssh`: SSH execution + SFTP transfers

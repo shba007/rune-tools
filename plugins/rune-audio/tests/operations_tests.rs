@@ -7,7 +7,7 @@ use std::fs;
 use std::path::PathBuf;
 use tempfile::tempdir;
 
-const TEST_BASE_DIR: &str = r"../code-kit\test-dir";
+const TEST_BASE_DIR: &str = r"../../temp";
 const TEST_AUDIO_URL: &str = "https://www.youtube.com/shorts/EqvgsORpbOU";
 
 fn get_workspace_dir() -> PathBuf {
@@ -60,14 +60,14 @@ fn test_resolve_cookie_arg_priority() {
         name: "extract_audio_track".to_string(),
         arguments: json!({
             "url": TEST_AUDIO_URL,
-            "cookiesFile": r"../code-kit/test-dir/cookies/custom.txt",
+            "cookiesFile": r"../../temp/cookies/custom.txt",
             "cookiesDir": dir.path().to_str().unwrap(),
             "cookiesFromBrowser": "chrome"
         }),
     };
     let resolved_file = resolve_cookie_arg(&req_file, TEST_AUDIO_URL).unwrap();
     assert_eq!(resolved_file.0, "--cookies");
-    assert_eq!(resolved_file.1, r"../code-kit/test-dir/cookies/custom.txt");
+    assert_eq!(resolved_file.1, r"../../temp/cookies/custom.txt");
 }
 
 #[test]
@@ -103,12 +103,16 @@ fn test_live_extract_audio_track_e2e() {
     let res = execute_tool(req).expect("Failed to execute audio extraction");
     assert_eq!(res["status"], "success");
 
+    print!("{}", audio_output_dir.display());
+
     let entries: Vec<PathBuf> = fs::read_dir(&audio_output_dir)
         .unwrap()
         .flatten()
         .map(|e| e.path())
         .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("mp3"))
         .collect();
+
+    print!("{:#?}", entries);
 
     assert!(
         !entries.is_empty(),

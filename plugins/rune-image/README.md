@@ -114,7 +114,7 @@
 * **Category:** Format Conversion / Raster-to-Vector / Iterative Refinement
 * **Prompt:**
 
-  > Trace `D:\Projects\Public\rune\code-kit\test-dir\head.png` into an SVG at `D:\Projects\Public\rune\code-kit\test-dir\head.svg`, using `convert_image_format`. Don't try to guess the perfect tracing settings up front — do this as a loop of small steps:
+  > Trace `D:\Projects\Public\rune\code-kit\temp\head.png` into an SVG at `D:\Projects\Public\rune\code-kit\temp\head.svg`, using `convert_image_format`. Don't try to guess the perfect tracing settings up front — do this as a loop of small steps:
   >
   > 1. Run `convert_image_format` once with default tracing settings to produce `head.svg`.
   > 2. Run `compare_images` with `image1_path` set to the original `head.png` and `image2_path` set to `head.svg`.
@@ -126,12 +126,12 @@
 
 * **Expected Tool(s):** `convert_image_format`, `compare_images` — called alternately, several times, in that order, not once each.
 * **Parameters (`convert_image_format`, per iteration):**
-  * `input_path`: `D:\Projects\Public\rune\code-kit\test-dir\head.png`
+  * `input_path`: `D:\Projects\Public\rune\code-kit\temp\head.png`
   * `output_format`: `'svg'`
   * `trace_color_mode`, `trace_hierarchical`, `trace_curve_mode`, `color_precision`, `filter_speckle`, `layer_difference`, `corner_threshold`: adjusted between iterations per the diagnosis table below
 * **Parameters (`compare_images`, per iteration):**
-  * `image1_path`: `D:\Projects\Public\rune\code-kit\test-dir\head.png`
-  * `image2_path`: `D:\Projects\Public\rune\code-kit\test-dir\head.svg`
+  * `image1_path`: `D:\Projects\Public\rune\code-kit\temp\head.png`
+  * `image2_path`: `D:\Projects\Public\rune\code-kit\temp\head.svg`
   * `algorithm`: `'rms'`
 * **Expected Output:** A `match_percentage` from `compare_images` that increases (or holds) across iterations, and a final SVG whose traced output is visually indistinguishable from `head.png` at the diff-image level.
 * **Diagnosis table — what to change based on the diff, one step at a time:**

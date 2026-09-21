@@ -7,7 +7,7 @@ use std::fs;
 use std::path::PathBuf;
 use tempfile::tempdir;
 
-const TEST_BASE_DIR: &str = r"../code-kit\test-dir";
+const TEST_BASE_DIR: &str = r"../../temp";
 const TEST_YOUTUBE_URL: &str = "https://www.youtube.com/shorts/EqvgsORpbOU";
 
 fn get_workspace_dir() -> PathBuf {
@@ -60,14 +60,14 @@ fn test_resolve_cookie_arg_priority() {
         name: "download_video_stream".to_string(),
         arguments: json!({
             "url": TEST_YOUTUBE_URL,
-            "cookiesFile": r"../code-kit/test-dir/cookies/custom.txt",
+            "cookiesFile": r"../../temp/cookies/custom.txt",
             "cookiesDir": dir.path().to_str().unwrap(),
             "cookiesFromBrowser": "chrome"
         }),
     };
     let resolved_file = resolve_cookie_arg(&req_file, TEST_YOUTUBE_URL).unwrap();
     assert_eq!(resolved_file.0, "--cookies");
-    assert_eq!(resolved_file.1, r"../code-kit/test-dir/cookies/custom.txt");
+    assert_eq!(resolved_file.1, r"../../temp/cookies/custom.txt");
 }
 
 #[test]

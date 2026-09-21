@@ -114,11 +114,24 @@ fn run_binary_raw(req: &CmdExecRequest) -> Result<CmdExecResponse, String> {
     }
 }
 
-pub fn run_binary(program: &str, args: &[&str], cwd: Option<&str>) -> Result<String, String> {
+pub fn run_binary(program: &str, _args: &[&str], _cwd: Option<&str>) -> Result<String, String> {
+    // For WASM target, binaries must be pre-downloaded
+    if cfg!(target_arch = "wasm32") {
+        return Err(format!(
+            "Binary '{}' is not available in WASM mode. Please download it manually and set ALLOWED_DIR.",
+            program
+        ));
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        ensure_binary_exists(program)?;
+    }
+
     let req = CmdExecRequest {
         program: program.to_string(),
-        args: args.iter().map(|s| s.to_string()).collect(),
-        cwd: cwd.map(|c| c.to_string()),
+        args: _args.iter().map(|s| s.to_string()).collect(),
+        cwd: _cwd.map(|c| c.to_string()),
     };
 
     let resp = run_binary_raw(&req)?;
@@ -352,4 +365,135 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
         unknown => Err(format!("Unknown tool: {}", unknown)),
     }
+}
+
+// =========================================================================
+// Helper Functions for Binary Download
+// =========================================================================
+
+#[cfg(not(target_arch = "wasm32"))]
+const BIN_DIR: &str = "bin";
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_binary_path(binary_name: &str) -> std::path::PathBuf {
+    let base = std::env::var("ALLOWED_DIR")
+        .or_else(|_| std::env::var("OUTPUT_DIR"))
+        .unwrap_or_else(|_| ".".to_string());
+    std::path::PathBuf::from(&base)
+        .join(BIN_DIR)
+        .join(binary_name)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_ytdlp_download_url() -> String {
+    // yt-dlp releases have separate binaries for each platform
+    match std::env::consts::OS {
+        "windows" => {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string()
+        }
+        "linux" | "macos" => {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp".to_string()
+        }
+        _ => "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string(),
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_binary_download_url(program: &str) -> String {
+    match program {
+        "yt-dlp" => get_ytdlp_download_url(),
+        "spotdl" => "https://raw.githubusercontent.com/spotdl/spotdl/master/scripts/spotdl.exe".to_string(),
+        "ffmpeg" => {
+            match std::env::consts::OS {
+                "windows" => {
+                    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string()
+                }
+                "linux" | "macos" => {
+                    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz".to_string()
+                }
+                _ => {
+                    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string()
+                }
+            }
+        }
+        _ => {
+            get_ytdlp_download_url()
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn download_binary(binary_name: &str, download_url: String) -> Result<(), String> {
+    use std::io::Write;
+
+    let binary_path = get_binary_path(binary_name);
+    let dir = binary_path.parent().ok_or("Invalid binary path")?;
+    fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    // Download binary
+    let response = reqwest::blocking::get(&download_url)
+        .map_err(|e| format!("Failed to download {}: {}", binary_name, e))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "Failed to download {}: HTTP {}",
+            binary_name,
+            response.status()
+        ));
+    }
+
+    let mut file = fs::File::create(&binary_path)
+        .map_err(|e| format!("Failed to create binary file: {}", e))?;
+
+    let bytes = response
+        .bytes()
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+
+    file.write_all(&bytes)
+        .map_err(|e| format!("Failed to write binary: {}", e))?;
+
+    println!(
+        "Downloaded {}: {:.1} MB",
+        binary_name,
+        bytes.len() as f64 / 1024.0 / 1024.0
+    );
+
+    // Make executable on Unix-like systems
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = fs::metadata(&binary_path).unwrap().permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&binary_path, perms).ok();
+    }
+
+    Ok(())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn ensure_binary_exists(binary_name: &str) -> Result<(), String> {
+    let binary_path = get_binary_path(binary_name);
+
+    if !binary_path.exists() {
+        println!("{} binary not found. Downloading...", binary_name);
+        let download_url = get_binary_download_url(binary_name);
+        match download_binary(binary_name, download_url.to_string()) {
+            Ok(_) => {
+                // Verify binary is executable
+                if !std::process::Command::new(&binary_path)
+                    .arg("--version")
+                    .output()
+                    .is_ok()
+                {
+                    return Err(format!(
+                        "Downloaded {} binary is not executable.",
+                        binary_name
+                    ));
+                }
+            }
+            Err(e) => return Err(format!("Failed to download {}: {}", binary_name, e)),
+        }
+    }
+
+    Ok(())
 }

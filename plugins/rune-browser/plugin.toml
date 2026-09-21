@@ -1,11 +1,22 @@
 [plugin]
 name = "rune-browser"
 description = "Browser automation with agent-browser (headless) and CDP (existing browser) support. Features: navigation, element interaction, form filling, screenshots, PDF export, console/network diagnostics, and persistent sessions."
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
 capabilities = { network_hosts = [
+	"localhost",
+	"127.0.0.1",
+	"github.com",
+	"objects.githubusercontent.com",
 ], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
-"agent-browser"
+	"agent-browser",
+	"agent-browser.exe",
+	"bin/agent-browser.exe",
+	"./bin/agent-browser.exe",
+	"bin/agent-browser",
+	"./bin/agent-browser",
+	"rune-browser-native",
+	"rune-browser-native.exe",
 ] } }
 documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-browser/README.md"

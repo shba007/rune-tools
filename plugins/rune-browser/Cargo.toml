@@ -1,7 +1,7 @@
 [package]
 name = "rune-browser"
 description = "Headless browser automation: page navigation, element interaction, form filling, JavaScript evaluation, screenshots, PDF export, network/console capture, and persistent session profiles"
-version = "0.1.0"
+version = "0.2.1"
 edition.workspace = true
 license.workspace = true
 
@@ -11,6 +11,10 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "rune-browser-native"
 path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
@@ -20,7 +24,12 @@ chrono = { version = "0.4", features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rune-sidecar = { path = "../../crates/rune-sidecar" }
+reqwest = { version = "0.11", features = ["blocking", "json"] }
 tokio = { version = "1", features = ["full"] }
+zip = "0.6"
+tar = "0.4"
+flate2 = { version = "1.0", default-features = false, features = ["zlib"] }
+xz2 = "0.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true

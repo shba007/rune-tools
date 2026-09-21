@@ -19,7 +19,6 @@ members = [
     "plugins/rune-time",
     "plugins/rune-video",
     "plugins/rune-game-engine",
-    # "plugins/rune-demo",
     "xtask",
 ]
 resolver = "2"

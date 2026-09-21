@@ -21,9 +21,11 @@ rune-pdk = { path = "../../crates/rune-pdk" }
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
+reqwest = { version = "0.11", features = ["blocking"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rune-sidecar = { path = "../../crates/rune-sidecar" }
+zip = "0.6"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true
