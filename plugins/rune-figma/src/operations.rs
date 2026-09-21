@@ -158,10 +158,7 @@ fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Result
         for req_field in required {
             if let Some(field_name) = req_field.as_str() {
                 let is_missing = match args {
-                    Value::Object(map) => match map.get(field_name) {
-                        None | Some(Value::Null) => true,
-                        _ => false,
-                    },
+                    Value::Object(map) => matches!(map.get(field_name), None | Some(Value::Null)),
                     _ => true,
                 };
 
