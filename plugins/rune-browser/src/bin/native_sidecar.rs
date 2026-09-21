@@ -39,7 +39,10 @@ fn main() -> std::io::Result<()> {
         let request: ToolCallRequest = match serde_json::from_str(raw_payload) {
             Ok(req) => req,
             Err(e) => {
-                println!("{}", json!({ "status": "error", "error": format!("Invalid JSON request: {}", e) }));
+                println!(
+                    "{}",
+                    json!({ "status": "error", "error": format!("Invalid JSON request: {}", e) })
+                );
                 return Ok(());
             }
         };

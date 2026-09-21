@@ -53,12 +53,17 @@ pub fn mcp_call_tool(input: String) -> extism_pdk::FnResult<String> {
         }
         Err(_) => {
             if let Ok(val) = serde_json::from_str::<serde_json::Value>(&input) {
-                let raw_name = val.get("name")
+                let raw_name = val
+                    .get("name")
                     .or_else(|| val.get("params").and_then(|p| p.get("name")))
                     .and_then(|n| n.as_str())
                     .unwrap_or("");
-                let clean_name = raw_name.rfind("__").map(|p| &raw_name[p + 2..]).unwrap_or(raw_name);
-                let args = val.get("arguments")
+                let clean_name = raw_name
+                    .rfind("__")
+                    .map(|p| &raw_name[p + 2..])
+                    .unwrap_or(raw_name);
+                let args = val
+                    .get("arguments")
                     .or_else(|| val.get("params").and_then(|p| p.get("arguments")))
                     .cloned()
                     .unwrap_or_else(|| json!({}));

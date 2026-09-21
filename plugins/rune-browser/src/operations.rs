@@ -1,6 +1,6 @@
-use crate::types::{CmdExecResponse, SessionInfo};
 #[cfg(target_arch = "wasm32")]
 use crate::types::CmdExecRequest;
+use crate::types::{CmdExecResponse, SessionInfo};
 use chrono::Utc;
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
@@ -68,21 +68,19 @@ fn save_session(
 }
 
 fn load_session(session_id: &str) -> Option<SessionInfo> {
-    if let Ok(lock) = IN_MEMORY_SESSIONS.lock() {
-        if let Some(ref map) = *lock {
-            if let Some(s) = map.get(session_id) {
-                return Some(s.clone());
-            }
-        }
+    if let Ok(lock) = IN_MEMORY_SESSIONS.lock()
+        && let Some(ref map) = *lock
+        && let Some(s) = map.get(session_id)
+    {
+        return Some(s.clone());
     }
 
     let path = get_session_path(session_id);
-    if path.exists() {
-        if let Ok(content) = fs::read_to_string(&path) {
-            if let Ok(s) = serde_json::from_str::<SessionInfo>(&content) {
-                return Some(s);
-            }
-        }
+    if path.exists()
+        && let Ok(content) = fs::read_to_string(&path)
+        && let Ok(s) = serde_json::from_str::<SessionInfo>(&content)
+    {
+        return Some(s);
     }
 
     None
@@ -93,26 +91,28 @@ fn list_sessions() -> Vec<SessionInfo> {
 
     let base = crate::resolve_dir(None);
     let sessions_dir = PathBuf::from(&base).join(SESSIONS_DIR);
-    if sessions_dir.exists() {
-        if let Ok(entries) = fs::read_dir(&sessions_dir) {
-            for entry in entries.flatten() {
-                if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
-                    if let Ok(content) = fs::read_to_string(entry.path()) {
-                        if let Ok(s) = serde_json::from_str::<SessionInfo>(&content) {
-                            sessions.push(s);
-                        }
-                    }
-                }
+    if sessions_dir.exists()
+        && let Ok(entries) = fs::read_dir(&sessions_dir)
+    {
+        for entry in entries.flatten() {
+            if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false)
+                && let Ok(content) = fs::read_to_string(entry.path())
+                && let Ok(s) = serde_json::from_str::<SessionInfo>(&content)
+            {
+                sessions.push(s);
             }
         }
     }
 
-    if let Ok(lock) = IN_MEMORY_SESSIONS.lock() {
-        if let Some(ref map) = *lock {
-            for s in map.values() {
-                if !sessions.iter().any(|existing| existing.session_id == s.session_id) {
-                    sessions.push(s.clone());
-                }
+    if let Ok(lock) = IN_MEMORY_SESSIONS.lock()
+        && let Some(ref map) = *lock
+    {
+        for s in map.values() {
+            if !sessions
+                .iter()
+                .any(|existing| existing.session_id == s.session_id)
+            {
+                sessions.push(s.clone());
             }
         }
     }
@@ -123,12 +123,11 @@ fn list_sessions() -> Vec<SessionInfo> {
 fn delete_session(session_id: &str) -> Result<(), String> {
     let mut found = false;
 
-    if let Ok(mut lock) = IN_MEMORY_SESSIONS.lock() {
-        if let Some(ref mut map) = *lock {
-            if map.remove(session_id).is_some() {
-                found = true;
-            }
-        }
+    if let Ok(mut lock) = IN_MEMORY_SESSIONS.lock()
+        && let Some(ref mut map) = *lock
+        && map.remove(session_id).is_some()
+    {
+        found = true;
     }
 
     let path = get_session_path(session_id);
@@ -137,7 +136,10 @@ fn delete_session(session_id: &str) -> Result<(), String> {
     }
 
     if !found {
-        return Err(format!("Failed to stop session: session '{}' not found", session_id));
+        return Err(format!(
+            "Failed to stop session: session '{}' not found",
+            session_id
+        ));
     }
 
     Ok(())
@@ -178,14 +180,20 @@ fn is_pure_executable(path: &Path) -> bool {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn locate_agent_browser_binary() -> Result<PathBuf, String> {
-    if let Ok(explicit) = std::env::var("AGENT_BROWSER_PATH").or_else(|_| std::env::var("BROWSER_PATH")) {
+    if let Ok(explicit) =
+        std::env::var("AGENT_BROWSER_PATH").or_else(|_| std::env::var("BROWSER_PATH"))
+    {
         let p = PathBuf::from(&explicit);
         if p.exists() && is_pure_executable(&p) {
             return Ok(p);
         }
     }
 
-    let bin_name = if cfg!(windows) { "agent-browser.exe" } else { "agent-browser" };
+    let bin_name = if cfg!(windows) {
+        "agent-browser.exe"
+    } else {
+        "agent-browser"
+    };
 
     // Check local managed cache directories
     let base_dir = crate::resolve_dir(None);
@@ -217,7 +225,11 @@ fn locate_agent_browser_binary() -> Result<PathBuf, String> {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn download_standalone_agent_browser() -> Result<PathBuf, String> {
-    let bin_name = if cfg!(windows) { "agent-browser.exe" } else { "agent-browser" };
+    let bin_name = if cfg!(windows) {
+        "agent-browser.exe"
+    } else {
+        "agent-browser"
+    };
     let base_dir = crate::resolve_dir(None);
     let bin_dir = PathBuf::from(&base_dir).join("bin");
     let _ = fs::create_dir_all(&bin_dir);
@@ -232,13 +244,27 @@ fn download_standalone_agent_browser() -> Result<PathBuf, String> {
         ("macos", _) => "agent-browser-darwin-x64",
         ("linux", "aarch64") => "agent-browser-linux-arm64",
         ("linux", _) => "agent-browser-linux-x64",
-        _ => return Err(format!("Unsupported platform for agent-browser: {}-{}", os, arch)),
+        _ => {
+            return Err(format!(
+                "Unsupported platform for agent-browser: {}-{}",
+                os, arch
+            ));
+        }
     };
 
     let urls = [
-        format!("https://github.com/vercel-labs/agent-browser/releases/latest/download/{}", asset_name),
-        format!("https://github.com/vercel-labs/agent-browser/releases/download/v0.38.1/{}", asset_name),
-        format!("https://github.com/vercel-labs/agent-browser/releases/download/v0.37.1/{}", asset_name),
+        format!(
+            "https://github.com/vercel-labs/agent-browser/releases/latest/download/{}",
+            asset_name
+        ),
+        format!(
+            "https://github.com/vercel-labs/agent-browser/releases/download/v0.38.1/{}",
+            asset_name
+        ),
+        format!(
+            "https://github.com/vercel-labs/agent-browser/releases/download/v0.37.1/{}",
+            asset_name
+        ),
     ];
 
     let mut last_err = String::new();
@@ -249,15 +275,15 @@ fn download_standalone_agent_browser() -> Result<PathBuf, String> {
             .and_then(|client| client.get(url).send())
         {
             Ok(resp) if resp.status().is_success() => {
-                if let Ok(bytes) = resp.bytes() {
-                    if fs::write(&dest, &bytes).is_ok() {
-                        #[cfg(unix)]
-                        {
-                            use std::os::unix::fs::PermissionsExt;
-                            let _ = fs::set_permissions(&dest, fs::Permissions::from_mode(0o755));
-                        }
-                        return Ok(dest);
+                if let Ok(bytes) = resp.bytes()
+                    && fs::write(&dest, &bytes).is_ok()
+                {
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        let _ = fs::set_permissions(&dest, fs::Permissions::from_mode(0o755));
                     }
+                    return Ok(dest);
                 }
             }
             Ok(resp) => {
@@ -296,10 +322,17 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
                 })
             } else {
                 let err_msg = String::from_utf8_lossy(&output.stderr);
-                Err(format!("agent-browser exited with code {:?}: {}", output.status.code(), err_msg))
+                Err(format!(
+                    "agent-browser exited with code {:?}: {}",
+                    output.status.code(),
+                    err_msg
+                ))
             }
         }
-        Err(e) => Err(format!("Failed to execute agent-browser at {:?}: {}", bin_path, e)),
+        Err(e) => Err(format!(
+            "Failed to execute agent-browser at {:?}: {}",
+            bin_path, e
+        )),
     }
 }
 
@@ -322,7 +355,10 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
         if resp.success {
             Ok(resp)
         } else {
-            Err(format!("agent-browser exited with code {:?}: {}", resp.exit_code, resp.stderr))
+            Err(format!(
+                "agent-browser exited with code {:?}: {}",
+                resp.exit_code, resp.stderr
+            ))
         }
     } else {
         Ok(CmdExecResponse {
@@ -339,7 +375,11 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
 // =========================================================================
 
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
-    let tool_name = request.name.rfind("__").map(|p| &request.name[p + 2..]).unwrap_or(&request.name);
+    let tool_name = request
+        .name
+        .rfind("__")
+        .map(|p| &request.name[p + 2..])
+        .unwrap_or(&request.name);
 
     match tool_name {
         "browser_session_start" => op_session_start(&request),
@@ -364,7 +404,11 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_session_start(request: &ToolCallRequest) -> Result<Value, String> {
-    let engine = get_arg(&request.arguments, "engine", Some("agent-browser".to_string()));
+    let engine = get_arg(
+        &request.arguments,
+        "engine",
+        Some("agent-browser".to_string()),
+    );
     let browser_type = get_arg(&request.arguments, "browser_type", Some("auto".to_string()));
     let headed = get_bool_arg(&request.arguments, "headed", false);
     let output_dir = get_arg(&request.arguments, "output_dir", None);
@@ -420,8 +464,8 @@ fn op_navigate(request: &ToolCallRequest) -> Result<Value, String> {
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let browser_type = get_arg(&request.arguments, "browser_type", None)
-        .unwrap_or_else(|| "auto".to_string());
+    let browser_type =
+        get_arg(&request.arguments, "browser_type", None).unwrap_or_else(|| "auto".to_string());
 
     let headed = get_bool_arg(&request.arguments, "headed", false);
 
@@ -963,7 +1007,11 @@ fn op_network_requests(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_cdp_connect(request: &ToolCallRequest) -> Result<Value, String> {
-    let target_host = get_arg(&request.arguments, "target_host", Some("localhost:9222".to_string()));
+    let target_host = get_arg(
+        &request.arguments,
+        "target_host",
+        Some("localhost:9222".to_string()),
+    );
     let web_socket_url = get_arg(&request.arguments, "web_socket_url", None);
     let session_id = format!("cdp_{}", Utc::now().timestamp_millis());
 
@@ -980,7 +1028,11 @@ fn op_cdp_request(request: &ToolCallRequest) -> Result<Value, String> {
         .ok_or_else(|| "Missing 'session_id' parameter".to_string())?;
     let method = get_arg(&request.arguments, "method", None)
         .ok_or_else(|| "Missing 'method' parameter".to_string())?;
-    let params = request.arguments.get("params").cloned().unwrap_or(json!({}));
+    let params = request
+        .arguments
+        .get("params")
+        .cloned()
+        .unwrap_or(json!({}));
 
     Ok(json!({
         "status": "success",
