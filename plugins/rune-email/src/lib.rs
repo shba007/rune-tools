@@ -27,7 +27,10 @@ pub fn mcp_list_tools(_: ()) -> extism_pdk::FnResult<String> {
 #[cfg(target_arch = "wasm32")]
 #[extism_pdk::plugin_fn]
 pub fn mcp_call_tool(input: String) -> extism_pdk::FnResult<String> {
-    let request: ToolCallRequest = serde_json::from_str(&input)?;
+    let mut request: ToolCallRequest = serde_json::from_str(&input)?;
+    if let Some(pos) = request.name.rfind("__") {
+        request.name = request.name[pos + 2..].to_string();
+    }
     let result = operations::execute_tool(request);
 
     let output = match result {

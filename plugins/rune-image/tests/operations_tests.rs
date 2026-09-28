@@ -595,8 +595,8 @@ fn test_compare_real_png_with_svg() {
     }
     // Test comparing actual PNG and SVG files from test directory
     // Use absolute paths to avoid relative path issues
-    let png_path = r"D:\Projects\Public\rune\code-kit\temp\head.png";
-    let svg_path = r"D:\Projects\Public\rune\code-kit\temp\head.svg";
+    let png_path = r"D:\Projects\Public\rune\code-tools\temp\head.png";
+    let svg_path = r"D:\Projects\Public\rune\code-tools\temp\head.svg";
 
     // Check if files exist
     assert!(
@@ -658,7 +658,7 @@ fn test_compare_same_png_file() {
     }
     // Test comparing the same PNG file with itself
     // This verifies that the comparison tool handles same-file comparisons correctly
-    let png_path = r"D:\Projects\Public\rune\code-kit\temp\head.png";
+    let png_path = r"D:\Projects\Public\rune\code-tools\temp\head.png";
 
     assert!(Path::new(&png_path).exists(), "PNG test file should exist");
 

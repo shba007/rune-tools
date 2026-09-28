@@ -1,4 +1,6 @@
-use rune_figma::operations::{execute_tool, filter_figma_node, rgba_to_hex};
+use rune_figma::operations::{
+    execute_tool, filter_figma_node, get_prompt, read_resource, rgba_to_hex,
+};
 use rune_pdk::ToolCallRequest;
 use serde_json::json;
 
@@ -9,6 +11,9 @@ fn test_rgba_to_hex() {
 
     let translucent_red = json!({ "r": 1.0, "g": 0.0, "b": 0.0, "a": 0.5 });
     assert_eq!(rgba_to_hex(&translucent_red), "#ff000080");
+
+    let bare_hex = json!("123456");
+    assert_eq!(rgba_to_hex(&bare_hex), "#123456");
 
     let hex_passthrough = json!("#123456");
     assert_eq!(rgba_to_hex(&hex_passthrough), "#123456");
@@ -89,4 +94,52 @@ fn test_unknown_tool_rejection() {
     let res = execute_tool(req);
     assert!(res.is_err());
     assert!(res.unwrap_err().contains("Unknown tool"));
+}
+
+#[test]
+fn test_empty_parameter_rejection() {
+    let req = ToolCallRequest {
+        name: "get_node_info".to_string(),
+        arguments: json!({ "nodeId": "   " }),
+    };
+
+    let res = execute_tool(req);
+    assert!(res.is_err());
+    assert!(res.unwrap_err().contains("to be non-empty"));
+}
+
+#[test]
+fn test_set_image_fill_mutually_exclusive_sources() {
+    let req_none = ToolCallRequest {
+        name: "set_image_fill".to_string(),
+        arguments: json!({ "nodeId": "1:2" }),
+    };
+    assert!(execute_tool(req_none).is_err());
+
+    let req_both = ToolCallRequest {
+        name: "set_image_fill".to_string(),
+        arguments: json!({
+            "nodeId": "1:2",
+            "imagePath": "/tmp/a.png",
+            "imageUrl": "https://example.com/a.png"
+        }),
+    };
+    assert!(execute_tool(req_both).is_err());
+
+    let req_valid = ToolCallRequest {
+        name: "set_image_fill".to_string(),
+        arguments: json!({
+            "nodeId": "1:2",
+            "imagePath": "/tmp/a.png"
+        }),
+    };
+    assert!(execute_tool(req_valid).is_ok());
+}
+
+#[test]
+fn test_resources_and_prompts() {
+    assert!(read_resource("rune://figma/document").is_ok());
+    assert!(read_resource("rune://figma/unknown").is_err());
+    assert!(get_prompt("design_strategy", &json!({})).is_ok());
+    assert!(get_prompt("unknown_strategy", &json!({})).is_err());
 }

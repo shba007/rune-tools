@@ -1,6 +1,6 @@
 [package]
 name = "rune-figma"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 license.workspace = true
 
@@ -21,10 +21,11 @@ rune-pdk = { path = "../../crates/rune-pdk" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 tokio = { version = "1", features = ["full"], optional = true }
-tokio-tungstenite = { version = "0.21", features = [
+tokio-tungstenite = { version = "0.30", features = [
   "connect",
 ], optional = true }
 futures-util = { version = "0.3", optional = true }
+chrono.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

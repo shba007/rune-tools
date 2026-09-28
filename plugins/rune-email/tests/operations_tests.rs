@@ -42,7 +42,7 @@ fn test_resolve_account_config_custom() {
 }
 
 #[test]
-fn test_empty_required_parameters() {
+fn test_empty_send_email_parameters() {
     let req_empty = ToolCallRequest {
         name: "send_email".to_string(),
         arguments: json!({}),
@@ -52,14 +52,66 @@ fn test_empty_required_parameters() {
 }
 
 #[test]
+fn test_send_email_empty_strings_rejected() {
+    let req = ToolCallRequest {
+        name: "send_email".to_string(),
+        arguments: json!({
+            "email": "user@gmail.com",
+            "password": "secret_password",
+            "preset": "gmail",
+            "to": "   ",
+            "subject": "Test",
+            "bodyText": "Hello"
+        }),
+    };
+    let res = execute_tool(req);
+    assert!(res.is_err());
+    assert!(res.unwrap_err().contains("Parameter 'to' cannot be empty"));
+
+    let req_subj = ToolCallRequest {
+        name: "send_email".to_string(),
+        arguments: json!({
+            "email": "user@gmail.com",
+            "password": "secret_password",
+            "preset": "gmail",
+            "to": "recipient@example.com",
+            "subject": "   ",
+            "bodyText": "Hello"
+        }),
+    };
+    let res_subj = execute_tool(req_subj);
+    assert!(res_subj.is_err());
+    assert!(
+        res_subj
+            .unwrap_err()
+            .contains("Parameter 'subject' cannot be empty")
+    );
+}
+
+#[test]
+fn test_invalid_uid_rejected() {
+    let req = ToolCallRequest {
+        name: "read_message".to_string(),
+        arguments: json!({
+            "email": "user@gmail.com",
+            "password": "secret_password",
+            "preset": "gmail",
+            "uid": 0
+        }),
+    };
+    let res = execute_tool(req);
+    assert!(res.is_err());
+    assert!(
+        res.unwrap_err()
+            .contains("Parameter 'uid' must be a positive integer")
+    );
+}
+
+#[test]
 fn test_unknown_tool_routing() {
     let req = ToolCallRequest {
         name: "non_existent_tool".to_string(),
-        arguments: json!({
-            "email": "test@test.com",
-            "password": "pass",
-            "preset": "gmail"
-        }),
+        arguments: json!({}),
     };
     let res = execute_tool(req);
     assert!(res.is_err());
@@ -141,19 +193,6 @@ fn test_live_print_last_emails_e2e() {
 
     let res = execute_tool(req).expect("Failed to fetch messages from live server");
     let messages = res["messages"].as_array().expect("Expected messages array");
-
-    println!("\n=== Last {} Emails in INBOX ===", messages.len());
-    for (i, msg) in messages.iter().enumerate() {
-        println!(
-            "[{}] UID: {} | Date: {} | From: {} | Subject: {}",
-            i + 1,
-            msg["uid"],
-            msg["date"].as_str().unwrap_or("N/A"),
-            msg["from"].as_str().unwrap_or("Unknown"),
-            msg["subject"].as_str().unwrap_or("(No Subject)")
-        );
-    }
-    println!("======================================\n");
 
     assert!(
         !messages.is_empty(),

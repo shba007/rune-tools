@@ -18,18 +18,26 @@ fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
     {
         return Some(val.to_string());
     }
-    let env_snake = snake.to_ascii_uppercase();
-    let env_camel = camel.to_ascii_uppercase();
-    std::env::var(&env_snake)
-        .or_else(|_| std::env::var(&env_camel))
-        .or_else(|_| {
-            if snake == "output_directory" {
-                std::env::var("OUTPUT_DIR").or_else(|_| std::env::var("ALLOWED_DIR"))
-            } else {
-                Err(std::env::VarError::NotPresent)
-            }
-        })
-        .ok()
+    // Scope environment variable fallbacks only to directory and config parameters
+    if snake == "output_directory" {
+        std::env::var("OUTPUT_DIRECTORY")
+            .or_else(|_| std::env::var("OUTPUT_DIR"))
+            .or_else(|_| std::env::var("ALLOWED_DIR"))
+            .ok()
+    } else if snake == "cookies_dir" {
+        std::env::var("COOKIES_DIR").ok()
+    } else if snake == "cookies_file" {
+        std::env::var("COOKIES_FILE").ok()
+    } else if snake == "cookies_from_browser" {
+        std::env::var("COOKIES_FROM_BROWSER").ok()
+    } else if snake == "proxy" {
+        std::env::var("HTTPS_PROXY")
+            .or_else(|_| std::env::var("HTTP_PROXY"))
+            .or_else(|_| std::env::var("PROXY"))
+            .ok()
+    } else {
+        None
+    }
 }
 
 fn get_u64_arg(args: &Value, camel: &str, snake: &str) -> Option<u64> {
@@ -39,6 +47,15 @@ fn get_u64_arg(args: &Value, camel: &str, snake: &str) -> Option<u64> {
         .and_then(Value::as_u64)
     {
         return Some(val);
+    }
+    if let Some(s) = args
+        .get(camel)
+        .or_else(|| args.get(snake))
+        .and_then(Value::as_str)
+    {
+        if let Ok(n) = s.parse::<u64>() {
+            return Some(n);
+        }
     }
     let env_snake = snake.to_ascii_uppercase();
     let env_camel = camel.to_ascii_uppercase();
@@ -55,6 +72,13 @@ fn get_bool_arg(args: &Value, camel: &str, snake: &str) -> bool {
         .and_then(Value::as_bool)
     {
         return val;
+    }
+    if let Some(s) = args
+        .get(camel)
+        .or_else(|| args.get(snake))
+        .and_then(Value::as_str)
+    {
+        return matches!(s.to_ascii_lowercase().as_str(), "1" | "true" | "yes");
     }
     let env_snake = snake.to_ascii_uppercase();
     let env_camel = camel.to_ascii_uppercase();
@@ -114,24 +138,13 @@ fn run_binary_raw(req: &CmdExecRequest) -> Result<CmdExecResponse, String> {
     }
 }
 
-pub fn run_binary(program: &str, _args: &[&str], _cwd: Option<&str>) -> Result<String, String> {
-    // For WASM target, binaries must be pre-downloaded
-    if cfg!(target_arch = "wasm32") {
-        return Err(format!(
-            "Binary '{}' is not available in WASM mode. Please download it manually and set ALLOWED_DIR.",
-            program
-        ));
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        ensure_binary_exists(program)?;
-    }
+pub fn run_binary(program: &str, args: &[&str], cwd: Option<&str>) -> Result<String, String> {
+    let executable = resolve_binary_executable(program)?;
 
     let req = CmdExecRequest {
-        program: program.to_string(),
-        args: _args.iter().map(|s| s.to_string()).collect(),
-        cwd: _cwd.map(|c| c.to_string()),
+        program: executable,
+        args: args.iter().map(|s| s.to_string()).collect(),
+        cwd: cwd.map(|c| c.to_string()),
     };
 
     let resp = run_binary_raw(&req)?;
@@ -368,25 +381,77 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 }
 
 // =========================================================================
-// Helper Functions for Binary Download
+// Helper Functions for Binary Resolution and Download
 // =========================================================================
 
 #[cfg(not(target_arch = "wasm32"))]
 const BIN_DIR: &str = "bin";
+
+#[cfg(target_arch = "wasm32")]
+fn resolve_binary_executable(program: &str) -> Result<String, String> {
+    Ok(program.to_string())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn resolve_binary_executable(program: &str) -> Result<String, String> {
+    let env_key = format!("{}_PATH", program.replace('-', "_").to_ascii_uppercase());
+    if let Ok(explicit) = std::env::var(&env_key) {
+        let p = PathBuf::from(&explicit);
+        if p.exists() {
+            return Ok(p.to_string_lossy().to_string());
+        }
+    }
+
+    let local_path = get_binary_path(program);
+    if local_path.exists() {
+        return Ok(local_path.to_string_lossy().to_string());
+    }
+
+    let exe_name = if cfg!(windows) && !program.ends_with(".exe") {
+        format!("{}.exe", program)
+    } else {
+        program.to_string()
+    };
+
+    if let Ok(path_var) = std::env::var("PATH") {
+        for dir in std::env::split_paths(&path_var) {
+            let candidate = dir.join(&exe_name);
+            if candidate.is_file() {
+                return Ok(candidate.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    if std::process::Command::new(program)
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+    {
+        return Ok(program.to_string());
+    }
+
+    ensure_binary_exists(program)?;
+    Ok(local_path.to_string_lossy().to_string())
+}
 
 #[cfg(not(target_arch = "wasm32"))]
 fn get_binary_path(binary_name: &str) -> std::path::PathBuf {
     let base = std::env::var("ALLOWED_DIR")
         .or_else(|_| std::env::var("OUTPUT_DIR"))
         .unwrap_or_else(|_| ".".to_string());
+    let file_name = if cfg!(windows) && !binary_name.ends_with(".exe") {
+        format!("{}.exe", binary_name)
+    } else {
+        binary_name.to_string()
+    };
     std::path::PathBuf::from(&base)
         .join(BIN_DIR)
-        .join(binary_name)
+        .join(file_name)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 fn get_ytdlp_download_url() -> String {
-    // yt-dlp releases have separate binaries for each platform
     match std::env::consts::OS {
         "windows" => {
             "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string()
@@ -399,10 +464,23 @@ fn get_ytdlp_download_url() -> String {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+fn get_spotdl_download_url() -> String {
+    match std::env::consts::OS {
+        "windows" => {
+            "https://github.com/spotDL/spotify-downloader/releases/latest/download/spotdl-windows-x64.exe".to_string()
+        }
+        "macos" => {
+            "https://github.com/spotDL/spotify-downloader/releases/latest/download/spotdl-darwin".to_string()
+        }
+        _ => "https://github.com/spotDL/spotify-downloader/releases/latest/download/spotdl-linux".to_string(),
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn get_binary_download_url(program: &str) -> String {
     match program {
         "yt-dlp" => get_ytdlp_download_url(),
-        "spotdl" => "https://raw.githubusercontent.com/spotdl/spotdl/master/scripts/spotdl.exe".to_string(),
+        "spotdl" => get_spotdl_download_url(),
         "ffmpeg" => {
             match std::env::consts::OS {
                 "windows" => {
@@ -416,9 +494,7 @@ fn get_binary_download_url(program: &str) -> String {
                 }
             }
         }
-        _ => {
-            get_ytdlp_download_url()
-        }
+        _ => get_ytdlp_download_url(),
     }
 }
 
@@ -430,7 +506,6 @@ fn download_binary(binary_name: &str, download_url: String) -> Result<(), String
     let dir = binary_path.parent().ok_or("Invalid binary path")?;
     fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory: {}", e))?;
 
-    // Download binary
     let response = reqwest::blocking::get(&download_url)
         .map_err(|e| format!("Failed to download {}: {}", binary_name, e))?;
 
@@ -451,6 +526,8 @@ fn download_binary(binary_name: &str, download_url: String) -> Result<(), String
 
     file.write_all(&bytes)
         .map_err(|e| format!("Failed to write binary: {}", e))?;
+    file.flush().ok();
+    drop(file);
 
     println!(
         "Downloaded {}: {:.1} MB",
@@ -458,13 +535,14 @@ fn download_binary(binary_name: &str, download_url: String) -> Result<(), String
         bytes.len() as f64 / 1024.0 / 1024.0
     );
 
-    // Make executable on Unix-like systems
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let mut perms = fs::metadata(&binary_path).unwrap().permissions();
-        perms.set_mode(0o755);
-        fs::set_permissions(&binary_path, perms).ok();
+        if let Ok(meta) = fs::metadata(&binary_path) {
+            let mut perms = meta.permissions();
+            perms.set_mode(0o755);
+            let _ = fs::set_permissions(&binary_path, perms);
+        }
     }
 
     Ok(())
@@ -477,13 +555,13 @@ fn ensure_binary_exists(binary_name: &str) -> Result<(), String> {
     if !binary_path.exists() {
         println!("{} binary not found. Downloading...", binary_name);
         let download_url = get_binary_download_url(binary_name);
-        match download_binary(binary_name, download_url.to_string()) {
+        match download_binary(binary_name, download_url) {
             Ok(_) => {
-                // Verify binary is executable
                 if !std::process::Command::new(&binary_path)
                     .arg("--version")
                     .output()
-                    .is_ok()
+                    .map(|o| o.status.success())
+                    .unwrap_or(false)
                 {
                     return Err(format!(
                         "Downloaded {} binary is not executable.",

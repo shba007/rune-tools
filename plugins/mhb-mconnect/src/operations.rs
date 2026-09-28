@@ -14,12 +14,16 @@ extern "ExtismHost" {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
+    if let Some(pos) = request.name.rfind("__") {
+        request.name = request.name[pos + 2..].to_string();
+    }
+
     let payload_str =
         serde_json::to_string(&request).map_err(|e| format!("Serialization error: {}", e))?;
 
     let cmd_req = CmdExecRequest {
-        program: "rune-mhb-mconnect-native".to_string(),
+        program: "mhb-mconnect-native".to_string(),
         args: vec!["--exec".to_string(), payload_str],
         cwd: None,
     };
@@ -35,7 +39,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         return Err(if !resp.stderr.is_empty() {
             resp.stderr
         } else {
-            "rune-mhb-mconnect-native exited with failure".to_string()
+            "mhb-mconnect-native exited with failure".to_string()
         });
     }
 
@@ -55,27 +59,46 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn get_base_url(args: &Value) -> String {
-    args.get("baseUrl")
+    let raw = args
+        .get("baseUrl")
         .or_else(|| args.get("base_url"))
         .and_then(Value::as_str)
         .map(ToString::to_string)
+        .or_else(|| rune_pdk::get_config("MHB_BASE_URL"))
+        .or_else(|| rune_pdk::get_config("BASE_URL"))
         .or_else(|| std::env::var("MHB_BASE_URL").ok())
         .or_else(|| std::env::var("BASE_URL").ok())
-        .unwrap_or_else(|| "https://api.modesthumanbrands.com".to_string())
+        .unwrap_or_else(|| "https://api.modesthumanbrands.com".to_string());
+    raw.trim_end_matches('/').to_string()
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
-    args.get(camel)
-        .or_else(|| args.get(snake))
-        .and_then(Value::as_str)
-        .map(ToString::to_string)
+fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Result<String, String> {
+    let val = args.get(camel).or_else(|| args.get(snake));
+    match val {
+        Some(Value::String(s)) => {
+            if s.trim().is_empty() {
+                Err(format!("Parameter '{}' cannot be empty", camel))
+            } else {
+                Ok(s.trim().to_string())
+            }
+        }
+        Some(_) => Err(format!("Parameter '{}' must be a string", camel)),
+        None => Err(format!("Missing '{}' parameter", camel)),
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
+    if let Some(pos) = request.name.rfind("__") {
+        request.name = request.name[pos + 2..].to_string();
+    }
+
     let base_url = get_base_url(&request.arguments);
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
 
     match request.name.as_str() {
         "mhb_list_templates" => {
@@ -86,7 +109,12 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .map_err(|e| format!("Network request failed: {}", e))?;
 
             if !resp.status().is_success() {
-                return Err(format!("API returned error status: {}", resp.status()));
+                let status = resp.status();
+                let err_text = resp.text().unwrap_or_default();
+                return Err(format!(
+                    "API returned error status [{}]: {}",
+                    status, err_text
+                ));
             }
 
             let templates: Vec<EmailTemplateSummary> = resp
@@ -97,12 +125,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "mhb_get_template" => {
-            let template_id = get_str_arg(&request.arguments, "templateId", "template_id")
-                .ok_or_else(|| "Missing 'templateId' parameter".to_string())?;
-
-            if template_id.trim().is_empty() {
-                return Err("Parameter 'templateId' cannot be empty".to_string());
-            }
+            let template_id = get_str_arg(&request.arguments, "templateId", "template_id")?;
 
             let url = format!(
                 "{}/api/interaction/email/template/{}",
@@ -114,7 +137,12 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .map_err(|e| format!("Network request failed: {}", e))?;
 
             if !resp.status().is_success() {
-                return Err(format!("API returned error status: {}", resp.status()));
+                let status = resp.status();
+                let err_text = resp.text().unwrap_or_default();
+                return Err(format!(
+                    "API returned error status [{}]: {}",
+                    status, err_text
+                ));
             }
 
             let detail: EmailTemplateDetail = resp
@@ -125,18 +153,20 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "mhb_render_template_preview" => {
-            let template_id = get_str_arg(&request.arguments, "templateId", "template_id")
-                .ok_or_else(|| "Missing 'templateId' parameter".to_string())?;
+            let template_id = get_str_arg(&request.arguments, "templateId", "template_id")?;
 
             let variables = request
                 .arguments
                 .get("variables")
-                .cloned()
-                .unwrap_or_else(|| json!({}));
+                .ok_or_else(|| "Missing 'variables' parameter".to_string())?;
+
+            if !variables.is_object() {
+                return Err("Parameter 'variables' must be a JSON object".to_string());
+            }
 
             let payload = RenderPreviewRequest {
                 template_id,
-                variables,
+                variables: variables.clone(),
             };
 
             let url = format!("{}/api/interaction/email/template/preview", base_url);

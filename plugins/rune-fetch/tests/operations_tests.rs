@@ -1,6 +1,6 @@
 use rune_fetch::operations::{
-    execute_tool, execute_tool_with_fetcher, get_prompt, html_to_markdown, process_content,
-    read_resource,
+    execute_tool, execute_tool_with_fetcher, get_prompt, html_to_markdown, is_html,
+    process_content, read_resource,
 };
 use rune_pdk::ToolCallRequest;
 use serde_json::json;
@@ -56,6 +56,17 @@ fn test_fetch_empty_url() {
 }
 
 #[test]
+fn test_fetch_bare_protocol_rejection() {
+    let req = ToolCallRequest {
+        name: "fetch".to_string(),
+        arguments: json!({ "url": "https://" }),
+    };
+    let res = execute_tool(req);
+    assert!(res.is_err());
+    assert!(res.unwrap_err().contains("must include a host domain"));
+}
+
+#[test]
 fn test_fetch_invalid_protocol() {
     let req = ToolCallRequest {
         name: "fetch".to_string(),
@@ -84,6 +95,42 @@ fn test_html_to_markdown_elements() {
 }
 
 #[test]
+fn test_html_comments_and_img_extraction() {
+    let html = "<!-- outer comment --><p>Check <img src=\"https://example.com/logo.png\" alt=\"Logo\" /> here.</p>";
+    let md = html_to_markdown(html);
+
+    assert!(!md.contains("outer comment"));
+    assert!(md.contains("![Logo](https://example.com/logo.png)"));
+}
+
+#[test]
+fn test_pre_and_code_preserves_indentation() {
+    let html = "<pre><code>  def foo():\n    return 42</code></pre>";
+    let md = html_to_markdown(html);
+
+    assert!(md.contains("```\n  def foo():\n    return 42\n```"));
+    assert!(!md.contains("`  def foo()"));
+}
+
+#[test]
+fn test_extended_html_entities() {
+    let html = "<p>Prices &euro;50 &mdash; &copy; 2026 &ldquo;Rune&rdquo;</p>";
+    let md = html_to_markdown(html);
+
+    assert!(md.contains("Prices €50 — © 2026 “Rune”"));
+}
+
+#[test]
+fn test_is_html_accurate_boundary() {
+    assert!(is_html("<!doctype html><html><body>ok</body></html>"));
+    assert!(is_html("<p>Paragraph</p>"));
+    assert!(!is_html("let val = x < y && z </ 2;"));
+    assert!(!is_html(
+        "This is a simple markdown note without html tags."
+    ));
+}
+
+#[test]
 fn test_process_content_raw_mode() {
     let html = "<h1>Heading</h1>";
     let result = process_content(html, true, false, 0, 1000).unwrap();
@@ -94,13 +141,11 @@ fn test_process_content_raw_mode() {
 fn test_process_content_pagination() {
     let sample = "0123456789abcdef";
 
-    // Pagination disabled: next_start_index must be None
     let res_no_paginate = process_content(sample, true, false, 0, 5).unwrap();
     assert_eq!(res_no_paginate["contents"], "01234");
     assert_eq!(res_no_paginate["has_more"], true);
     assert!(res_no_paginate.get("next_start_index").is_none());
 
-    // Pagination enabled: next_start_index must be Some(5)
     let res_paginate = process_content(sample, true, true, 0, 5).unwrap();
     assert_eq!(res_paginate["contents"], "01234");
     assert_eq!(res_paginate["has_more"], true);
@@ -132,6 +177,22 @@ fn test_get_prompt() {
     let err = get_prompt("invalid_prompt", &args);
     assert!(err.is_err());
     assert!(err.unwrap_err().contains("Unknown prompt"));
+}
+
+#[test]
+fn test_router_prefix_and_camel_case_alias() {
+    let req = ToolCallRequest {
+        name: "rune-fetch__fetch".to_string(),
+        arguments: json!({
+            "url": "https://example.com",
+            "maxLength": 10,
+            "startIndex": 0
+        }),
+    };
+
+    let res = execute_tool_with_fetcher(req, |_url| Ok("1234567890abcdef".to_string())).unwrap();
+    assert_eq!(res["contents"], "1234567890");
+    assert_eq!(res["length"], 10);
 }
 
 #[test]

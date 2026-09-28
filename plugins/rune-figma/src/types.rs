@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RgbaColor {
     pub r: f64,
     pub g: f64,
@@ -13,12 +13,12 @@ fn default_alpha() -> f64 {
     1.0
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AnnotationProperty {
     pub r#type: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AnnotationItem {
     #[serde(rename = "nodeId")]
     pub node_id: String,
@@ -31,14 +31,14 @@ pub struct AnnotationItem {
     pub properties: Option<Vec<AnnotationProperty>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TextReplacementItem {
     #[serde(rename = "nodeId")]
     pub node_id: String,
     pub text: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ConnectionItem {
     #[serde(rename = "startNodeId")]
     pub start_node_id: String,
@@ -48,7 +48,7 @@ pub struct ConnectionItem {
 }
 
 /// WebSocket Relay Message Envelope
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RelayEnvelope {
     pub id: Option<String>,
     #[serde(rename = "type")]
@@ -59,7 +59,7 @@ pub struct RelayEnvelope {
 }
 
 /// Sidecar IPC request structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SidecarIpcRequest {
     pub id: String,
     pub command: String,

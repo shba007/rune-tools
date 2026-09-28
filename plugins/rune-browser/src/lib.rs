@@ -2,6 +2,26 @@ pub mod definitions;
 pub mod operations;
 pub mod types;
 
+use std::path::PathBuf;
+
+pub fn get_config(key: &str) -> Option<String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        extism_pdk::config::get(key)
+            .ok()
+            .flatten()
+            .or_else(|| std::env::var(key.to_ascii_uppercase()).ok())
+            .filter(|s| !s.is_empty())
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::env::var(key.to_ascii_uppercase())
+            .or_else(|_| std::env::var(key))
+            .ok()
+            .filter(|s| !s.is_empty())
+    }
+}
+
 pub fn resolve_dir(dir_param: Option<&str>) -> String {
     let explicit = dir_param.map(ToString::to_string).or_else(|| {
         std::env::var("OUTPUT_DIRECTORY")
@@ -9,7 +29,20 @@ pub fn resolve_dir(dir_param: Option<&str>) -> String {
             .or_else(|_| std::env::var("ALLOWED_DIR"))
             .ok()
     });
-    explicit.unwrap_or_else(|| ".".to_string())
+
+    let raw = explicit.unwrap_or_else(|| ".".to_string());
+    let target = PathBuf::from(raw);
+
+    if let Some(allowed_root) = get_config("allowed_dir") {
+        let root = PathBuf::from(allowed_root);
+        if target.is_relative() {
+            root.join(target).to_string_lossy().to_string()
+        } else {
+            target.to_string_lossy().to_string()
+        }
+    } else {
+        target.to_string_lossy().to_string()
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -43,7 +76,6 @@ extern "ExtismHost" {
 #[cfg(target_arch = "wasm32")]
 #[extism_pdk::plugin_fn]
 pub fn mcp_call_tool(input: String) -> extism_pdk::FnResult<String> {
-    // 1. Resilient request parsing (supports standard, router-prefixed, and raw JSON-RPC structures)
     let request: ToolCallRequest = match serde_json::from_str::<ToolCallRequest>(&input) {
         Ok(mut req) => {
             if let Some(pos) = req.name.rfind("__") {
@@ -81,12 +113,10 @@ pub fn mcp_call_tool(input: String) -> extism_pdk::FnResult<String> {
         }
     };
 
-    // 2. Dispatch via operations::execute_tool; catch all errors to prevent Wasmtime traps
-    match operations::execute_tool(request) {
-        Ok(val) => Ok(serde_json::to_string(&val)?),
-        Err(err) => Ok(serde_json::to_string(&json!({
-            "status": "error",
-            "error": err
-        }))?),
-    }
+    let output = match operations::execute_tool(request) {
+        Ok(val) => json!({ "status": "success", "result": val }),
+        Err(err) => json!({ "status": "error", "error": err }),
+    };
+
+    Ok(serde_json::to_string(&output)?)
 }

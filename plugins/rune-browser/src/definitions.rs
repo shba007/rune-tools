@@ -25,9 +25,9 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "session_id": { "type": "string", "description": "Session ID to stop (omits default session if omitted)" }
+                    "session_id": { "type": "string", "description": "Session ID to stop" }
                 },
-                "required": []
+                "required": ["session_id"]
             }),
         },
         ToolDefinition {
@@ -49,6 +49,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "url": { "type": "string", "description": "Target webpage URL to open" },
                     "session_id": { "type": "string", "description": "Session ID to use (creates new if omitted)" },
                     "engine": { "type": "string", "enum": ["agent-browser", "cdp"], "default": "agent-browser", "description": "Browser engine" },
+                    "browser_type": { "type": "string", "enum": ["chrome", "brave", "edge", "auto"], "default": "auto", "description": "Browser to launch" },
                     "headed": { "type": "boolean", "default": false, "description": "Launch visible browser" }
                 },
                 "required": ["url"]
@@ -192,7 +193,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 }
             }),
         },
-        // CDP Tools (for connecting to existing browser)
+        // CDP Tools
         ToolDefinition {
             name: "browser_cdp_connect".to_string(),
             description: "Connects to an existing Chrome DevTools session.".to_string(),
@@ -225,7 +226,8 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {
                     "session_id": { "type": "string", "description": "Session ID to disconnect" }
-                }
+                },
+                "required": ["session_id"]
             }),
         },
     ]

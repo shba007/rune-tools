@@ -1,3 +1,16 @@
+[plugin]
+name = "mhb-mconnect"
+version = "0.1.2"
+execution_model = "native"
+description = "A Modest Human Brands (MHB) external interaction API connector MCP server for email template management and preview rendering"
+
 [capabilities]
-network_hosts = ["connect.modesthumanbrands.com"]
+network_hosts = [
+  "api.modesthumanbrands.com",
+  "connect.modesthumanbrands.com",
+  "modesthumanbrands.com",
+]
+filesystem = { mode = "none" }
 exec = { allowed_binaries = ["mhb-mconnect-native"] }
+
+[dependencies.binaries]

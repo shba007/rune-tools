@@ -20,7 +20,13 @@ pub fn execute_tool_with_fetcher<F>(req: ToolCallRequest, fetcher: F) -> Result<
 where
     F: FnOnce(&str) -> Result<String, String>,
 {
-    match req.name.as_str() {
+    let tool_name = req
+        .name
+        .rfind("__")
+        .map(|p| &req.name[p + 2..])
+        .unwrap_or(&req.name);
+
+    match tool_name {
         "fetch" => handle_fetch(&req.arguments, fetcher),
         unknown => Err(format!(
             "Unknown tool: '{}'. Available tools: 'fetch'. Please check the tool name.",
@@ -33,7 +39,6 @@ fn handle_fetch<F>(args: &Value, fetcher: F) -> Result<Value, String>
 where
     F: FnOnce(&str) -> Result<String, String>,
 {
-    // Validate existence of URL before general deserialization for actionable error messages
     let url_val = args
         .get("url")
         .ok_or_else(|| "Missing required parameter 'url'. Please provide a valid HTTP or HTTPS URL (e.g. 'https://example.com').".to_string())?;
@@ -53,6 +58,13 @@ where
     if !trimmed_url.starts_with("http://") && !trimmed_url.starts_with("https://") {
         return Err(format!(
             "Invalid URL '{}': URL must start with 'http://' or 'https://'.",
+            trimmed_url
+        ));
+    }
+
+    if trimmed_url == "http://" || trimmed_url == "https://" {
+        return Err(format!(
+            "Invalid URL '{}': URL must include a host domain or IP address (e.g. 'https://example.com').",
             trimmed_url
         ));
     }
@@ -91,8 +103,9 @@ pub fn process_content(
     let char_vec: Vec<char> = text.chars().collect();
     let total_characters = char_vec.len();
 
+    let effective_max_length = if max_length == 0 { 50000 } else { max_length };
     let start = start_index.min(total_characters);
-    let end = (start + max_length).min(total_characters);
+    let end = (start + effective_max_length).min(total_characters);
     let sliced_content: String = char_vec[start..end].iter().collect();
     let length = sliced_content.chars().count();
 
@@ -200,14 +213,29 @@ pub fn get_prompt(name: &str, args: &Value) -> Result<Value, String> {
     }
 }
 
-fn is_html(content: &str) -> bool {
+pub fn is_html(content: &str) -> bool {
     let trimmed = content.trim_start();
-    trimmed.starts_with("<!DOCTYPE")
-        || trimmed.starts_with("<html")
-        || trimmed.starts_with("<?xml")
-        || (content.contains('<') && content.contains("</"))
-        || content.contains("<body")
-        || content.contains("<div")
+    let lower_start: String = trimmed.chars().take(50).collect::<String>().to_lowercase();
+    if lower_start.starts_with("<!doctype")
+        || lower_start.starts_with("<html")
+        || lower_start.starts_with("<?xml")
+    {
+        return true;
+    }
+
+    let lower = content.to_lowercase();
+    (lower.contains("<html") && lower.contains("</html>"))
+        || (lower.contains("<head") && lower.contains("</head>"))
+        || (lower.contains("<body") && lower.contains("</body>"))
+        || (lower.contains("<title") && lower.contains("</title>"))
+        || (lower.contains("<div") && lower.contains("</div>"))
+        || ((lower.contains("<p>") || lower.contains("<p ")) && lower.contains("</p>"))
+        || (lower.contains("<h1") && lower.contains("</h1>"))
+        || (lower.contains("<h2") && lower.contains("</h2>"))
+        || (lower.contains("<h3") && lower.contains("</h3>"))
+        || (lower.contains("<table") && lower.contains("</table>"))
+        || (lower.contains("<ul") && lower.contains("</ul>"))
+        || (lower.contains("<ol") && lower.contains("</ol>"))
 }
 
 /// Converts HTML into clean Markdown without external dependencies.
@@ -219,9 +247,26 @@ pub fn html_to_markdown(html: &str) -> String {
     let mut link_href_stack: Vec<Option<String>> = Vec::new();
     let mut list_stack: Vec<char> = Vec::new(); // 'u' for unordered, 'o' for ordered
     let mut ol_counter: Vec<usize> = Vec::new();
+    let mut in_pre = false;
 
     while let Some(c) = chars.next() {
         if c == '<' {
+            // Strip HTML comments (<!-- ... -->) and doctype directives
+            if chars.peek() == Some(&'!') {
+                let mut directive_buf = String::new();
+                while let Some(&nc) = chars.peek() {
+                    directive_buf.push(nc);
+                    chars.next();
+                    if directive_buf.starts_with("!--") && directive_buf.ends_with("-->") {
+                        break;
+                    }
+                    if !directive_buf.starts_with("!--") && nc == '>' {
+                        break;
+                    }
+                }
+                continue;
+            }
+
             let mut tag_content = String::new();
             while let Some(&next_c) = chars.peek() {
                 chars.next();
@@ -250,13 +295,22 @@ pub fn html_to_markdown(html: &str) -> String {
                 .trim_end_matches('/')
                 .to_lowercase();
 
-            // Ignore scripts, styles, SVGs, and head elements
-            if matches!(tag_name.as_str(), "script" | "style" | "svg" | "noscript") {
+            // Ignore scripts, styles, SVGs, noscript, and head tags
+            if matches!(
+                tag_name.as_str(),
+                "script" | "style" | "svg" | "noscript" | "head"
+            ) {
                 if is_closing {
                     skip_tags_depth = skip_tags_depth.saturating_sub(1);
                 } else if !trimmed_tag.ends_with('/') {
                     skip_tags_depth += 1;
                 }
+                continue;
+            }
+
+            // Reset skip depth on body boundary
+            if tag_name == "body" {
+                skip_tags_depth = 0;
                 continue;
             }
 
@@ -295,8 +349,24 @@ pub fn html_to_markdown(html: &str) -> String {
                     }
                 } else {
                     let href = extract_attribute(tag_body, "href");
-                    link_href_stack.push(href);
-                    output.push('[');
+                    if trimmed_tag.ends_with('/') {
+                        if let Some(h) = href {
+                            output.push_str(&format!("[{}]({})", h, h));
+                        }
+                    } else {
+                        link_href_stack.push(href);
+                        output.push('[');
+                    }
+                }
+                continue;
+            }
+
+            // Images
+            if tag_name == "img" {
+                let src = extract_attribute(tag_body, "src").unwrap_or_default();
+                let alt = extract_attribute(tag_body, "alt").unwrap_or_default();
+                if !src.is_empty() {
+                    output.push_str(&format!("![{}]({})", alt, src));
                 }
                 continue;
             }
@@ -306,7 +376,7 @@ pub fn html_to_markdown(html: &str) -> String {
                 "ul" => {
                     if is_closing {
                         list_stack.pop();
-                        ensure_newline(&mut output);
+                        ensure_blank_line(&mut output);
                     } else {
                         list_stack.push('u');
                         ensure_newline(&mut output);
@@ -316,7 +386,7 @@ pub fn html_to_markdown(html: &str) -> String {
                     if is_closing {
                         list_stack.pop();
                         ol_counter.pop();
-                        ensure_newline(&mut output);
+                        ensure_blank_line(&mut output);
                     } else {
                         list_stack.push('o');
                         ol_counter.push(1);
@@ -328,6 +398,8 @@ pub fn html_to_markdown(html: &str) -> String {
                         ensure_newline(&mut output);
                     } else {
                         ensure_newline(&mut output);
+                        let indent = "  ".repeat(list_stack.len().saturating_sub(1));
+                        output.push_str(&indent);
                         if list_stack.last() == Some(&'o') {
                             let count = ol_counter
                                 .last_mut()
@@ -343,9 +415,18 @@ pub fn html_to_markdown(html: &str) -> String {
                         }
                     }
                 }
-                "p" | "div" | "article" | "section" => {
+                "p" => {
                     if is_closing {
                         ensure_blank_line(&mut output);
+                    } else {
+                        ensure_blank_line(&mut output);
+                    }
+                }
+                "div" | "article" | "section" | "main" | "header" | "footer" => {
+                    if is_closing {
+                        ensure_newline(&mut output);
+                    } else {
+                        ensure_newline(&mut output);
                     }
                 }
                 "br" => {
@@ -362,11 +443,20 @@ pub fn html_to_markdown(html: &str) -> String {
                     output.push('*');
                 }
                 "code" => {
-                    output.push('`');
+                    if !in_pre {
+                        output.push('`');
+                    }
                 }
                 "pre" => {
-                    ensure_blank_line(&mut output);
-                    output.push_str("```\n");
+                    if is_closing {
+                        in_pre = false;
+                        ensure_newline(&mut output);
+                        output.push_str("```\n\n");
+                    } else {
+                        in_pre = true;
+                        ensure_blank_line(&mut output);
+                        output.push_str("```\n");
+                    }
                 }
                 "blockquote" => {
                     if is_closing {
@@ -374,6 +464,19 @@ pub fn html_to_markdown(html: &str) -> String {
                     } else {
                         ensure_blank_line(&mut output);
                         output.push_str("> ");
+                    }
+                }
+                "tr" => {
+                    if is_closing {
+                        ensure_newline(&mut output);
+                    } else {
+                        ensure_newline(&mut output);
+                        output.push_str("| ");
+                    }
+                }
+                "th" | "td" => {
+                    if is_closing {
+                        output.push_str(" | ");
                     }
                 }
                 _ => {}
@@ -389,21 +492,42 @@ pub fn html_to_markdown(html: &str) -> String {
 
 fn extract_attribute(tag: &str, attr: &str) -> Option<String> {
     let lower_tag = tag.to_lowercase();
-    let pattern = format!("{}=", attr.to_lowercase());
-    let idx = lower_tag.find(&pattern)?;
-    let after_eq = tag[idx + pattern.len()..].trim_start();
-    let quote = after_eq.chars().next()?;
+    let attr_lower = attr.to_lowercase();
+    let bytes = lower_tag.as_bytes();
+    let mut i = 0;
 
-    if quote == '"' || quote == '\'' {
-        let val_start = 1;
-        let val_end = after_eq[val_start..].find(quote)?;
-        Some(after_eq[val_start..val_start + val_end].to_string())
-    } else {
-        let val_end = after_eq
-            .find(|c: char| c.is_whitespace() || c == '>')
-            .unwrap_or(after_eq.len());
-        Some(after_eq[..val_end].to_string())
+    while i < bytes.len() {
+        if let Some(pos) = lower_tag[i..].find(&attr_lower) {
+            let start = i + pos;
+            let end = start + attr_lower.len();
+
+            let valid_before = start == 0 || bytes[start - 1].is_ascii_whitespace();
+            if valid_before && end < bytes.len() {
+                let rest = &tag[end..];
+                let trimmed = rest.trim_start();
+                if trimmed.starts_with('=') {
+                    let after_eq = trimmed[1..].trim_start();
+                    if let Some(quote) = after_eq.chars().next() {
+                        if quote == '"' || quote == '\'' {
+                            let val_start = 1;
+                            if let Some(val_end) = after_eq[val_start..].find(quote) {
+                                return Some(after_eq[val_start..val_start + val_end].to_string());
+                            }
+                        } else {
+                            let val_end = after_eq
+                                .find(|c: char| c.is_whitespace() || c == '>')
+                                .unwrap_or(after_eq.len());
+                            return Some(after_eq[..val_end].to_string());
+                        }
+                    }
+                }
+            }
+            i = end;
+        } else {
+            break;
+        }
     }
+    None
 }
 
 fn ensure_newline(output: &mut String) {
@@ -454,8 +578,22 @@ fn decode_html_entities(input: &str) -> String {
                     "apos" => output.push('\''),
                     "nbsp" => output.push(' '),
                     "copy" => output.push('©'),
+                    "reg" => output.push('®'),
+                    "trade" => output.push('™'),
                     "mdash" => output.push('—'),
                     "ndash" => output.push('–'),
+                    "hellip" => output.push('…'),
+                    "bull" => output.push('•'),
+                    "laquo" => output.push('«'),
+                    "raquo" => output.push('»'),
+                    "lsquo" => output.push('‘'),
+                    "rsquo" => output.push('’'),
+                    "ldquo" => output.push('“'),
+                    "rdquo" => output.push('”'),
+                    "pound" => output.push('£'),
+                    "euro" => output.push('€'),
+                    "yen" => output.push('¥'),
+                    "deg" => output.push('°'),
                     s if s.starts_with("#x") || s.starts_with("#X") => {
                         if let Ok(code) = u32::from_str_radix(&s[2..], 16) {
                             if let Some(ch) = char::from_u32(code) {
@@ -496,17 +634,28 @@ fn decode_html_entities(input: &str) -> String {
 fn clean_markdown_whitespace(input: &str) -> String {
     let mut cleaned_lines = Vec::new();
     let mut consecutive_empty = 0usize;
+    let mut in_code_block = false;
 
     for line in input.lines() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
+        let trimmed_line = line.trim();
+        if trimmed_line.starts_with("```") {
+            in_code_block = !in_code_block;
+        }
+
+        if in_code_block {
+            cleaned_lines.push(line.trim_end());
+            consecutive_empty = 0;
+            continue;
+        }
+
+        if trimmed_line.is_empty() {
             consecutive_empty += 1;
             if consecutive_empty <= 1 {
                 cleaned_lines.push("");
             }
         } else {
             consecutive_empty = 0;
-            cleaned_lines.push(trimmed);
+            cleaned_lines.push(trimmed_line);
         }
     }
 

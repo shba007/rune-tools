@@ -1,7 +1,7 @@
 [package]
 name = "rune-browser"
 description = "Headless browser automation: page navigation, element interaction, form filling, JavaScript evaluation, screenshots, PDF export, network/console capture, and persistent session profiles"
-version = "0.2.1"
+version = "0.2.2"
 edition.workspace = true
 license.workspace = true
 

@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FetchPayload {
     pub url: String,
-    #[serde(default = "default_max_length")]
+    #[serde(default = "default_max_length", alias = "maxLength")]
     pub max_length: usize,
-    #[serde(default)]
+    #[serde(default, alias = "startIndex")]
     pub start_index: usize,
     #[serde(default)]
     pub raw: bool,

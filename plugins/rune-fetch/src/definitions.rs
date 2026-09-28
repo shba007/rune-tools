@@ -16,10 +16,12 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "max_length": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Maximum number of characters to return (default: 50000)"
                 },
                 "start_index": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Start character index for pagination (default: 0)"
                 },
                 "raw": {

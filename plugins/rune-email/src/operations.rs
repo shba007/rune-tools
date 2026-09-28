@@ -64,7 +64,10 @@ use crate::types::{AttachmentInfo, EmailAccountConfig, MessageHeaderSummary};
 #[cfg(not(target_arch = "wasm32"))]
 use imap::Session;
 #[cfg(not(target_arch = "wasm32"))]
-use lettre::message::{MultiPart, SinglePart, header::ContentType};
+use lettre::message::{
+    MultiPart, SinglePart,
+    header::{ContentDisposition, ContentType},
+};
 #[cfg(not(target_arch = "wasm32"))]
 use lettre::transport::smtp::authentication::Credentials;
 #[cfg(not(target_arch = "wasm32"))]
@@ -78,10 +81,18 @@ use serde_json::json;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[cfg(not(target_arch = "wasm32"))]
-fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
+fn get_payload_str(args: &Value, camel: &str, snake: &str) -> Option<String> {
+    args.get(camel)
+        .or_else(|| args.get(snake))
+        .and_then(Value::as_str)
+        .map(|s| s.trim().to_string())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_config_str(args: &Value, camel: &str, snake: &str) -> Option<String> {
     if let Some(val) = args
         .get(camel)
         .or_else(|| args.get(snake))
@@ -139,28 +150,80 @@ pub fn resolve_dir(dir_param: Option<&str>) -> String {
             .or_else(|_| std::env::var("ALLOWED_DIR"))
             .ok()
     });
-    explicit.unwrap_or_else(|| ".".to_string())
+
+    let raw = explicit.unwrap_or_else(|| ".".to_string());
+    let target = PathBuf::from(raw);
+
+    if let Ok(allowed_root) = std::env::var("ALLOWED_DIR") {
+        let root = PathBuf::from(allowed_root);
+        if target.is_relative() {
+            root.join(target).to_string_lossy().to_string()
+        } else {
+            target.to_string_lossy().to_string()
+        }
+    } else {
+        target.to_string_lossy().to_string()
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn guess_mime_type(path: &Path) -> &'static str {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "txt" | "text" | "log" => "text/plain",
+        "html" | "htm" => "text/html",
+        "json" => "application/json",
+        "pdf" => "application/pdf",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "svg" => "image/svg+xml",
+        "webp" => "image/webp",
+        "csv" => "text/csv",
+        "zip" => "application/zip",
+        "tar" => "application/x-tar",
+        "gz" => "application/gzip",
+        "xml" => "application/xml",
+        "mp3" => "audio/mpeg",
+        "mp4" => "video/mp4",
+        "doc" | "docx" => "application/msword",
+        "xls" | "xlsx" => "application/vnd.ms-excel",
+        "ppt" | "pptx" => "application/vnd.ms-powerpoint",
+        _ => "application/octet-stream",
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn resolve_account_config(args: &Value) -> Result<EmailAccountConfig, String> {
-    let preset = get_str_arg(args, "preset", "preset")
+    let preset = get_config_str(args, "preset", "preset")
         .or_else(|| std::env::var("EMAIL_PRESET").ok())
         .map(|s| s.to_ascii_lowercase());
 
-    let email = get_str_arg(args, "email", "email")
+    let email = get_config_str(args, "email", "email")
         .or_else(|| std::env::var("EMAIL_USER").ok())
         .or_else(|| std::env::var("IMAP_USER").ok())
         .or_else(|| std::env::var("SMTP_USER").ok())
         .ok_or_else(|| "Missing required email address/username".to_string())?;
 
-    let pass = get_str_arg(args, "password", "password")
+    let pass = get_config_str(args, "password", "password")
         .or_else(|| std::env::var("EMAIL_PASSWORD").ok())
         .or_else(|| std::env::var("IMAP_PASSWORD").ok())
         .or_else(|| std::env::var("SMTP_PASSWORD").ok())
         .ok_or_else(|| "Missing required email password".to_string())?;
 
-    let display_name = get_str_arg(args, "displayName", "display_name")
+    if email.trim().is_empty() {
+        return Err("Email address cannot be empty".to_string());
+    }
+    if pass.trim().is_empty() {
+        return Err("Email password cannot be empty".to_string());
+    }
+
+    let display_name = get_config_str(args, "displayName", "display_name")
         .or_else(|| std::env::var("EMAIL_DISPLAY_NAME").ok());
 
     let (def_imap_host, def_imap_port, def_smtp_host, def_smtp_port) = match preset.as_deref() {
@@ -171,9 +234,9 @@ pub fn resolve_account_config(args: &Value) -> Result<EmailAccountConfig, String
     };
 
     let imap_host =
-        get_str_arg(args, "imapHost", "imap_host").unwrap_or_else(|| def_imap_host.to_string());
+        get_config_str(args, "imapHost", "imap_host").unwrap_or_else(|| def_imap_host.to_string());
     let smtp_host =
-        get_str_arg(args, "smtpHost", "smtp_host").unwrap_or_else(|| def_smtp_host.to_string());
+        get_config_str(args, "smtpHost", "smtp_host").unwrap_or_else(|| def_smtp_host.to_string());
 
     if imap_host.is_empty() {
         return Err("IMAP host is not configured (specify preset or imapHost)".to_string());
@@ -286,7 +349,43 @@ fn detect_drafts_mailbox(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+fn build_smtp_transport(config: &EmailAccountConfig) -> Result<SmtpTransport, String> {
+    let creds = Credentials::new(config.smtp_user.clone(), config.smtp_pass.clone());
+    let builder = if config.smtp_port == 587 {
+        SmtpTransport::starttls_relay(&config.smtp_host)
+    } else {
+        SmtpTransport::relay(&config.smtp_host)
+    };
+
+    let transport = builder
+        .map_err(|e| format!("SMTP relay configuration error: {}", e))?
+        .port(config.smtp_port)
+        .credentials(creds)
+        .build();
+
+    Ok(transport)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+    const KNOWN_TOOLS: &[&str] = &[
+        "verify_email_connection",
+        "list_mailboxes",
+        "list_messages",
+        "search_messages",
+        "read_message",
+        "download_attachment",
+        "send_email",
+        "reply_email",
+        "draft_email",
+        "manage_message_flags",
+        "move_message",
+    ];
+
+    if !KNOWN_TOOLS.contains(&request.name.as_str()) {
+        return Err(format!("Unknown tool: {}", request.name));
+    }
+
     let config = resolve_account_config(&request.arguments)?;
 
     match request.name.as_str() {
@@ -298,13 +397,10 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let mb_count = mailboxes.len();
             let _ = imap_session.logout();
 
-            let creds = Credentials::new(config.smtp_user.clone(), config.smtp_pass.clone());
-            let transport = SmtpTransport::relay(&config.smtp_host)
-                .map_err(|e| format!("SMTP relay configuration error: {}", e))?
-                .port(config.smtp_port)
-                .credentials(creds)
-                .build();
-            let smtp_tested = transport.test_connection().unwrap_or(true);
+            let transport = build_smtp_transport(&config)?;
+            let smtp_tested = transport
+                .test_connection()
+                .map_err(|e| format!("SMTP test connection failed: {}", e))?;
 
             Ok(json!({
                 "status": "connected",
@@ -333,7 +429,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "list_messages" => {
-            let mailbox = get_str_arg(&request.arguments, "mailbox", "mailbox")
+            let mailbox = get_payload_str(&request.arguments, "mailbox", "mailbox")
                 .unwrap_or_else(|| "INBOX".to_string());
             let limit = get_u64_arg(&request.arguments, "limit", "limit").unwrap_or(20) as usize;
             let page = get_u64_arg(&request.arguments, "page", "page").unwrap_or(1) as usize;
@@ -436,13 +532,13 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "search_messages" => {
-            let mailbox = get_str_arg(&request.arguments, "mailbox", "mailbox")
+            let mailbox = get_payload_str(&request.arguments, "mailbox", "mailbox")
                 .unwrap_or_else(|| "INBOX".to_string());
-            let query_kw = get_str_arg(&request.arguments, "query", "query");
-            let from_filter = get_str_arg(&request.arguments, "from", "from");
-            let to_filter = get_str_arg(&request.arguments, "to", "to");
-            let subject_filter = get_str_arg(&request.arguments, "subject", "subject");
-            let since_date = get_str_arg(&request.arguments, "sinceDate", "since_date");
+            let query_kw = get_payload_str(&request.arguments, "query", "query");
+            let from_filter = get_payload_str(&request.arguments, "from", "from");
+            let to_filter = get_payload_str(&request.arguments, "to", "to");
+            let subject_filter = get_payload_str(&request.arguments, "subject", "subject");
+            let since_date = get_payload_str(&request.arguments, "sinceDate", "since_date");
             let limit = get_u64_arg(&request.arguments, "limit", "limit").unwrap_or(20) as usize;
 
             let mut imap_session = connect_imap(&config)?;
@@ -564,7 +660,10 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         "read_message" => {
             let uid = get_u64_arg(&request.arguments, "uid", "uid")
                 .ok_or_else(|| "Missing 'uid' parameter".to_string())? as u32;
-            let mailbox = get_str_arg(&request.arguments, "mailbox", "mailbox")
+            if uid == 0 {
+                return Err("Parameter 'uid' must be a positive integer".to_string());
+            }
+            let mailbox = get_payload_str(&request.arguments, "mailbox", "mailbox")
                 .unwrap_or_else(|| "INBOX".to_string());
             let mark_as_read = get_bool_arg(&request.arguments, "markAsRead", "mark_as_read", true);
 
@@ -641,15 +740,18 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         "download_attachment" => {
             let uid = get_u64_arg(&request.arguments, "uid", "uid")
                 .ok_or_else(|| "Missing 'uid' parameter".to_string())? as u32;
-            let mailbox = get_str_arg(&request.arguments, "mailbox", "mailbox")
+            if uid == 0 {
+                return Err("Parameter 'uid' must be a positive integer".to_string());
+            }
+            let mailbox = get_payload_str(&request.arguments, "mailbox", "mailbox")
                 .unwrap_or_else(|| "INBOX".to_string());
             let attachment_idx =
                 get_u64_arg(&request.arguments, "attachmentIndex", "attachment_index")
                     .map(|v| v as usize);
-            let target_name = get_str_arg(&request.arguments, "filename", "filename");
+            let target_name = get_payload_str(&request.arguments, "filename", "filename");
 
             let out_dir_param =
-                get_str_arg(&request.arguments, "outputDirectory", "output_directory");
+                get_payload_str(&request.arguments, "outputDirectory", "output_directory");
             let out_dir = resolve_dir(out_dir_param.as_deref());
             let _ = fs::create_dir_all(&out_dir);
 
@@ -674,7 +776,12 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let mut saved_files = Vec::new();
 
             for (idx, att) in parsed.attachments().enumerate() {
-                let name = att.attachment_name().unwrap_or("attachment").to_string();
+                let raw_name = att.attachment_name().unwrap_or("attachment");
+                let name = Path::new(raw_name)
+                    .file_name()
+                    .map(|f| f.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "attachment".to_string());
+
                 let should_save = if let Some(target_idx) = attachment_idx {
                     target_idx == idx
                 } else if let Some(ref req_name) = target_name {
@@ -709,16 +816,22 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "send_email" => {
-            let to_str = get_str_arg(&request.arguments, "to", "to")
+            let to_str = get_payload_str(&request.arguments, "to", "to")
                 .ok_or_else(|| "Missing 'to' parameter".to_string())?;
             if to_str.trim().is_empty() {
                 return Err("Parameter 'to' cannot be empty".to_string());
             }
-            let subject = get_str_arg(&request.arguments, "subject", "subject")
+            let subject = get_payload_str(&request.arguments, "subject", "subject")
                 .ok_or_else(|| "Missing 'subject' parameter".to_string())?;
-            let body_text = get_str_arg(&request.arguments, "bodyText", "body_text")
+            if subject.trim().is_empty() {
+                return Err("Parameter 'subject' cannot be empty".to_string());
+            }
+            let body_text = get_payload_str(&request.arguments, "bodyText", "body_text")
                 .ok_or_else(|| "Missing 'bodyText' parameter".to_string())?;
-            let body_html = get_str_arg(&request.arguments, "bodyHtml", "body_html");
+            if body_text.trim().is_empty() {
+                return Err("Parameter 'bodyText' cannot be empty".to_string());
+            }
+            let body_html = get_payload_str(&request.arguments, "bodyHtml", "body_html");
 
             let mut email_builder = Message::builder()
                 .from(
@@ -738,7 +851,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 }
             }
 
-            if let Some(cc_str) = get_str_arg(&request.arguments, "cc", "cc") {
+            if let Some(cc_str) = get_payload_str(&request.arguments, "cc", "cc") {
                 for cc in cc_str.split(',') {
                     let trimmed = cc.trim();
                     if !trimmed.is_empty() {
@@ -749,12 +862,25 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 }
             }
 
+            if let Some(bcc_str) = get_payload_str(&request.arguments, "bcc", "bcc") {
+                for bcc in bcc_str.split(',') {
+                    let trimmed = bcc.trim();
+                    if !trimmed.is_empty() {
+                        email_builder = email_builder.bcc(
+                            trimmed
+                                .parse()
+                                .map_err(|e| format!("Invalid BCC '{}': {}", trimmed, e))?,
+                        );
+                    }
+                }
+            }
+
             let multipart = if let Some(html) = body_html {
                 MultiPart::alternative()
                     .singlepart(
                         SinglePart::builder()
                             .header(ContentType::TEXT_PLAIN)
-                            .body(body_text),
+                            .body(body_text.clone()),
                     )
                     .singlepart(
                         SinglePart::builder()
@@ -765,20 +891,55 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 MultiPart::alternative().singlepart(
                     SinglePart::builder()
                         .header(ContentType::TEXT_PLAIN)
-                        .body(body_text),
+                        .body(body_text.clone()),
                 )
             };
 
-            let email_msg = email_builder
-                .multipart(multipart)
-                .map_err(|e| format!("Failed to build MIME message: {}", e))?;
+            let attachment_paths: Vec<String> = request
+                .arguments
+                .get("attachmentPaths")
+                .or_else(|| request.arguments.get("attachment_paths"))
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|p| p.as_str().map(ToString::to_string))
+                        .collect()
+                })
+                .unwrap_or_default();
 
-            let creds = Credentials::new(config.smtp_user.clone(), config.smtp_pass.clone());
-            let transport = SmtpTransport::relay(&config.smtp_host)
-                .map_err(|e| format!("SMTP relay configuration error: {}", e))?
-                .port(config.smtp_port)
-                .credentials(creds)
-                .build();
+            let email_msg = if !attachment_paths.is_empty() {
+                let mut mixed = MultiPart::mixed().multipart(multipart);
+                for path_str in attachment_paths {
+                    let resolved = resolve_dir(Some(&path_str));
+                    let path = PathBuf::from(&resolved);
+                    let file_bytes = fs::read(&path)
+                        .map_err(|e| format!("Failed to read attachment '{}': {}", path_str, e))?;
+                    let filename = path
+                        .file_name()
+                        .map(|f| f.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "attachment.bin".to_string());
+                    let mime = guess_mime_type(&path);
+                    let content_type = ContentType::parse(&mime).unwrap_or_else(|_| {
+                        ContentType::parse("application/octet-stream").unwrap()
+                    });
+
+                    mixed = mixed.singlepart(
+                        SinglePart::builder()
+                            .header(content_type)
+                            .header(ContentDisposition::attachment(&filename))
+                            .body(file_bytes),
+                    );
+                }
+                email_builder
+                    .multipart(mixed)
+                    .map_err(|e| format!("Failed to build MIME message: {}", e))?
+            } else {
+                email_builder
+                    .multipart(multipart)
+                    .map_err(|e| format!("Failed to build MIME message: {}", e))?
+            };
+
+            let transport = build_smtp_transport(&config)?;
 
             transport
                 .send(&email_msg)
@@ -800,9 +961,12 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let original_uid = get_u64_arg(&request.arguments, "originalUid", "original_uid")
                 .ok_or_else(|| "Missing 'originalUid' parameter".to_string())?
                 as u32;
-            let mailbox = get_str_arg(&request.arguments, "mailbox", "mailbox")
+            if original_uid == 0 {
+                return Err("Parameter 'originalUid' must be a positive integer".to_string());
+            }
+            let mailbox = get_payload_str(&request.arguments, "mailbox", "mailbox")
                 .unwrap_or_else(|| "INBOX".to_string());
-            let reply_body = get_str_arg(&request.arguments, "replyBody", "reply_body")
+            let reply_body = get_payload_str(&request.arguments, "replyBody", "reply_body")
                 .ok_or_else(|| "Missing 'replyBody' parameter".to_string())?;
             if reply_body.trim().is_empty() {
                 return Err("Parameter 'replyBody' cannot be empty".to_string());
@@ -874,12 +1038,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .body(reply_body)
                 .map_err(|e| format!("Failed to build reply message: {}", e))?;
 
-            let creds = Credentials::new(config.smtp_user.clone(), config.smtp_pass.clone());
-            let transport = SmtpTransport::relay(&config.smtp_host)
-                .map_err(|e| format!("SMTP relay configuration error: {}", e))?
-                .port(config.smtp_port)
-                .credentials(creds)
-                .build();
+            let transport = build_smtp_transport(&config)?;
 
             transport
                 .send(&reply_msg)
@@ -897,15 +1056,21 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "draft_email" => {
-            let to_str = get_str_arg(&request.arguments, "to", "to")
+            let to_str = get_payload_str(&request.arguments, "to", "to")
                 .ok_or_else(|| "Missing 'to' parameter".to_string())?;
             if to_str.trim().is_empty() {
                 return Err("Parameter 'to' cannot be empty".to_string());
             }
-            let subject = get_str_arg(&request.arguments, "subject", "subject")
+            let subject = get_payload_str(&request.arguments, "subject", "subject")
                 .ok_or_else(|| "Missing 'subject' parameter".to_string())?;
-            let body_text = get_str_arg(&request.arguments, "bodyText", "body_text")
+            if subject.trim().is_empty() {
+                return Err("Parameter 'subject' cannot be empty".to_string());
+            }
+            let body_text = get_payload_str(&request.arguments, "bodyText", "body_text")
                 .ok_or_else(|| "Missing 'bodyText' parameter".to_string())?;
+            if body_text.trim().is_empty() {
+                return Err("Parameter 'bodyText' cannot be empty".to_string());
+            }
 
             let mut email_builder = Message::builder()
                 .from(
@@ -944,10 +1109,16 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         "manage_message_flags" => {
             let uid = get_u64_arg(&request.arguments, "uid", "uid")
                 .ok_or_else(|| "Missing 'uid' parameter".to_string())? as u32;
-            let mailbox = get_str_arg(&request.arguments, "mailbox", "mailbox")
+            if uid == 0 {
+                return Err("Parameter 'uid' must be a positive integer".to_string());
+            }
+            let mailbox = get_payload_str(&request.arguments, "mailbox", "mailbox")
                 .unwrap_or_else(|| "INBOX".to_string());
-            let action = get_str_arg(&request.arguments, "action", "action")
+            let action = get_payload_str(&request.arguments, "action", "action")
                 .ok_or_else(|| "Missing 'action' parameter".to_string())?;
+            if action.trim().is_empty() {
+                return Err("Parameter 'action' cannot be empty".to_string());
+            }
 
             let flag_cmd = match action.as_str() {
                 "mark_read" => "+FLAGS (\\Seen)",
@@ -973,9 +1144,13 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         "move_message" => {
             let uid = get_u64_arg(&request.arguments, "uid", "uid")
                 .ok_or_else(|| "Missing 'uid' parameter".to_string())? as u32;
-            let src_mailbox = get_str_arg(&request.arguments, "sourceMailbox", "source_mailbox")
-                .unwrap_or_else(|| "INBOX".to_string());
-            let dst_mailbox = get_str_arg(
+            if uid == 0 {
+                return Err("Parameter 'uid' must be a positive integer".to_string());
+            }
+            let src_mailbox =
+                get_payload_str(&request.arguments, "sourceMailbox", "source_mailbox")
+                    .unwrap_or_else(|| "INBOX".to_string());
+            let dst_mailbox = get_payload_str(
                 &request.arguments,
                 "destinationMailbox",
                 "destination_mailbox",

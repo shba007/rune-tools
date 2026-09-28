@@ -1,11 +1,11 @@
 {
-	"mcpServers": {
-		"mhb-mconnect": {
-			"command": "rune",
-			"args": ["run", "mhb-mconnect"],
-			"env": {
-				"MHB_BASE_URL": "https://example.com"
-			}
-		}
-	}
+  "mcpServers": {
+    "mhb-mconnect": {
+      "command": "rune",
+      "args": ["run", "mhb-mconnect"],
+      "env": {
+        "MHB_BASE_URL": "https://api.modesthumanbrands.com"
+      }
+    }
+  }
 }

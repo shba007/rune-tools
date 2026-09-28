@@ -63,16 +63,21 @@ pub fn resolve_path_with_root(
         let root_trimmed = clean_root.trim_end_matches('/');
         let root_path = PathBuf::from(root_trimmed);
 
-        // Check if this is an absolute path
-        let is_absolute = clean_input.contains(":/") || clean_input.starts_with("//");
+        // Check if this is an absolute path (Unix '/', Windows 'C:/', or UNC '//')
+        let is_absolute = clean_input.starts_with('/')
+            || clean_input.contains(":/")
+            || clean_input.starts_with("//")
+            || Path::new(&clean_input).is_absolute();
 
         if is_absolute {
             // For absolute paths, check if they're within the allowed directory
-            if !clean_input
-                .to_ascii_lowercase()
-                .starts_with(&format!("{}/", root_trimmed.to_ascii_lowercase()))
-                && clean_input != root_trimmed
-            {
+            let clean_input_lower = clean_input.to_ascii_lowercase();
+            let root_lower = root_trimmed.to_ascii_lowercase();
+
+            let is_inside = clean_input_lower == root_lower
+                || clean_input_lower.starts_with(&format!("{}/", root_lower));
+
+            if !is_inside {
                 return Err(format!(
                     "Access denied: path '{}' is outside allowed directory '{}'",
                     relative_or_abs, allowed_root

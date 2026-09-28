@@ -1,7 +1,7 @@
 [package]
 name = "rune-email"
 description = "Universal IMAP/SMTP email client: mailbox listing, search, full message parsing to Markdown, attachment download, send/reply/draft, flag management, and inter-mailbox moves"
-version = "0.1.3"
+version = "0.1.4"
 edition.workspace = true
 license.workspace = true
 
@@ -27,10 +27,10 @@ rune-sidecar = { path = "../../crates/rune-sidecar" }
 imap = { version = "2.4", default-features = false, features = ["native-tls"] }
 native-tls = "0.2"
 lettre = { version = "0.11", default-features = false, features = [
-	"builder",
-	"smtp-transport",
-	"native-tls",
-	"hostname",
+  "builder",
+  "smtp-transport",
+  "native-tls",
+  "hostname",
 ] }
 mail-parser = "0.11"
 

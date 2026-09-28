@@ -2,10 +2,16 @@ use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 
 pub fn rgba_to_hex(val: &Value) -> String {
-    if let Some(s) = val.as_str()
-        && s.starts_with('#')
-    {
-        return s.to_string();
+    if let Some(s) = val.as_str() {
+        let trimmed = s.trim();
+        if trimmed.starts_with('#') {
+            return trimmed.to_string();
+        }
+        if (trimmed.len() == 6 || trimmed.len() == 8)
+            && trimmed.chars().all(|c| c.is_ascii_hexdigit())
+        {
+            return format!("#{}", trimmed);
+        }
     }
 
     let r = val.get("r").and_then(|v| v.as_f64()).unwrap_or(0.0);
@@ -152,7 +158,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     }))
 }
 
-fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Result<(), String> {
+pub fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Result<(), String> {
     // 1. Enforce required arguments from input_schema
     if let Some(required) = tool.input_schema.get("required").and_then(|r| r.as_array()) {
         for req_field in required {
@@ -167,6 +173,15 @@ fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Result
                         "Tool '{}' requires parameter '{}'. Ensure it is provided.",
                         tool.name, field_name
                     ));
+                }
+
+                if let Some(s) = args.get(field_name).and_then(Value::as_str) {
+                    if s.trim().is_empty() {
+                        return Err(format!(
+                            "Tool '{}' requires parameter '{}' to be non-empty.",
+                            tool.name, field_name
+                        ));
+                    }
                 }
             }
         }

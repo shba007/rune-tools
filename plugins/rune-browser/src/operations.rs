@@ -11,13 +11,21 @@ use std::sync::Mutex;
 
 const SESSIONS_DIR: &str = "browser-sessions";
 
-// In-memory session store ensuring session tools never fail even if disk access is restricted
 static IN_MEMORY_SESSIONS: Mutex<Option<HashMap<String, SessionInfo>>> = Mutex::new(None);
 
 fn get_arg(args: &Value, key: &str, default: Option<String>) -> Option<String> {
     args.get(key)
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+        .and_then(|v| {
+            if let Some(s) = v.as_str() {
+                Some(s.to_string())
+            } else if let Some(n) = v.as_i64() {
+                Some(n.to_string())
+            } else if let Some(n) = v.as_f64() {
+                Some(n.to_string())
+            } else {
+                None
+            }
+        })
         .or(default)
 }
 
@@ -49,13 +57,11 @@ fn save_session(
         status: "active".to_string(),
     };
 
-    // 1. In-memory storage
     if let Ok(mut lock) = IN_MEMORY_SESSIONS.lock() {
         let map = lock.get_or_insert_with(HashMap::new);
         map.insert(session_id.to_string(), session_info.clone());
     }
 
-    // 2. Persistent storage
     let path = get_session_path(session_id);
     if let Some(dir) = path.parent() {
         let _ = fs::create_dir_all(dir);
@@ -146,13 +152,12 @@ fn delete_session(session_id: &str) -> Result<(), String> {
 }
 
 // =========================================================================
-// Cross-Platform Native Binary Management (Native Sidecar / Unit Tests)
+// Native Binary Execution & Auto-Provisioning
 // =========================================================================
 
 #[cfg(not(target_arch = "wasm32"))]
 fn is_pure_executable(path: &Path) -> bool {
     let path_str = path.to_string_lossy().to_lowercase();
-    // Strictly reject Node/Bun wrappers and shell shims
     if path_str.contains(".bun")
         || path_str.contains("node_modules")
         || path_str.ends_with(".cmd")
@@ -195,7 +200,6 @@ fn locate_agent_browser_binary() -> Result<PathBuf, String> {
         "agent-browser"
     };
 
-    // Check local managed cache directories
     let base_dir = crate::resolve_dir(None);
     let candidates = [
         PathBuf::from(&base_dir).join("bin").join(bin_name),
@@ -209,7 +213,6 @@ fn locate_agent_browser_binary() -> Result<PathBuf, String> {
         }
     }
 
-    // System PATH check — strictly rejecting .cmd, .bat, and Bun scripts
     if let Ok(path_var) = std::env::var("PATH") {
         for dir in std::env::split_paths(&path_var) {
             let candidate = dir.join(bin_name);
@@ -219,7 +222,6 @@ fn locate_agent_browser_binary() -> Result<PathBuf, String> {
         }
     }
 
-    // Download standalone binary on native host
     download_standalone_agent_browser()
 }
 
@@ -325,7 +327,7 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
                 Err(format!(
                     "agent-browser exited with code {:?}: {}",
                     output.status.code(),
-                    err_msg
+                    err_msg.trim()
                 ))
             }
         }
@@ -338,7 +340,6 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
 
 #[cfg(target_arch = "wasm32")]
 fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
-    // In WASM mode, dispatch to host_cmd_exec without triggering HTTP network traps
     let req = CmdExecRequest {
         program: "agent-browser".to_string(),
         args,
@@ -346,27 +347,23 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
     };
     let json_req = serde_json::to_string(&req).map_err(|e| e.to_string())?;
 
-    let raw_output = match unsafe { crate::host_cmd_exec(json_req) } {
-        Ok(out) => out,
-        Err(e) => return Err(format!("agent-browser execution failed via host: {}", e)),
-    };
+    let raw_output = unsafe { crate::host_cmd_exec(json_req) }
+        .map_err(|e| format!("agent-browser execution failed via host: {:?}", e))?;
 
-    if let Ok(resp) = serde_json::from_str::<CmdExecResponse>(&raw_output) {
-        if resp.success {
-            Ok(resp)
-        } else {
-            Err(format!(
-                "agent-browser exited with code {:?}: {}",
-                resp.exit_code, resp.stderr
-            ))
-        }
+    let resp: CmdExecResponse = serde_json::from_str(&raw_output)
+        .map_err(|e| format!("Failed to parse host response for agent-browser: {}", e))?;
+
+    if resp.success {
+        Ok(resp)
     } else {
-        Ok(CmdExecResponse {
-            success: true,
-            exit_code: Some(0),
-            stdout: raw_output,
-            stderr: String::new(),
-        })
+        let err = if !resp.stderr.trim().is_empty() {
+            resp.stderr.trim()
+        } else if !resp.stdout.trim().is_empty() {
+            resp.stdout.trim()
+        } else {
+            "agent-browser process exited with non-zero exit code"
+        };
+        Err(format!("agent-browser error: {}", err))
     }
 }
 
@@ -435,13 +432,15 @@ fn op_session_start(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_session_stop(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None);
-    if let Some(sid) = session_id {
-        delete_session(&sid)?;
-        Ok(json!({ "status": "stopped", "session_id": sid }))
-    } else {
-        Err("Missing session_id parameter".to_string())
+    let session_id = get_arg(&request.arguments, "session_id", None)
+        .ok_or_else(|| "Missing 'session_id' parameter".to_string())?;
+
+    if session_id.trim().is_empty() {
+        return Err("Parameter 'session_id' cannot be empty".to_string());
     }
+
+    delete_session(&session_id)?;
+    Ok(json!({ "status": "stopped", "session_id": session_id }))
 }
 
 fn op_session_list(_request: &ToolCallRequest) -> Result<Value, String> {
@@ -469,7 +468,6 @@ fn op_navigate(request: &ToolCallRequest) -> Result<Value, String> {
 
     let headed = get_bool_arg(&request.arguments, "headed", false);
 
-    // Direct CDP handling if engine is CDP or if agent-browser is not available
     if engine == "cdp" {
         return Ok(json!({
             "status": "success",
@@ -493,25 +491,13 @@ fn op_navigate(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push("--headed".to_string());
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "navigate",
-            "url": url,
-            "output": resp.stdout.trim()
-        })),
-        Err(e) => {
-            // Graceful fallback to CDP if agent-browser CLI is not installed on host
-            Ok(json!({
-                "status": "success",
-                "action": "navigate",
-                "engine": "cdp-fallback",
-                "url": url,
-                "note": format!("agent-browser CLI not available ({}), navigated via CDP protocol fallback", e),
-                "output": format!("Navigated to {} via browser CDP connection", url)
-            }))
-        }
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "navigate",
+        "url": url,
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_type(request: &ToolCallRequest) -> Result<Value, String> {
@@ -544,29 +530,24 @@ fn op_type(request: &ToolCallRequest) -> Result<Value, String> {
         }));
     }
 
+    let clear = get_bool_arg(&request.arguments, "clear", false);
     let mut cmd_args = vec!["type".to_string(), target.clone(), value.clone()];
 
     if let Some(ref sid) = session_id {
         cmd_args.push(format!("--session={}", sid));
     }
-
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "type",
-            "target": target,
-            "value": value,
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "type",
-            "engine": "cdp-fallback",
-            "target": target,
-            "value": value,
-            "output": format!("Typed '{}' into '{}' via CDP fallback", value, target)
-        })),
+    if clear {
+        cmd_args.push("--clear".to_string());
     }
+
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "type",
+        "target": target,
+        "value": value,
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_click(request: &ToolCallRequest) -> Result<Value, String> {
@@ -608,21 +589,13 @@ fn op_click(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push("--new-tab".to_string());
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "click",
-            "target": target,
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "click",
-            "engine": "cdp-fallback",
-            "target": target,
-            "output": format!("Clicked element '{}' via CDP fallback", target)
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "click",
+        "target": target,
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_fill(request: &ToolCallRequest) -> Result<Value, String> {
@@ -630,6 +603,10 @@ fn op_fill(request: &ToolCallRequest) -> Result<Value, String> {
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
     let value = get_arg(&request.arguments, "value", None)
         .ok_or_else(|| "Missing 'value' parameter".to_string())?;
+
+    if target.trim().is_empty() {
+        return Err("Parameter 'target' cannot be empty".to_string());
+    }
 
     let session_id = get_arg(&request.arguments, "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
@@ -648,34 +625,33 @@ fn op_fill(request: &ToolCallRequest) -> Result<Value, String> {
         }));
     }
 
+    let press_enter = get_bool_arg(&request.arguments, "press_enter", false);
     let mut cmd_args = vec!["fill".to_string(), target.clone(), value.clone()];
 
     if let Some(ref sid) = session_id {
         cmd_args.push(format!("--session={}", sid));
     }
-
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "fill",
-            "target": target,
-            "value": value,
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "fill",
-            "engine": "cdp-fallback",
-            "target": target,
-            "value": value,
-            "output": format!("Filled input '{}' with '{}' via CDP fallback", target, value)
-        })),
+    if press_enter {
+        cmd_args.push("--press-enter".to_string());
     }
+
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "fill",
+        "target": target,
+        "value": value,
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_select_option(request: &ToolCallRequest) -> Result<Value, String> {
     let target = get_arg(&request.arguments, "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
+
+    if target.trim().is_empty() {
+        return Err("Parameter 'target' cannot be empty".to_string());
+    }
 
     let session_id = get_arg(&request.arguments, "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
@@ -708,26 +684,22 @@ fn op_select_option(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push(format!("--label={}", l));
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "select_option",
-            "target": target,
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "select_option",
-            "engine": "cdp-fallback",
-            "target": target,
-            "output": format!("Selected option in '{}' via CDP fallback", target)
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "select_option",
+        "target": target,
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_hover(request: &ToolCallRequest) -> Result<Value, String> {
     let target = get_arg(&request.arguments, "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
+
+    if target.trim().is_empty() {
+        return Err("Parameter 'target' cannot be empty".to_string());
+    }
 
     let session_id = get_arg(&request.arguments, "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
@@ -751,21 +723,13 @@ fn op_hover(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push(format!("--session={}", sid));
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "hover",
-            "target": target,
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "hover",
-            "engine": "cdp-fallback",
-            "target": target,
-            "output": format!("Hovered over '{}' via CDP fallback", target)
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "hover",
+        "target": target,
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_execute_script(request: &ToolCallRequest) -> Result<Value, String> {
@@ -797,18 +761,11 @@ fn op_execute_script(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push(format!("--session={}", sid));
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "result": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "execute_script",
-            "engine": "cdp-fallback",
-            "result": format!("Evaluated script via CDP fallback: {}", script)
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "result": resp.stdout.trim()
+    }))
 }
 
 fn op_screenshot(request: &ToolCallRequest) -> Result<Value, String> {
@@ -825,8 +782,12 @@ fn op_screenshot(request: &ToolCallRequest) -> Result<Value, String> {
     let default_filename =
         filename.unwrap_or_else(|| format!("screenshot_{}.png", Utc::now().timestamp_millis()));
 
-    let out_dir = output_dir.unwrap_or_else(|| crate::resolve_dir(None));
+    let out_dir = crate::resolve_dir(output_dir.as_deref());
     let target_path = PathBuf::from(&out_dir).join(&default_filename);
+
+    if let Some(parent) = target_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
 
     if engine == "cdp" {
         return Ok(json!({
@@ -850,21 +811,13 @@ fn op_screenshot(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push("--full-page".to_string());
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "screenshot",
-            "saved_path": target_path.to_string_lossy(),
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "screenshot",
-            "engine": "cdp-fallback",
-            "saved_path": target_path.to_string_lossy(),
-            "output": "Captured screenshot via CDP fallback"
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "screenshot",
+        "saved_path": target_path.to_string_lossy(),
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_pdf(request: &ToolCallRequest) -> Result<Value, String> {
@@ -881,8 +834,12 @@ fn op_pdf(request: &ToolCallRequest) -> Result<Value, String> {
     let default_filename =
         filename.unwrap_or_else(|| format!("page_{}.pdf", Utc::now().timestamp_millis()));
 
-    let out_dir = output_dir.unwrap_or_else(|| crate::resolve_dir(None));
+    let out_dir = crate::resolve_dir(output_dir.as_deref());
     let target_path = PathBuf::from(&out_dir).join(&default_filename);
+
+    if let Some(parent) = target_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
 
     if engine == "cdp" {
         return Ok(json!({
@@ -903,21 +860,13 @@ fn op_pdf(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push("--landscape".to_string());
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "action": "pdf",
-            "saved_path": target_path.to_string_lossy(),
-            "output": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "action": "pdf",
-            "engine": "cdp-fallback",
-            "saved_path": target_path.to_string_lossy(),
-            "output": "Exported PDF via CDP fallback"
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "action": "pdf",
+        "saved_path": target_path.to_string_lossy(),
+        "output": resp.stdout.trim()
+    }))
 }
 
 fn op_console_messages(request: &ToolCallRequest) -> Result<Value, String> {
@@ -950,17 +899,11 @@ fn op_console_messages(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push(format!("--limit={}", lim));
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "messages": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "engine": "cdp-fallback",
-            "messages": "[]"
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "messages": resp.stdout.trim()
+    }))
 }
 
 fn op_network_requests(request: &ToolCallRequest) -> Result<Value, String> {
@@ -993,17 +936,11 @@ fn op_network_requests(request: &ToolCallRequest) -> Result<Value, String> {
         cmd_args.push(format!("--method={}", m));
     }
 
-    match run_agent_browser_cli(cmd_args) {
-        Ok(resp) => Ok(json!({
-            "status": "success",
-            "requests": resp.stdout.trim()
-        })),
-        Err(_) => Ok(json!({
-            "status": "success",
-            "engine": "cdp-fallback",
-            "requests": "[]"
-        })),
-    }
+    let resp = run_agent_browser_cli(cmd_args)?;
+    Ok(json!({
+        "status": "success",
+        "requests": resp.stdout.trim()
+    }))
 }
 
 fn op_cdp_connect(request: &ToolCallRequest) -> Result<Value, String> {
@@ -1046,10 +983,12 @@ fn op_cdp_request(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_cdp_disconnect(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None);
-    if let Some(sid) = session_id {
-        Ok(json!({ "status": "disconnected", "session_id": sid }))
-    } else {
-        Err("Missing session_id parameter".to_string())
+    let session_id = get_arg(&request.arguments, "session_id", None)
+        .ok_or_else(|| "Missing 'session_id' parameter".to_string())?;
+
+    if session_id.trim().is_empty() {
+        return Err("Parameter 'session_id' cannot be empty".to_string());
     }
+
+    Ok(json!({ "status": "disconnected", "session_id": session_id }))
 }
