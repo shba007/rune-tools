@@ -3,7 +3,7 @@ use crate::types::{CmdExecRequest, CmdExecResponse};
 #[cfg(target_arch = "wasm32")]
 use rune_pdk::ToolCallRequest;
 #[cfg(target_arch = "wasm32")]
-use serde_json::{Value, json};
+use serde_json::Value;
 
 #[cfg(target_arch = "wasm32")]
 #[extism_pdk::host_fn("extism:host/user")]

@@ -1,9 +1,10 @@
 [package]
 name = "rune-video"
-description = "Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg."
-version = "0.1.2"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
+description = "Video streaming, playlist extraction, and media trimming using ffmpeg, streamlink, and yt-dlp."
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -14,21 +15,23 @@ path = "src/bin/native_sidecar.rs"
 required-features = ["native"]
 
 [features]
-native = []
+default = []
+native = ["dep:rune-sidecar"]
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
-serde.workspace = true
+rune-sidecar = { path = "../../crates/rune-sidecar", optional = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-chrono.workspace = true
-reqwest = { version = "0.11", features = ["blocking"] }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rune-sidecar = { path = "../../crates/rune-sidecar" }
-zip = "0.6"
+chrono = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+reqwest = { workspace = true }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
 [dev-dependencies]
+serde_json.workspace = true
 tempfile.workspace = true

@@ -1,9 +1,10 @@
 [package]
 name = "rune-audio"
-description = "Audio stream extraction and transcoding (MP3, FLAC, WAV, M4A, Opus), plus music track/album/playlist ingestion with ID3 metadata and synced LRC lyrics via spotdl"
 version = "0.2.1"
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
+description = "Audio track extraction using yt-dlp, ffmpeg, and spotdl for podcast and audio content management."
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -14,19 +15,21 @@ path = "src/bin/native_sidecar.rs"
 required-features = ["native"]
 
 [features]
-native = []
+default = []
+native = ["dep:rune-sidecar"]
 
 [dependencies]
 rune-pdk = { path = "../../crates/rune-pdk" }
-serde.workspace = true
+rune-sidecar = { path = "../../crates/rune-sidecar", optional = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-reqwest.workspace = true
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rune-sidecar = { path = "../../crates/rune-sidecar" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+reqwest = { workspace = true }
+
 [dev-dependencies]
+serde_json.workspace = true
 tempfile.workspace = true
