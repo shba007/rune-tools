@@ -1,7 +1,7 @@
 {
   "mhb-mconnect": {
     "description": "Modest Human Brands external interaction API connector for email template management, schema retrieval, and rendering previews.",
-    "latest": "0.1.1",
+    "latest": "0.1.2",
     "versions": {
       "0.1.0": {
         "native": {
@@ -20,12 +20,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.1/mhb-mconnect-native-0.1.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.1/mhb-mconnect-0.1.1.wasm"
+      },
+      "0.1.2": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-native-0.1.2-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-native-0.1.2-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-native-0.1.2-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-native-0.1.2-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-0.1.2.wasm"
       }
     }
   },
   "rune-audio": {
-    "description": "Audio stream extraction and transcoding (MP3, FLAC, WAV, M4A, Opus), plus music track/album/playlist ingestion with ID3 metadata and synced LRC lyrics via spotdl",
-    "latest": "0.1.2",
+    "description": "Audio track extraction using yt-dlp, ffmpeg, and spotdl for podcast and audio content management.",
+    "latest": "0.2.1",
     "versions": {
       "0.1.0": {
         "native": {
@@ -53,12 +62,36 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.1.2/rune-audio-native-0.1.2-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.1.2/rune-audio-0.1.2.wasm"
+      },
+      "0.2.1": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-native-0.2.1-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-native-0.2.1-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-native-0.2.1-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-native-0.2.1-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-0.2.1.wasm"
+      }
+    }
+  },
+  "rune-browser": {
+    "description": "Headless browser automation: page navigation, element interaction, form filling, JavaScript evaluation, screenshots, PDF export, network/console capture, and persistent session profiles",
+    "latest": "0.2.2",
+    "versions": {
+      "0.2.2": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-native-0.2.2-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-native-0.2.2-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-native-0.2.2-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-native-0.2.2-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-0.2.2.wasm"
       }
     }
   },
   "rune-email": {
     "description": "Universal IMAP/SMTP email client: mailbox listing, search, full message parsing to Markdown, attachment download, send/reply/draft, flag management, and inter-mailbox moves",
-    "latest": "0.1.3",
+    "latest": "0.1.4",
     "versions": {
       "0.1.1": {
         "native": {
@@ -86,24 +119,50 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.3/rune-email-native-0.1.3-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.3/rune-email-0.1.3.wasm"
+      },
+      "0.1.4": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-native-0.1.4-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-native-0.1.4-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-native-0.1.4-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-native-0.1.4-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-0.1.4.wasm"
       }
     }
   },
   "rune-fetch": {
-    "description": "Web page fetching with HTML-to-Markdown conversion (or raw text) and character-level pagination via cursor semantics",
-    "latest": "0.2.1",
+    "description": "",
+    "latest": "0.3.1",
     "versions": {
       "0.2.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.2.0/rune-fetch-0.2.0.wasm"
       },
       "0.2.1": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.2.1/rune-fetch-0.2.1.wasm"
+      },
+      "0.3.1": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.3.1/rune-fetch-0.3.1.wasm"
+      }
+    }
+  },
+  "rune-figma": {
+    "description": "",
+    "latest": "0.1.2",
+    "versions": {
+      "0.1.2": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.1.2/rune-figma-native-0.1.2-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.1.2/rune-figma-native-0.1.2-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.1.2/rune-figma-native-0.1.2-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.1.2/rune-figma-native-0.1.2-x86_64-unknown-linux-gnu.tar.gz"
+        }
       }
     }
   },
   "rune-filesystem": {
     "description": "Sandboxed filesystem manipulation: line-based reading, multimodal media reads, atomic writes, line edits with dry-run diffs, tree views, glob search, and safe moves within an enforced boundary",
-    "latest": "0.3.2",
+    "latest": "0.3.4",
     "versions": {
       "0.3.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.0/rune-filesystem-0.3.0.wasm"
@@ -113,6 +172,9 @@
       },
       "0.3.2": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.2/rune-filesystem-0.3.2.wasm"
+      },
+      "0.3.4": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.4/rune-filesystem-0.3.4.wasm"
       }
     }
   },
