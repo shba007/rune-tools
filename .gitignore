@@ -25,3 +25,34 @@ rustc-ice-*.txt
 
 .env
 temp
+
+# ==========================================
+# Downloaded Tooling & Third-Party Binaries
+# ==========================================
+**/bin/
+**/ffmpeg*
+**/yt-dlp*
+**/spotdl*
+**/streamlink*
+**/agent-browser*
+
+# ==========================================
+# Test Artifacts, Sessions & Media Outputs
+# ==========================================
+**/test-dir/
+**/test-output/
+**/browser-sessions/
+**/temp/
+**/*.pdf
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.mp4
+**/*.mp3
+**/*.pptx
+presentation.json
+presentation.theme.md
+
+# Artifacts created by misparsed CLI flags
+plugins/rune-browser/--*
+plugins/rune-browser/[0-9]*
