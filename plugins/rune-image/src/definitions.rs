@@ -77,15 +77,15 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "image1_path": {
+                    "image1Path": {
                         "type": "string",
                         "description": "Path to the first image file (PNG, JPEG, GIF, SVG or WebP)"
                     },
-                    "image2_path": {
+                    "image2Path": {
                         "type": "string",
                         "description": "Path to the second image file (PNG, JPEG, GIF, SVG or WebP)"
                     },
-                    "output_path": {
+                    "outputPath": {
                         "type": "string",
                         "description": "Path for the difference image output. Defaults to './diff.png'."
                     },
@@ -98,7 +98,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                         "description": "Threshold for considering pixels different (0.0-1.0). Lower = more strict. Defaults to 0.0 (exact match)."
                     }
                 },
-                "required": ["image1_path", "image2_path"]
+                "required": ["image1Path", "image2Path"]
             }),
         },
         ToolDefinition {
@@ -107,12 +107,12 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "image_path": {
+                    "imagePath": {
                         "type": "string",
                         "description": "Path to the image file"
                     }
                 },
-                "required": ["image_path"]
+                "required": ["imagePath"]
             }),
         },
         ToolDefinition {
@@ -121,11 +121,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "input_path": {
+                    "inputPath": {
                         "type": "string",
                         "description": "Path to the input image file"
                     },
-                    "output_format": {
+                    "outputFormat": {
                         "type": "string",
                         "description": "Target format: 'png', 'jpeg', 'gif', 'webp', or 'svg'. SVG input can be converted to any raster format; raster input can be vectorized to 'svg'."
                     },
@@ -135,52 +135,52 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                         "minimum": 0.0,
                         "maximum": 1.0
                     },
-                    "trace_color_mode": {
+                    "traceColorMode": {
                         "type": "string",
                         "description": "Raster-to-SVG only. 'color' (default, keeps full color -- best for photos) or 'binary' (single color, faster, best for line art)."
                     },
-                    "trace_hierarchical": {
+                    "traceHierarchical": {
                         "type": "string",
                         "description": "Raster-to-SVG only. 'stacked' (default) layers shapes; 'cutout' avoids overlapping shapes. Only applies in color mode."
                     },
-                    "trace_curve_mode": {
+                    "traceCurveMode": {
                         "type": "string",
                         "description": "Raster-to-SVG only. Curve fitting: 'spline' (default, smooth curves), 'polygon' (straight segments), or 'none' (pixel-aligned, good for pixel art)."
                     },
-                    "color_precision": {
+                    "colorPrecision": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Significant bits per RGB channel; higher preserves more color detail. Defaults to 6."
                     },
-                    "filter_speckle": {
+                    "filterSpeckle": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Discards traced patches smaller than this many pixels, to suppress noise. Defaults to 4."
                     },
-                    "layer_difference": {
+                    "layerDifference": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Color difference threshold between gradient layers. Defaults to 16."
                     },
-                    "corner_threshold": {
+                    "cornerThreshold": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Minimum angle (degrees) to treat a point as a corner rather than smoothing it. Defaults to 60."
                     },
-                    "length_threshold": {
+                    "lengthThreshold": {
                         "type": "number",
                         "description": "Raster-to-SVG only. Subdivides curves until segments are shorter than this length. Range [3.5, 10]. Defaults to 4.0."
                     },
-                    "splice_threshold": {
+                    "spliceThreshold": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Minimum angle displacement (degrees) to splice a spline. Defaults to 45."
                     },
-                    "max_iterations": {
+                    "maxIterations": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Maximum smoothing iterations. Defaults to 10."
                     },
-                    "path_precision": {
+                    "pathPrecision": {
                         "type": "integer",
                         "description": "Raster-to-SVG only. Decimal places used in the output path coordinates. Defaults to 2."
                     }
                 },
-                "required": ["input_path", "output_format"]
+                "required": ["inputPath", "outputFormat"]
             }),
         },
     ]

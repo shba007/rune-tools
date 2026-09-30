@@ -1,13 +1,37 @@
 [plugin]
 name = "rune-video"
-description = "Video streaming and processing using ffmpeg, streamlink, and yt-dlp."
-version = "0.1.1"
+description = "Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg."
+version = "0.2.0"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
-capabilities = { network_hosts = [
-], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
-  "ffmpeg",
-  "streamlink",
-  "yt-dlp",
-] } }
 documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-video/README.md"
+
+[capabilities]
+network_hosts = [
+  "youtube.com",
+  "www.youtube.com",
+  "youtu.be",
+  "twitch.tv",
+  "www.twitch.tv",
+  "kick.com",
+  "reddit.com",
+  "twitter.com",
+  "x.com",
+]
+filesystem = { mode = "scoped", root_param = "allowed_dir" }
+exec = { allowed_binaries = ["ffmpeg", "streamlink", "yt-dlp"] }
+
+[dependencies.binaries.ffmpeg]
+version = ">=6.0"
+optional = false
+description = "Media stream copying, lossless clipping, and transcoding"
+
+[dependencies.binaries.yt-dlp]
+version = ">=2024.01.01"
+optional = false
+description = "Video stream extraction, playlist crawling, and metadata inspection"
+
+[dependencies.binaries.streamlink]
+version = ">=6.0.0"
+optional = true
+description = "Live broadcast capture and recording"

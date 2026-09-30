@@ -1,3 +1,12 @@
+[plugin]
+name = "rune-sequential-thinking"
+version = "0.2.0"
+execution_model = "wasm"
+description = "A detailed tool for dynamic and reflective problem-solving through structured, step-by-step thinking processes."
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-sequential-thinking/README.md"
+
 [capabilities]
 network_hosts = []
 exec = { allowed_binaries = [] }

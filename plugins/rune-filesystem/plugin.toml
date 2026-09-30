@@ -1,7 +1,7 @@
 [plugin]
 name = "rune-filesystem"
 description = "Filesystem operations including directory walking, file paging, and path manipulation."
-version = "0.3.4"
+version = "0.3.5"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
 capabilities = { network_hosts = [

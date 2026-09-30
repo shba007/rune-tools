@@ -9,7 +9,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository (default: current directory or REPO_PATH)" }
+                    "repoPath": { "type": "string", "description": "Path to the repository (default: current directory or REPO_PATH)" }
                 }
             }),
         },
@@ -19,7 +19,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" }
+                    "repoPath": { "type": "string", "description": "Path to the repository" }
                 }
             }),
         },
@@ -29,7 +29,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" }
+                    "repoPath": { "type": "string", "description": "Path to the repository" }
                 }
             }),
         },
@@ -39,7 +39,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
                     "target": { "type": "string", "description": "Target commit/branch (default: HEAD)" }
                 }
             }),
@@ -50,7 +50,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
                     "message": { "type": "string", "description": "The commit message" }
                 },
                 "required": ["message"]
@@ -62,7 +62,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
                     "files": { "type": "array", "items": { "type": "string" }, "description": "List of files to add (default: all)" }
                 }
             }),
@@ -73,7 +73,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" }
+                    "repoPath": { "type": "string", "description": "Path to the repository" }
                 }
             }),
         },
@@ -83,8 +83,8 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
-                    "max_count": { "type": "integer", "description": "Max number of commits to return (default: 10)" }
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
+                    "maxCount": { "type": "integer", "description": "Max number of commits to return (default: 10)" }
                 }
             }),
         },
@@ -94,10 +94,10 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
-                    "branch_name": { "type": "string", "description": "Name of the new branch" }
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
+                    "branchName": { "type": "string", "description": "Name of the new branch" }
                 },
-                "required": ["branch_name"]
+                "required": ["branchName"]
             }),
         },
         ToolDefinition {
@@ -106,10 +106,10 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
-                    "branch_name": { "type": "string", "description": "Branch to switch to" }
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
+                    "branchName": { "type": "string", "description": "Branch to switch to" }
                 },
-                "required": ["branch_name"]
+                "required": ["branchName"]
             }),
         },
         ToolDefinition {
@@ -118,7 +118,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Path to the repository" },
+                    "repoPath": { "type": "string", "description": "Path to the repository" },
                     "revision": { "type": "string", "description": "Commit SHA or ref (default: HEAD)" }
                 }
             }),
@@ -129,7 +129,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "repo_path": { "type": "string", "description": "Directory path to initialize" }
+                    "repoPath": { "type": "string", "description": "Directory path to initialize" }
                 }
             }),
         },
@@ -143,7 +143,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                         "type": "string",
                         "description": "The full commit message (subject and optional body) to validate"
                     },
-                    "max_subject_length": {
+                    "maxSubjectLength": {
                         "type": "integer",
                         "description": "Maximum allowed character count for the subject line (default: 72)"
                     },

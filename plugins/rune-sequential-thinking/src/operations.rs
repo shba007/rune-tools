@@ -16,7 +16,7 @@ pub fn with_session<F, R>(f: F) -> R
 where
     F: FnOnce(&mut ThinkingSession) -> R,
 {
-    let mut guard = SESSION.lock().unwrap();
+    let mut guard = SESSION.lock().unwrap_or_else(|e| e.into_inner());
     if guard.is_none() {
         *guard = Some(ThinkingSession::default());
     }
@@ -24,7 +24,7 @@ where
 }
 
 pub fn reset_session() {
-    let mut guard = SESSION.lock().unwrap();
+    let mut guard = SESSION.lock().unwrap_or_else(|e| e.into_inner());
     *guard = Some(ThinkingSession::default());
 }
 

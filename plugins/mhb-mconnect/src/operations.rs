@@ -1,63 +1,9 @@
-#[cfg(target_arch = "wasm32")]
-use crate::types::{CmdExecRequest, CmdExecResponse};
-#[cfg(not(target_arch = "wasm32"))]
 use crate::types::{
     EmailTemplateDetail, EmailTemplateSummary, RenderPreviewRequest, RenderPreviewResponse,
 };
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 
-#[cfg(target_arch = "wasm32")]
-#[extism_pdk::host_fn("extism:host/user")]
-extern "ExtismHost" {
-    fn host_cmd_exec(input: String) -> String;
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
-    if let Some(pos) = request.name.rfind("__") {
-        request.name = request.name[pos + 2..].to_string();
-    }
-
-    let payload_str =
-        serde_json::to_string(&request).map_err(|e| format!("Serialization error: {}", e))?;
-
-    let cmd_req = CmdExecRequest {
-        program: "mhb-mconnect-native".to_string(),
-        args: vec!["--exec".to_string(), payload_str],
-        cwd: None,
-    };
-
-    let raw_req = serde_json::to_string(&cmd_req).map_err(|e| e.to_string())?;
-    let raw_resp =
-        unsafe { host_cmd_exec(raw_req) }.map_err(|e| format!("Host execution failed: {:?}", e))?;
-
-    let resp: CmdExecResponse = serde_json::from_str(&raw_resp)
-        .map_err(|e| format!("Failed to parse host response: {}", e))?;
-
-    if !resp.success && resp.stdout.trim().is_empty() {
-        return Err(if !resp.stderr.is_empty() {
-            resp.stderr
-        } else {
-            "mhb-mconnect-native exited with failure".to_string()
-        });
-    }
-
-    let parsed_val: Value = serde_json::from_str(&resp.stdout).map_err(|e| {
-        format!(
-            "Failed to parse output JSON: {} (stdout: {})",
-            e, resp.stdout
-        )
-    })?;
-
-    if let Some(err) = parsed_val.get("error").and_then(Value::as_str) {
-        return Err(err.to_string());
-    }
-
-    Ok(parsed_val)
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 fn get_base_url(args: &Value) -> String {
     let raw = args
         .get("baseUrl")
@@ -72,7 +18,6 @@ fn get_base_url(args: &Value) -> String {
     raw.trim_end_matches('/').to_string()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Result<String, String> {
     let val = args.get(camel).or_else(|| args.get(snake));
     match val {
@@ -88,7 +33,6 @@ fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Result<String, String>
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
     if let Some(pos) = request.name.rfind("__") {
         request.name = request.name[pos + 2..].to_string();

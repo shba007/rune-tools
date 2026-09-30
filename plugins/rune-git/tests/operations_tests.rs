@@ -16,7 +16,7 @@ fn test_git_init_status_commit_flow() {
 
     let res = execute_tool(ToolCallRequest {
         name: "git_init".to_string(),
-        arguments: json!({ "repo_path": repo_path }),
+        arguments: json!({ "repoPath": repo_path }),
     });
     assert!(res.is_ok());
 
@@ -25,14 +25,14 @@ fn test_git_init_status_commit_flow() {
 
     let res = execute_tool(ToolCallRequest {
         name: "git_add".to_string(),
-        arguments: json!({ "repo_path": repo_path, "files": ["file.txt"] }),
+        arguments: json!({ "repoPath": repo_path, "files": ["file.txt"] }),
     });
     assert!(res.is_ok());
 
     let res = execute_tool(ToolCallRequest {
         name: "git_commit".to_string(),
         arguments: json!({
-            "repo_path": repo_path,
+            "repoPath": repo_path,
             "message": "initial commit"
         }),
     });
@@ -40,7 +40,7 @@ fn test_git_init_status_commit_flow() {
 
     let res = execute_tool(ToolCallRequest {
         name: "git_status".to_string(),
-        arguments: json!({ "repo_path": repo_path }),
+        arguments: json!({ "repoPath": repo_path }),
     })
     .unwrap();
     assert!(
@@ -69,14 +69,14 @@ fn test_validate_commit_message_exact_length_check() {
         name: "validate_commit_message".to_string(),
         arguments: json!({
             "message": msg,
-            "max_subject_length": 100,
+            "maxSubjectLength": 100,
             "conventional": true
         }),
     })
     .unwrap();
 
     assert_eq!(res["valid"], true);
-    assert_eq!(res["subject_length"], 91);
+    assert_eq!(res["subjectLength"], 91);
     assert_eq!(res["issues"].as_array().unwrap().len(), 0);
 
     // Default threshold is 72, which 91 exceeds
@@ -90,7 +90,7 @@ fn test_validate_commit_message_exact_length_check() {
     .unwrap();
 
     assert_eq!(res_default["valid"], false);
-    assert_eq!(res_default["subject_length"], 91);
+    assert_eq!(res_default["subjectLength"], 91);
     assert!(
         res_default["issues"][0]
             .as_str()

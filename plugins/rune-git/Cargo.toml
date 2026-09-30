@@ -1,7 +1,7 @@
 [package]
 name = "rune-git"
 description = " Git repository management: status, diff, staging, committing, branching, switching, merging, log inspection, remote management, fetch/pull/push"
-version = "0.2.3"
+version = "0.2.4"
 edition.workspace = true
 license.workspace = true
 
@@ -17,12 +17,12 @@ required-features = ["native"]
 native = []
 
 [dependencies]
-rune-pdk = { path = "../../crates/rune-pdk" }
+rune-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rune-sidecar = { path = "../../crates/rune-sidecar" }
+rune-sidecar.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true

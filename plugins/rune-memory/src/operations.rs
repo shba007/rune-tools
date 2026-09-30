@@ -27,6 +27,7 @@ pub fn resolve_storage_path(args: Option<&Value>) -> PathBuf {
 
     let filename = explicit_file
         .or_else(|| get_config("memory_file"))
+        .or_else(|| get_config("MEMORY_FILE"))
         .unwrap_or_else(|| "memory.json".to_string());
 
     let explicit_dir = args

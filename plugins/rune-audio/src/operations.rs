@@ -52,10 +52,9 @@ fn get_u64_arg(args: &Value, camel: &str, snake: &str) -> Option<u64> {
         .get(camel)
         .or_else(|| args.get(snake))
         .and_then(Value::as_str)
+        && let Ok(n) = s.parse::<u64>()
     {
-        if let Ok(n) = s.parse::<u64>() {
-            return Some(n);
-        }
+        return Some(n);
     }
     let env_snake = snake.to_ascii_uppercase();
     let env_camel = camel.to_ascii_uppercase();
@@ -90,21 +89,7 @@ fn get_bool_arg(args: &Value, camel: &str, snake: &str) -> bool {
 }
 
 pub fn get_config(key: &str) -> Option<String> {
-    #[cfg(target_arch = "wasm32")]
-    {
-        extism_pdk::config::get(key)
-            .ok()
-            .flatten()
-            .or_else(|| std::env::var(key.to_ascii_uppercase()).ok())
-            .filter(|s| !s.is_empty())
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        std::env::var(key.to_ascii_uppercase())
-            .or_else(|_| std::env::var(key))
-            .ok()
-            .filter(|s| !s.is_empty())
-    }
+    rune_pdk::get_config(key)
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -139,7 +124,7 @@ fn run_binary_raw(req: &CmdExecRequest) -> Result<CmdExecResponse, String> {
 }
 
 pub fn run_binary(program: &str, args: &[&str], cwd: Option<&str>) -> Result<String, String> {
-    let executable = resolve_binary_executable(program)?;
+    let executable = rune_pdk::resolve_binary_executable(program)?;
 
     let req = CmdExecRequest {
         program: executable,
@@ -378,200 +363,4 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
         unknown => Err(format!("Unknown tool: {}", unknown)),
     }
-}
-
-// =========================================================================
-// Helper Functions for Binary Resolution and Download
-// =========================================================================
-
-#[cfg(not(target_arch = "wasm32"))]
-const BIN_DIR: &str = "bin";
-
-#[cfg(target_arch = "wasm32")]
-fn resolve_binary_executable(program: &str) -> Result<String, String> {
-    Ok(program.to_string())
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn resolve_binary_executable(program: &str) -> Result<String, String> {
-    let env_key = format!("{}_PATH", program.replace('-', "_").to_ascii_uppercase());
-    if let Ok(explicit) = std::env::var(&env_key) {
-        let p = PathBuf::from(&explicit);
-        if p.exists() {
-            return Ok(p.to_string_lossy().to_string());
-        }
-    }
-
-    let local_path = get_binary_path(program);
-    if local_path.exists() {
-        return Ok(local_path.to_string_lossy().to_string());
-    }
-
-    let exe_name = if cfg!(windows) && !program.ends_with(".exe") {
-        format!("{}.exe", program)
-    } else {
-        program.to_string()
-    };
-
-    if let Ok(path_var) = std::env::var("PATH") {
-        for dir in std::env::split_paths(&path_var) {
-            let candidate = dir.join(&exe_name);
-            if candidate.is_file() {
-                return Ok(candidate.to_string_lossy().to_string());
-            }
-        }
-    }
-
-    if std::process::Command::new(program)
-        .arg("--version")
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-    {
-        return Ok(program.to_string());
-    }
-
-    ensure_binary_exists(program)?;
-    Ok(local_path.to_string_lossy().to_string())
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn get_binary_path(binary_name: &str) -> std::path::PathBuf {
-    let base = std::env::var("ALLOWED_DIR")
-        .or_else(|_| std::env::var("OUTPUT_DIR"))
-        .unwrap_or_else(|_| ".".to_string());
-    let file_name = if cfg!(windows) && !binary_name.ends_with(".exe") {
-        format!("{}.exe", binary_name)
-    } else {
-        binary_name.to_string()
-    };
-    std::path::PathBuf::from(&base)
-        .join(BIN_DIR)
-        .join(file_name)
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn get_ytdlp_download_url() -> String {
-    match std::env::consts::OS {
-        "windows" => {
-            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string()
-        }
-        "linux" | "macos" => {
-            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp".to_string()
-        }
-        _ => "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe".to_string(),
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn get_spotdl_download_url() -> String {
-    match std::env::consts::OS {
-        "windows" => {
-            "https://github.com/spotDL/spotify-downloader/releases/latest/download/spotdl-windows-x64.exe".to_string()
-        }
-        "macos" => {
-            "https://github.com/spotDL/spotify-downloader/releases/latest/download/spotdl-darwin".to_string()
-        }
-        _ => "https://github.com/spotDL/spotify-downloader/releases/latest/download/spotdl-linux".to_string(),
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn get_binary_download_url(program: &str) -> String {
-    match program {
-        "yt-dlp" => get_ytdlp_download_url(),
-        "spotdl" => get_spotdl_download_url(),
-        "ffmpeg" => {
-            match std::env::consts::OS {
-                "windows" => {
-                    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string()
-                }
-                "linux" | "macos" => {
-                    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz".to_string()
-                }
-                _ => {
-                    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.exe".to_string()
-                }
-            }
-        }
-        _ => get_ytdlp_download_url(),
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn download_binary(binary_name: &str, download_url: String) -> Result<(), String> {
-    use std::io::Write;
-
-    let binary_path = get_binary_path(binary_name);
-    let dir = binary_path.parent().ok_or("Invalid binary path")?;
-    fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory: {}", e))?;
-
-    let response = reqwest::blocking::get(&download_url)
-        .map_err(|e| format!("Failed to download {}: {}", binary_name, e))?;
-
-    if !response.status().is_success() {
-        return Err(format!(
-            "Failed to download {}: HTTP {}",
-            binary_name,
-            response.status()
-        ));
-    }
-
-    let mut file = fs::File::create(&binary_path)
-        .map_err(|e| format!("Failed to create binary file: {}", e))?;
-
-    let bytes = response
-        .bytes()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    file.write_all(&bytes)
-        .map_err(|e| format!("Failed to write binary: {}", e))?;
-    file.flush().ok();
-    drop(file);
-
-    println!(
-        "Downloaded {}: {:.1} MB",
-        binary_name,
-        bytes.len() as f64 / 1024.0 / 1024.0
-    );
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        if let Ok(meta) = fs::metadata(&binary_path) {
-            let mut perms = meta.permissions();
-            perms.set_mode(0o755);
-            let _ = fs::set_permissions(&binary_path, perms);
-        }
-    }
-
-    Ok(())
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn ensure_binary_exists(binary_name: &str) -> Result<(), String> {
-    let binary_path = get_binary_path(binary_name);
-
-    if !binary_path.exists() {
-        println!("{} binary not found. Downloading...", binary_name);
-        let download_url = get_binary_download_url(binary_name);
-        match download_binary(binary_name, download_url) {
-            Ok(_) => {
-                if !std::process::Command::new(&binary_path)
-                    .arg("--version")
-                    .output()
-                    .map(|o| o.status.success())
-                    .unwrap_or(false)
-                {
-                    return Err(format!(
-                        "Downloaded {} binary is not executable.",
-                        binary_name
-                    ));
-                }
-            }
-            Err(e) => return Err(format!("Failed to download {}: {}", binary_name, e)),
-        }
-    }
-
-    Ok(())
 }

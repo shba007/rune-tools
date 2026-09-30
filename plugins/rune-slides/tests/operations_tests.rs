@@ -7,7 +7,7 @@ use tempfile::tempdir;
 fn test_iterative_slide_workflow() {
     let dir = tempdir().unwrap();
     let project_path = dir.path().join("presentation.json");
-    let output_path = dir.path().join("output.html");
+    let output_path = dir.path().join("presentation.pptx");
     let path_str = project_path.to_str().unwrap();
 
     // 1. Init
@@ -61,10 +61,11 @@ fn test_iterative_slide_workflow() {
         name: "slide_export".to_string(),
         arguments: json!({
             "projectPath": path_str,
-            "outputPath": output_path.to_str().unwrap()
+            "outputPath": output_path.to_str().unwrap(),
+            "format": "pptx"
         }),
     })
     .unwrap();
     assert_eq!(res_export["status"], "success");
-    assert!(output_path.exists(), "Exported HTML file must exist");
+    assert!(output_path.exists(), "Exported PPTX file must exist");
 }

@@ -43,21 +43,7 @@ fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
 }
 
 pub fn get_config(key: &str) -> Option<String> {
-    #[cfg(target_arch = "wasm32")]
-    {
-        extism_pdk::config::get(key)
-            .ok()
-            .flatten()
-            .or_else(|| std::env::var(key.to_ascii_uppercase()).ok())
-            .filter(|s| !s.is_empty())
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        std::env::var(key.to_ascii_uppercase())
-            .or_else(|_| std::env::var(key))
-            .ok()
-            .filter(|s| !s.is_empty())
-    }
+    rune_pdk::get_config(key)
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -92,8 +78,10 @@ fn run_binary_raw(req: &CmdExecRequest) -> Result<CmdExecResponse, String> {
 }
 
 pub fn run_binary(program: &str, args: &[&str], cwd: Option<&str>) -> Result<String, String> {
+    let executable = rune_pdk::resolve_binary_executable(program)?;
+
     let req = CmdExecRequest {
-        program: program.to_string(),
+        program: executable,
         args: args.iter().map(|s| s.to_string()).collect(),
         cwd: cwd.map(|c| c.to_string()),
     };
@@ -344,13 +332,12 @@ fn compare_images_pixel_by_pixel(
             let dg = (g1 - g2).abs();
             let db = (b1 - b2).abs();
 
-            // Calculate Euclidean distance
             let distance = ((dr * dr + dg * dg + db * db) as f64).sqrt();
             let max_diff = distance / 255.0;
 
             if max_diff < threshold {
                 matching_pixels += 1;
-                diff_img.put_pixel(x, y, Rgba([50, 200, 50, 255])); // Green for match
+                diff_img.put_pixel(x, y, Rgba([50, 200, 50, 255]));
             } else {
                 differing_pixels += 1;
                 let intensity = (max_diff * 255.0) as u8;
@@ -358,7 +345,7 @@ fn compare_images_pixel_by_pixel(
                     x,
                     y,
                     Rgba([intensity, 255 - intensity, 255 - intensity, 255]),
-                ); // Red/blue for difference
+                );
             }
         }
     }
@@ -375,8 +362,6 @@ fn compare_images_pixel_by_pixel(
 }
 
 fn rasterize_svg(svg_path: &str, width: u32, height: u32) -> Result<DynamicImage, String> {
-    // The `image` crate has no SVG decoder, so we rasterize with `resvg`
-    // (pure Rust, no system libraries needed -- works in wasm32 and native).
     if width == 0 || height == 0 {
         return Err(format!(
             "Failed to convert SVG '{}': target dimensions must be non-zero, got {}x{}",
@@ -407,7 +392,6 @@ fn rasterize_svg(svg_path: &str, width: u32, height: u32) -> Result<DynamicImage
         )
     })?;
 
-    // Scale the SVG's own coordinate space to fill the requested raster size.
     let transform = resvg::tiny_skia::Transform::from_scale(
         width as f32 / svg_width,
         height as f32 / svg_height,
@@ -415,8 +399,6 @@ fn rasterize_svg(svg_path: &str, width: u32, height: u32) -> Result<DynamicImage
 
     resvg::render(&tree, transform, &mut pixmap.as_mut());
 
-    // tiny-skia stores premultiplied-alpha pixels; `image` expects straight
-    // alpha, so we demultiply each pixel on the way out.
     let raw_pixels: Vec<u8> = pixmap
         .pixels()
         .iter()
@@ -440,9 +422,6 @@ fn is_svg_file(path: &str) -> bool {
     path.to_lowercase().ends_with(".svg")
 }
 
-/// Builds a vtracer `Config` from optional tool arguments, layered on top of
-/// vtracer's own defaults (color mode, spline curves, stacked hierarchy --
-/// already tuned for photos/color art, not just line drawings).
 fn build_trace_config(args: &Value) -> vtracer::Config {
     let mut config = vtracer::Config::default();
 
@@ -527,19 +506,18 @@ fn load_and_convert_image(
 ) -> Result<(DynamicImage, u32, u32), String> {
     if is_svg_file(path) {
         let (width, height) = if path.contains("width=") && path.contains("height=") {
-            // Parse dimensions from path if available
             let width_part = path.split("width=").nth(1).unwrap_or("");
             let height_part = path.split("height=").nth(1).unwrap_or("");
 
             let width_str = width_part
-                .split(" ")
+                .split(' ')
                 .next()
                 .unwrap_or(&default_width.to_string())
                 .to_string();
             let width_val: u32 = width_str.parse().unwrap_or(default_width);
 
             let height_str = height_part
-                .split(" ")
+                .split(' ')
                 .next()
                 .unwrap_or(&default_height.to_string())
                 .to_string();
@@ -634,10 +612,8 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .parse()
                 .map_err(|_| "Invalid threshold value. Must be a number between 0.0 and 1.0")?;
 
-            // Use minimum threshold of 0.001 to account for floating point precision in pixel comparisons
             let effective_threshold = threshold.max(0.001);
 
-            // Validate threshold before loading images
             if effective_threshold > 1.0 {
                 return Err("Threshold must be between 0.0 and 1.0".to_string());
             }
@@ -646,7 +622,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 return Err("Image paths cannot be empty".to_string());
             }
 
-            // Check if files exist
             if !Path::new(&image1_path).exists() {
                 return Err(format!("Image1 path does not exist: {}", image1_path));
             }
@@ -654,22 +629,13 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 return Err(format!("Image2 path does not exist: {}", image2_path));
             }
 
-            // Load and convert images
             let (img1, _width1, _height1) =
                 load_and_convert_image(&image1_path, DEFAULT_SVG_WIDTH, DEFAULT_SVG_HEIGHT)?;
             let (img2, _width2, _height2) =
                 load_and_convert_image(&image2_path, DEFAULT_SVG_WIDTH, DEFAULT_SVG_HEIGHT)?;
 
-            // Compare images. Note: we intentionally pass `effective_threshold`
-            // here, not the raw `threshold`. With the raw threshold (which
-            // defaults to 0.0) and a strict `<` comparison, even pixels with
-            // zero difference would fail `0.0 < 0.0` and be counted as
-            // "differing" -- which made comparing a file against itself
-            // report a 0% match. `effective_threshold` floors this at 0.001
-            // specifically to absorb that floating-point edge case.
             let (diff_image, stats) = generate_diff_image(&img1, &img2, effective_threshold);
 
-            // Save diff image
             let output_path_resolved = PathBuf::from(&output_path).to_string_lossy().to_string();
 
             let _ = fs::create_dir_all(
@@ -681,7 +647,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .save(&output_path_resolved)
                 .map_err(|e| format!("Failed to save diff image: {}", e))?;
 
-            // Calculate match percentage
             let match_percentage =
                 (stats.matching_pixels as f64 / stats.pixels_compared as f64) * 100.0;
 
@@ -711,7 +676,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
             let (width, height) = img.dimensions();
 
-            // Get format from image extension or default
             let format_str = Path::new(&image_path)
                 .extension()
                 .and_then(|e| e.to_str())
@@ -743,7 +707,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 height,
                 color_type,
                 has_alpha,
-                bit_depth: 8, // Simplified - could be enhanced
+                bit_depth: 8,
                 file_size,
                 dimensions: format!("{}x{}", width, height),
                 metadata: json!({})
@@ -798,7 +762,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 ))
             };
 
-            // SVG to raster conversion
             if input_ext == "svg" {
                 if !["png", "jpeg", "jpg", "gif", "webp"].contains(&output_format.as_str()) {
                     return Err(format!(
@@ -807,7 +770,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                     ));
                 }
 
-                // Use rasterize_svg function (already implemented)
                 let rasterized = rasterize_svg(&input_path, 800, 800)?;
 
                 let ext = match output_format.as_str() {
@@ -819,21 +781,13 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                     .save(output_path.with_extension(ext))
                     .map_err(|e| format!("Failed to save converted image: {}", e))?;
             } else if output_format == "svg" {
-                // Raster to SVG vectorization via vtracer. Unlike potrace,
-                // vtracer has a color clustering pipeline, so it's suited to
-                // photos and colored art, not just black & white line work.
                 let config = build_trace_config(&request.arguments);
                 vtracer::convert_image_to_svg(Path::new(&input_path), &output_path, config)
                     .map_err(|e| format!("Failed to vectorize image to SVG: {}", e))?;
             } else {
-                // Raster to raster conversion. Only open with `image::open`
-                // here (not for SVG above): the `image` crate has no SVG
-                // decoder, so calling it unconditionally on an SVG file
-                // used to fail before this branch was even reached.
                 let img = image::open(&input_path)
                     .map_err(|e| format!("Failed to open input image: {}", e))?;
 
-                // The image crate handles format detection based on file extension
                 img.save(&output_path)
                     .map_err(|e| format!("Failed to save converted image: {}", e))?;
             }

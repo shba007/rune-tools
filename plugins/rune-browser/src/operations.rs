@@ -6,31 +6,30 @@ use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 const SESSIONS_DIR: &str = "browser-sessions";
 
 static IN_MEMORY_SESSIONS: Mutex<Option<HashMap<String, SessionInfo>>> = Mutex::new(None);
 
-fn get_arg(args: &Value, key: &str, default: Option<String>) -> Option<String> {
-    args.get(key)
+fn get_arg(args: &Value, camel: &str, snake: &str, default: Option<String>) -> Option<String> {
+    args.get(camel)
+        .or_else(|| args.get(snake))
         .and_then(|v| {
-            if let Some(s) = v.as_str() {
-                Some(s.to_string())
-            } else if let Some(n) = v.as_i64() {
-                Some(n.to_string())
-            } else if let Some(n) = v.as_f64() {
-                Some(n.to_string())
-            } else {
-                None
-            }
+            v.as_str()
+                .map(|s| s.to_string())
+                .or_else(|| v.as_i64().map(|n| n.to_string()))
+                .or_else(|| v.as_f64().map(|n| n.to_string()))
         })
         .or(default)
 }
 
-fn get_bool_arg(args: &Value, key: &str, default: bool) -> bool {
-    args.get(key).and_then(|v| v.as_bool()).unwrap_or(default)
+fn get_bool_arg(args: &Value, camel: &str, snake: &str, default: bool) -> bool {
+    args.get(camel)
+        .or_else(|| args.get(snake))
+        .and_then(|v| v.as_bool())
+        .unwrap_or(default)
 }
 
 // =========================================================================
@@ -152,160 +151,22 @@ fn delete_session(session_id: &str) -> Result<(), String> {
 }
 
 // =========================================================================
-// Native Binary Execution & Auto-Provisioning
+// Native Binary Execution (Host-Managed Resolution via rune-pdk)
 // =========================================================================
 
 #[cfg(not(target_arch = "wasm32"))]
-fn is_pure_executable(path: &Path) -> bool {
-    let path_str = path.to_string_lossy().to_lowercase();
-    if path_str.contains(".bun")
-        || path_str.contains("node_modules")
-        || path_str.ends_with(".cmd")
-        || path_str.ends_with(".bat")
-        || path_str.ends_with(".ps1")
-        || path_str.ends_with(".js")
-    {
-        return false;
-    }
-
-    #[cfg(windows)]
-    {
-        path.extension()
-            .and_then(|ext| ext.to_str())
-            .map(|ext| ext.eq_ignore_ascii_case("exe"))
-            .unwrap_or(false)
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = path;
-        true
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn locate_agent_browser_binary() -> Result<PathBuf, String> {
-    if let Ok(explicit) =
-        std::env::var("AGENT_BROWSER_PATH").or_else(|_| std::env::var("BROWSER_PATH"))
-    {
-        let p = PathBuf::from(&explicit);
-        if p.exists() && is_pure_executable(&p) {
-            return Ok(p);
-        }
-    }
-
-    let bin_name = if cfg!(windows) {
-        "agent-browser.exe"
-    } else {
-        "agent-browser"
-    };
-
-    let base_dir = crate::resolve_dir(None);
-    let candidates = [
-        PathBuf::from(&base_dir).join("bin").join(bin_name),
-        PathBuf::from(&base_dir).join(bin_name),
-        std::env::temp_dir().join("rune-bin").join(bin_name),
-    ];
-
-    for c in &candidates {
-        if c.exists() && is_pure_executable(c) {
-            return Ok(c.clone());
-        }
-    }
-
-    if let Ok(path_var) = std::env::var("PATH") {
-        for dir in std::env::split_paths(&path_var) {
-            let candidate = dir.join(bin_name);
-            if candidate.is_file() && is_pure_executable(&candidate) {
-                return Ok(candidate);
-            }
-        }
-    }
-
-    download_standalone_agent_browser()
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn download_standalone_agent_browser() -> Result<PathBuf, String> {
-    let bin_name = if cfg!(windows) {
-        "agent-browser.exe"
-    } else {
-        "agent-browser"
-    };
-    let base_dir = crate::resolve_dir(None);
-    let bin_dir = PathBuf::from(&base_dir).join("bin");
-    let _ = fs::create_dir_all(&bin_dir);
-    let dest = bin_dir.join(bin_name);
-
-    let os = std::env::consts::OS;
-    let arch = std::env::consts::ARCH;
-
-    let asset_name = match (os, arch) {
-        ("windows", _) => "agent-browser-win32-x64.exe",
-        ("macos", "aarch64") => "agent-browser-darwin-arm64",
-        ("macos", _) => "agent-browser-darwin-x64",
-        ("linux", "aarch64") => "agent-browser-linux-arm64",
-        ("linux", _) => "agent-browser-linux-x64",
-        _ => {
-            return Err(format!(
-                "Unsupported platform for agent-browser: {}-{}",
-                os, arch
-            ));
-        }
-    };
-
-    let urls = [
-        format!(
-            "https://github.com/vercel-labs/agent-browser/releases/latest/download/{}",
-            asset_name
-        ),
-        format!(
-            "https://github.com/vercel-labs/agent-browser/releases/download/v0.38.1/{}",
-            asset_name
-        ),
-        format!(
-            "https://github.com/vercel-labs/agent-browser/releases/download/v0.37.1/{}",
-            asset_name
-        ),
-    ];
-
-    let mut last_err = String::new();
-    for url in &urls {
-        match reqwest::blocking::Client::builder()
-            .timeout(std::time::Duration::from_secs(60))
-            .build()
-            .and_then(|client| client.get(url).send())
-        {
-            Ok(resp) if resp.status().is_success() => {
-                if let Ok(bytes) = resp.bytes()
-                    && fs::write(&dest, &bytes).is_ok()
-                {
-                    #[cfg(unix)]
-                    {
-                        use std::os::unix::fs::PermissionsExt;
-                        let _ = fs::set_permissions(&dest, fs::Permissions::from_mode(0o755));
-                    }
-                    return Ok(dest);
-                }
-            }
-            Ok(resp) => {
-                last_err = format!("HTTP {}", resp.status());
-            }
-            Err(e) => {
-                last_err = e.to_string();
-            }
-        }
-    }
-
-    Err(format!(
-        "Failed to download standalone native agent-browser binary ({}): {}. Please check network or set AGENT_BROWSER_PATH.",
-        asset_name, last_err
-    ))
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
-    let bin_path = locate_agent_browser_binary()?;
+    if rune_pdk::is_contract_test_mode() {
+        return Ok(CmdExecResponse {
+            success: true,
+            exit_code: Some(0),
+            stdout: "[]".to_string(),
+            stderr: String::new(),
+        });
+    }
+
+    let bin_path_str = rune_pdk::resolve_binary_executable("agent-browser")?;
+    let bin_path = PathBuf::from(bin_path_str);
 
     let mut cmd = std::process::Command::new(&bin_path);
     cmd.args(&args);
@@ -340,6 +201,15 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
 
 #[cfg(target_arch = "wasm32")]
 fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
+    if rune_pdk::is_contract_test_mode() {
+        return Ok(CmdExecResponse {
+            success: true,
+            exit_code: Some(0),
+            stdout: "[]".to_string(),
+            stderr: String::new(),
+        });
+    }
+
     let req = CmdExecRequest {
         program: "agent-browser".to_string(),
         args,
@@ -404,11 +274,17 @@ fn op_session_start(request: &ToolCallRequest) -> Result<Value, String> {
     let engine = get_arg(
         &request.arguments,
         "engine",
+        "engine",
         Some("agent-browser".to_string()),
     );
-    let browser_type = get_arg(&request.arguments, "browser_type", Some("auto".to_string()));
-    let headed = get_bool_arg(&request.arguments, "headed", false);
-    let output_dir = get_arg(&request.arguments, "output_dir", None);
+    let browser_type = get_arg(
+        &request.arguments,
+        "browserType",
+        "browser_type",
+        Some("auto".to_string()),
+    );
+    let headed = get_bool_arg(&request.arguments, "headed", "headed", false);
+    let output_dir = get_arg(&request.arguments, "outputDir", "output_dir", None);
 
     let session_id = format!("session_{}", Utc::now().timestamp_millis());
 
@@ -432,11 +308,11 @@ fn op_session_start(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_session_stop(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None)
-        .ok_or_else(|| "Missing 'session_id' parameter".to_string())?;
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None)
+        .ok_or_else(|| "Missing 'sessionId' parameter".to_string())?;
 
     if session_id.trim().is_empty() {
-        return Err("Parameter 'session_id' cannot be empty".to_string());
+        return Err("Parameter 'sessionId' cannot be empty".to_string());
     }
 
     delete_session(&session_id)?;
@@ -449,24 +325,24 @@ fn op_session_list(_request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_navigate(request: &ToolCallRequest) -> Result<Value, String> {
-    let url = get_arg(&request.arguments, "url", None)
+    let url = get_arg(&request.arguments, "url", "url", None)
         .ok_or_else(|| "Missing 'url' parameter".to_string())?;
 
     if url.trim().is_empty() {
         return Err("Parameter 'url' cannot be empty".to_string());
     }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
 
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let browser_type =
-        get_arg(&request.arguments, "browser_type", None).unwrap_or_else(|| "auto".to_string());
+    let browser_type = get_arg(&request.arguments, "browserType", "browser_type", None)
+        .unwrap_or_else(|| "auto".to_string());
 
-    let headed = get_bool_arg(&request.arguments, "headed", false);
+    let headed = get_bool_arg(&request.arguments, "headed", "headed", false);
 
     if engine == "cdp" {
         return Ok(json!({
@@ -501,9 +377,9 @@ fn op_navigate(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_type(request: &ToolCallRequest) -> Result<Value, String> {
-    let target = get_arg(&request.arguments, "target", None)
+    let target = get_arg(&request.arguments, "target", "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
-    let value = get_arg(&request.arguments, "value", None)
+    let value = get_arg(&request.arguments, "value", "value", None)
         .ok_or_else(|| "Missing 'value' parameter".to_string())?;
 
     if target.trim().is_empty() {
@@ -513,9 +389,9 @@ fn op_type(request: &ToolCallRequest) -> Result<Value, String> {
         return Err("Parameter 'value' cannot be empty".to_string());
     }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
@@ -530,7 +406,7 @@ fn op_type(request: &ToolCallRequest) -> Result<Value, String> {
         }));
     }
 
-    let clear = get_bool_arg(&request.arguments, "clear", false);
+    let clear = get_bool_arg(&request.arguments, "clear", "clear", false);
     let mut cmd_args = vec!["type".to_string(), target.clone(), value.clone()];
 
     if let Some(ref sid) = session_id {
@@ -551,16 +427,16 @@ fn op_type(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_click(request: &ToolCallRequest) -> Result<Value, String> {
-    let target = get_arg(&request.arguments, "target", None)
+    let target = get_arg(&request.arguments, "target", "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
 
     if target.trim().is_empty() {
         return Err("Parameter 'target' cannot be empty".to_string());
     }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
@@ -574,8 +450,8 @@ fn op_click(request: &ToolCallRequest) -> Result<Value, String> {
         }));
     }
 
-    let double_click = get_bool_arg(&request.arguments, "double_click", false);
-    let new_tab = get_bool_arg(&request.arguments, "new_tab", false);
+    let double_click = get_bool_arg(&request.arguments, "doubleClick", "double_click", false);
+    let new_tab = get_bool_arg(&request.arguments, "newTab", "new_tab", false);
 
     let mut cmd_args = vec!["click".to_string(), target.clone()];
 
@@ -599,18 +475,21 @@ fn op_click(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_fill(request: &ToolCallRequest) -> Result<Value, String> {
-    let target = get_arg(&request.arguments, "target", None)
+    let target = get_arg(&request.arguments, "target", "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
-    let value = get_arg(&request.arguments, "value", None)
+    let value = get_arg(&request.arguments, "value", "value", None)
         .ok_or_else(|| "Missing 'value' parameter".to_string())?;
 
     if target.trim().is_empty() {
         return Err("Parameter 'target' cannot be empty".to_string());
     }
+    if value.trim().is_empty() {
+        return Err("Parameter 'value' cannot be empty".to_string());
+    }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
@@ -625,7 +504,7 @@ fn op_fill(request: &ToolCallRequest) -> Result<Value, String> {
         }));
     }
 
-    let press_enter = get_bool_arg(&request.arguments, "press_enter", false);
+    let press_enter = get_bool_arg(&request.arguments, "pressEnter", "press_enter", false);
     let mut cmd_args = vec!["fill".to_string(), target.clone(), value.clone()];
 
     if let Some(ref sid) = session_id {
@@ -646,21 +525,21 @@ fn op_fill(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_select_option(request: &ToolCallRequest) -> Result<Value, String> {
-    let target = get_arg(&request.arguments, "target", None)
+    let target = get_arg(&request.arguments, "target", "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
 
     if target.trim().is_empty() {
         return Err("Parameter 'target' cannot be empty".to_string());
     }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let value = get_arg(&request.arguments, "value", None);
-    let label = get_arg(&request.arguments, "label", None);
+    let value = get_arg(&request.arguments, "value", "value", None);
+    let label = get_arg(&request.arguments, "label", "label", None);
 
     if engine == "cdp" {
         return Ok(json!({
@@ -694,16 +573,16 @@ fn op_select_option(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_hover(request: &ToolCallRequest) -> Result<Value, String> {
-    let target = get_arg(&request.arguments, "target", None)
+    let target = get_arg(&request.arguments, "target", "target", None)
         .ok_or_else(|| "Missing 'target' parameter".to_string())?;
 
     if target.trim().is_empty() {
         return Err("Parameter 'target' cannot be empty".to_string());
     }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
@@ -733,16 +612,16 @@ fn op_hover(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_execute_script(request: &ToolCallRequest) -> Result<Value, String> {
-    let script = get_arg(&request.arguments, "script", None)
+    let script = get_arg(&request.arguments, "script", "script", None)
         .ok_or_else(|| "Missing 'script' parameter".to_string())?;
 
     if script.trim().is_empty() {
         return Err("Parameter 'script' cannot be empty".to_string());
     }
 
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
@@ -769,15 +648,15 @@ fn op_execute_script(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_screenshot(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let filename = get_arg(&request.arguments, "filename", None);
-    let full_page = get_bool_arg(&request.arguments, "full_page", false);
-    let output_dir = get_arg(&request.arguments, "output_dir", None);
+    let filename = get_arg(&request.arguments, "filename", "filename", None);
+    let full_page = get_bool_arg(&request.arguments, "fullPage", "full_page", false);
+    let output_dir = get_arg(&request.arguments, "outputDir", "output_dir", None);
 
     let default_filename =
         filename.unwrap_or_else(|| format!("screenshot_{}.png", Utc::now().timestamp_millis()));
@@ -821,15 +700,15 @@ fn op_screenshot(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_pdf(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let filename = get_arg(&request.arguments, "filename", None);
-    let landscape = get_bool_arg(&request.arguments, "landscape", false);
-    let output_dir = get_arg(&request.arguments, "output_dir", None);
+    let filename = get_arg(&request.arguments, "filename", "filename", None);
+    let landscape = get_bool_arg(&request.arguments, "landscape", "landscape", false);
+    let output_dir = get_arg(&request.arguments, "outputDir", "output_dir", None);
 
     let default_filename =
         filename.unwrap_or_else(|| format!("page_{}.pdf", Utc::now().timestamp_millis()));
@@ -870,14 +749,14 @@ fn op_pdf(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_console_messages(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let level = get_arg(&request.arguments, "level", None);
-    let limit = get_arg(&request.arguments, "limit", None);
+    let level = get_arg(&request.arguments, "level", "level", None);
+    let limit = get_arg(&request.arguments, "limit", "limit", None);
 
     if engine == "cdp" {
         return Ok(json!({
@@ -907,14 +786,14 @@ fn op_console_messages(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_network_requests(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None);
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None);
     let saved_session = session_id.as_deref().and_then(load_session);
-    let engine = get_arg(&request.arguments, "engine", None)
+    let engine = get_arg(&request.arguments, "engine", "engine", None)
         .or_else(|| saved_session.as_ref().map(|s| s.engine.clone()))
         .unwrap_or_else(|| "agent-browser".to_string());
 
-    let url_filter = get_arg(&request.arguments, "url", None);
-    let method = get_arg(&request.arguments, "method", None);
+    let url_filter = get_arg(&request.arguments, "url", "url", None);
+    let method = get_arg(&request.arguments, "method", "method", None);
 
     if engine == "cdp" {
         return Ok(json!({
@@ -946,10 +825,11 @@ fn op_network_requests(request: &ToolCallRequest) -> Result<Value, String> {
 fn op_cdp_connect(request: &ToolCallRequest) -> Result<Value, String> {
     let target_host = get_arg(
         &request.arguments,
+        "targetHost",
         "target_host",
         Some("localhost:9222".to_string()),
     );
-    let web_socket_url = get_arg(&request.arguments, "web_socket_url", None);
+    let web_socket_url = get_arg(&request.arguments, "webSocketUrl", "web_socket_url", None);
     let session_id = format!("cdp_{}", Utc::now().timestamp_millis());
 
     Ok(json!({
@@ -961,9 +841,9 @@ fn op_cdp_connect(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_cdp_request(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None)
-        .ok_or_else(|| "Missing 'session_id' parameter".to_string())?;
-    let method = get_arg(&request.arguments, "method", None)
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None)
+        .ok_or_else(|| "Missing 'sessionId' parameter".to_string())?;
+    let method = get_arg(&request.arguments, "method", "method", None)
         .ok_or_else(|| "Missing 'method' parameter".to_string())?;
     let params = request
         .arguments
@@ -983,11 +863,11 @@ fn op_cdp_request(request: &ToolCallRequest) -> Result<Value, String> {
 }
 
 fn op_cdp_disconnect(request: &ToolCallRequest) -> Result<Value, String> {
-    let session_id = get_arg(&request.arguments, "session_id", None)
-        .ok_or_else(|| "Missing 'session_id' parameter".to_string())?;
+    let session_id = get_arg(&request.arguments, "sessionId", "session_id", None)
+        .ok_or_else(|| "Missing 'sessionId' parameter".to_string())?;
 
     if session_id.trim().is_empty() {
-        return Err("Parameter 'session_id' cannot be empty".to_string());
+        return Err("Parameter 'sessionId' cannot be empty".to_string());
     }
 
     Ok(json!({ "status": "disconnected", "session_id": session_id }))

@@ -27,7 +27,7 @@ fn test_fetch_execution_with_mock_fetcher() {
     assert!(contents.contains("[Example](https://example.com)"));
     assert!(!contents.contains("console.log"));
     assert!(!contents.contains("color: red"));
-    assert_eq!(res["has_more"], false);
+    assert_eq!(res["hasMore"], false);
 }
 
 #[test]
@@ -143,13 +143,13 @@ fn test_process_content_pagination() {
 
     let res_no_paginate = process_content(sample, true, false, 0, 5).unwrap();
     assert_eq!(res_no_paginate["contents"], "01234");
-    assert_eq!(res_no_paginate["has_more"], true);
-    assert!(res_no_paginate.get("next_start_index").is_none());
+    assert_eq!(res_no_paginate["hasMore"], true);
+    assert!(res_no_paginate.get("nextStartIndex").is_none());
 
     let res_paginate = process_content(sample, true, true, 0, 5).unwrap();
     assert_eq!(res_paginate["contents"], "01234");
-    assert_eq!(res_paginate["has_more"], true);
-    assert_eq!(res_paginate["next_start_index"], 5);
+    assert_eq!(res_paginate["hasMore"], true);
+    assert_eq!(res_paginate["nextStartIndex"], 5);
 }
 
 #[test]
@@ -161,6 +161,8 @@ fn test_read_resource() {
             .unwrap()
             .contains("Rune Fetch Plugin")
     );
+    assert!(read_resource("help").is_ok());
+    assert!(read_resource("rune://rune-fetch/help").is_ok());
 
     let err = read_resource("rune://fetch/unknown");
     assert!(err.is_err());

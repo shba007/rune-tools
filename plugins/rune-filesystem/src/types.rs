@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextEdit {
-    #[serde(alias = "old_text", alias = "oldText")]
+    #[serde(rename = "oldText", alias = "old_text")]
     pub old_text: String,
-    #[serde(alias = "new_text", alias = "newText")]
+    #[serde(rename = "newText", alias = "new_text")]
     pub new_text: String,
 }

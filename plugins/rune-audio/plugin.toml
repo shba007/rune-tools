@@ -1,13 +1,35 @@
 [plugin]
 name = "rune-audio"
 description = "Audio track extraction using yt-dlp, ffmpeg, and spotdl for podcast and audio content management."
-version = "0.2.1"
+version = "0.2.3"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
-capabilities = { network_hosts = [
-], filesystem = { mode = "scoped", root_param = "allowed_dir" }, exec = { allowed_binaries = [
-  "ffmpeg",
-  "yt-dlp",
-  "spotdl",
-] } }
 documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-audio/README.md"
+
+[capabilities]
+network_hosts = [
+  "youtube.com",
+  "www.youtube.com",
+  "youtu.be",
+  "spotify.com",
+  "open.spotify.com",
+  "apple.com",
+  "music.apple.com",
+]
+filesystem = { mode = "scoped", root_param = "allowed_dir" }
+exec = { allowed_binaries = ["ffmpeg", "yt-dlp", "spotdl"] }
+
+[dependencies.binaries.ffmpeg]
+version = ">=6.0"
+optional = false
+description = "Audio transcoding, format conversion, and metadata embedding"
+
+[dependencies.binaries.yt-dlp]
+version = ">=2024.01.01"
+optional = false
+description = "Audio extraction from web streams"
+
+[dependencies.binaries.spotdl]
+version = ">=4.2.0"
+optional = true
+description = "Spotify and Apple Music downloader with ID3 tag and lyrics generation"

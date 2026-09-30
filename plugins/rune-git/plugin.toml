@@ -1,4 +1,18 @@
+[plugin]
+name = "rune-git"
+description = "Git repository management: status, diff, staging, committing, branching, and logging."
+version = "0.2.4"
+execution_model = "native"
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-git/README.md"
+
 [capabilities]
 network_hosts = []
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = ["git"] }
+
+[dependencies.binaries.git]
+version = ">=2.30.0"
+optional = true
+description = "Distributed version control system"

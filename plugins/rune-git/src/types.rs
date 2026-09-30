@@ -19,6 +19,7 @@ pub struct CmdExecResponse {
 pub struct CommitValidationReport {
     pub valid: bool,
     pub subject: String,
+    #[serde(rename = "subjectLength", alias = "subject_length")]
     pub subject_length: usize,
     pub body: Option<String>,
     pub issues: Vec<String>,

@@ -2,6 +2,7 @@ pub mod testing;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::path::PathBuf;
 
 #[cfg(target_arch = "wasm32")]
 pub use extism_pdk::*;
@@ -28,11 +29,10 @@ pub struct ToolCallRequest {
     pub arguments: Value,
 }
 
-// crates/rune-pdk — shared by every plugin, never redefined locally
 #[derive(Serialize, Deserialize)]
 pub struct Page<T> {
     pub items: T,
-    pub cursor: Option<String>, // opaque continuation token
+    pub cursor: Option<String>,
     pub has_more: bool,
 }
 
@@ -78,7 +78,6 @@ pub struct PromptGetRequest {
     pub arguments: Option<Value>,
 }
 
-/// Status of host-provisioned binary dependencies (§13.5).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BinaryProvisionStatus {
@@ -88,7 +87,6 @@ pub enum BinaryProvisionStatus {
     UnsupportedPlatform,
 }
 
-/// Diagnostic report entry for host-managed external executables.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BinaryStatus {
     pub name: String,
@@ -101,7 +99,6 @@ pub struct BinaryStatus {
     pub message: Option<String>,
 }
 
-/// Resolves configuration parameters uniformly across WASM and Native environments (§2.5).
 pub fn get_config(key: &str) -> Option<String> {
     #[cfg(target_arch = "wasm32")]
     {
@@ -115,5 +112,84 @@ pub fn get_config(key: &str) -> Option<String> {
             .or_else(|_| std::env::var(&lower))
             .or_else(|_| std::env::var(key))
             .ok()
+    }
+}
+
+pub fn is_contract_test_mode() -> bool {
+    std::env::var("RUNE_CONTRACT_TEST").as_deref() == Ok("1")
+}
+
+pub fn resolve_binary_executable(program: &str) -> Result<String, String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        Ok(program.to_string())
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if is_contract_test_mode() {
+            return Ok(program.to_string());
+        }
+
+        let upper_key = format!("{}_PATH", program.replace('-', "_").to_ascii_uppercase());
+        if let Ok(explicit) = std::env::var(&upper_key) {
+            let p = PathBuf::from(&explicit);
+            if p.exists() {
+                return Ok(p.to_string_lossy().to_string());
+            }
+        }
+
+        let lower_key = format!("{}_path", program.replace('-', "_").to_ascii_lowercase());
+        if let Ok(explicit) = std::env::var(&lower_key) {
+            let p = PathBuf::from(&explicit);
+            if p.exists() {
+                return Ok(p.to_string_lossy().to_string());
+            }
+        }
+
+        let exe_name = if cfg!(windows) && !program.ends_with(".exe") {
+            format!("{}.exe", program)
+        } else {
+            program.to_string()
+        };
+
+        let local_dirs = [
+            std::env::var("ALLOWED_DIR").ok(),
+            std::env::var("OUTPUT_DIR").ok(),
+            Some(".".to_string()),
+        ];
+
+        for base in local_dirs.into_iter().flatten() {
+            let candidate_bin = PathBuf::from(&base).join("bin").join(&exe_name);
+            if candidate_bin.is_file() {
+                return Ok(candidate_bin.to_string_lossy().to_string());
+            }
+            let candidate_direct = PathBuf::from(&base).join(&exe_name);
+            if candidate_direct.is_file() {
+                return Ok(candidate_direct.to_string_lossy().to_string());
+            }
+        }
+
+        if let Ok(path_var) = std::env::var("PATH") {
+            for dir in std::env::split_paths(&path_var) {
+                let candidate = dir.join(&exe_name);
+                if candidate.is_file() {
+                    return Ok(candidate.to_string_lossy().to_string());
+                }
+            }
+        }
+
+        if std::process::Command::new(program)
+            .arg("--version")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+        {
+            return Ok(program.to_string());
+        }
+
+        Err(format!(
+            "Required external binary '{}' not found. It was neither provisioned by rune-kit (checked environment variable '{}') nor found on the system PATH.",
+            program, upper_key
+        ))
     }
 }

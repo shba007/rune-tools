@@ -1,6 +1,6 @@
 [package]
 name = "rune-audio"
-version = "0.2.1"
+version = "0.2.3"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
@@ -15,19 +15,18 @@ path = "src/bin/native_sidecar.rs"
 required-features = ["native"]
 
 [features]
-default = []
-native = ["dep:rune-sidecar"]
+native = []
 
 [dependencies]
-rune-pdk = { path = "../../crates/rune-pdk" }
-rune-sidecar = { path = "../../crates/rune-sidecar", optional = true }
-serde = { workspace = true, features = ["derive"] }
+rune-pdk.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar.workspace = true
 reqwest = { workspace = true }
 
 [dev-dependencies]

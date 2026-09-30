@@ -1,4 +1,13 @@
+[plugin]
+name = "rune-slides"
+description = "Markdown presentation builder and native PowerPoint/PDF exporter."
+version = "0.2.0"
+execution_model = "native"
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-slides/README.md"
+
 [capabilities]
 network_hosts = []
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
-exec = { allowed_binaries = ["rune-slides-native"] }
+exec = { allowed_binaries = [] }

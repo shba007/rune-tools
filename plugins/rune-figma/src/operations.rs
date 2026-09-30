@@ -145,7 +145,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             )
         })?;
 
-    // Generic schema validation enforcing required arguments
     validate_tool_schema(tool, &request.arguments)?;
 
     Ok(json!({
@@ -159,7 +158,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 }
 
 pub fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Result<(), String> {
-    // 1. Enforce required arguments from input_schema
     if let Some(required) = tool.input_schema.get("required").and_then(|r| r.as_array()) {
         for req_field in required {
             if let Some(field_name) = req_field.as_str() {
@@ -175,19 +173,18 @@ pub fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Re
                     ));
                 }
 
-                if let Some(s) = args.get(field_name).and_then(Value::as_str) {
-                    if s.trim().is_empty() {
-                        return Err(format!(
-                            "Tool '{}' requires parameter '{}' to be non-empty.",
-                            tool.name, field_name
-                        ));
-                    }
+                if let Some(s) = args.get(field_name).and_then(Value::as_str)
+                    && s.trim().is_empty()
+                {
+                    return Err(format!(
+                        "Tool '{}' requires parameter '{}' to be non-empty.",
+                        tool.name, field_name
+                    ));
                 }
             }
         }
     }
 
-    // 2. Domain-specific validation (mutually exclusive sources)
     if tool.name == "set_image_fill" {
         let has_path = args.get("imagePath").is_some();
         let has_url = args.get("imageUrl").is_some();
@@ -202,16 +199,17 @@ pub fn validate_tool_schema(tool: &rune_pdk::ToolDefinition, args: &Value) -> Re
 }
 
 pub fn read_resource(uri: &str) -> Result<Value, String> {
-    match uri {
-        "rune://figma/document" => Ok(json!({
+    let clean_uri = uri.strip_prefix("rune://rune-figma/").unwrap_or(uri);
+    match clean_uri {
+        "rune://figma/document" | "figma/document" | "document" => Ok(json!({
             "status": "success",
             "result": { "type": "DOCUMENT", "name": "Active Figma Document", "children": [] }
         })),
-        "rune://figma/selection" => Ok(json!({
+        "rune://figma/selection" | "figma/selection" | "selection" => Ok(json!({
             "status": "success",
             "result": { "selectedNodes": [], "count": 0 }
         })),
-        "rune://figma/styles" => Ok(json!({
+        "rune://figma/styles" | "figma/styles" | "styles" => Ok(json!({
             "status": "success",
             "result": { "styles": [] }
         })),

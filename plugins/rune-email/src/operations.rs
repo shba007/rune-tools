@@ -1,89 +1,18 @@
-use rune_pdk::ToolCallRequest;
-use serde_json::Value;
-
-// =========================================================================
-// WASM32 Target Implementation (Host Subprocess Bridge)
-// =========================================================================
-
-#[cfg(target_arch = "wasm32")]
-use crate::types::{CmdExecRequest, CmdExecResponse};
-
-#[cfg(target_arch = "wasm32")]
-#[extism_pdk::host_fn("extism:host/user")]
-extern "ExtismHost" {
-    fn host_cmd_exec(input: String) -> String;
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
-    let payload_str =
-        serde_json::to_string(&request).map_err(|e| format!("Serialization error: {}", e))?;
-
-    let cmd_req = CmdExecRequest {
-        program: "rune-email-native".to_string(),
-        args: vec!["--exec".to_string(), payload_str],
-        cwd: None,
-    };
-
-    let raw_req = serde_json::to_string(&cmd_req).map_err(|e| e.to_string())?;
-
-    let raw_resp =
-        unsafe { host_cmd_exec(raw_req) }.map_err(|e| format!("Host execution failed: {:?}", e))?;
-
-    let resp: CmdExecResponse = serde_json::from_str(&raw_resp)
-        .map_err(|e| format!("Failed to parse host response: {}", e))?;
-
-    if !resp.success && resp.stdout.trim().is_empty() {
-        return Err(if !resp.stderr.is_empty() {
-            resp.stderr
-        } else {
-            "rune-email-native exited with failure".to_string()
-        });
-    }
-
-    let parsed_val: Value = serde_json::from_str(&resp.stdout).map_err(|e| {
-        format!(
-            "Failed to parse output JSON: {} (stdout: {})",
-            e, resp.stdout
-        )
-    })?;
-
-    if let Some(err) = parsed_val.get("error").and_then(Value::as_str) {
-        return Err(err.to_string());
-    }
-
-    Ok(parsed_val)
-}
-
-// =========================================================================
-// Native Target Implementation (IMAP/SMTP Direct Networking)
-// =========================================================================
-
-#[cfg(not(target_arch = "wasm32"))]
 use crate::types::{AttachmentInfo, EmailAccountConfig, MessageHeaderSummary};
-#[cfg(not(target_arch = "wasm32"))]
 use imap::Session;
-#[cfg(not(target_arch = "wasm32"))]
 use lettre::message::{
     MultiPart, SinglePart,
     header::{ContentDisposition, ContentType},
 };
-#[cfg(not(target_arch = "wasm32"))]
 use lettre::transport::smtp::authentication::Credentials;
-#[cfg(not(target_arch = "wasm32"))]
 use lettre::{Message, SmtpTransport, Transport};
-#[cfg(not(target_arch = "wasm32"))]
 use mail_parser::MimeHeaders;
-#[cfg(not(target_arch = "wasm32"))]
 use native_tls::TlsConnector;
-#[cfg(not(target_arch = "wasm32"))]
-use serde_json::json;
-#[cfg(not(target_arch = "wasm32"))]
+use rune_pdk::ToolCallRequest;
+use serde_json::{Value, json};
 use std::fs;
-#[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
 
-#[cfg(not(target_arch = "wasm32"))]
 fn get_payload_str(args: &Value, camel: &str, snake: &str) -> Option<String> {
     args.get(camel)
         .or_else(|| args.get(snake))
@@ -91,7 +20,6 @@ fn get_payload_str(args: &Value, camel: &str, snake: &str) -> Option<String> {
         .map(|s| s.trim().to_string())
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn get_config_str(args: &Value, camel: &str, snake: &str) -> Option<String> {
     if let Some(val) = args
         .get(camel)
@@ -107,7 +35,6 @@ fn get_config_str(args: &Value, camel: &str, snake: &str) -> Option<String> {
         .ok()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn get_u64_arg(args: &Value, camel: &str, snake: &str) -> Option<u64> {
     if let Some(val) = args
         .get(camel)
@@ -124,7 +51,6 @@ fn get_u64_arg(args: &Value, camel: &str, snake: &str) -> Option<u64> {
         .and_then(|v| v.parse().ok())
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn get_bool_arg(args: &Value, camel: &str, snake: &str, default: bool) -> bool {
     if let Some(val) = args
         .get(camel)
@@ -142,7 +68,6 @@ fn get_bool_arg(args: &Value, camel: &str, snake: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn resolve_dir(dir_param: Option<&str>) -> String {
     let explicit = dir_param.map(ToString::to_string).or_else(|| {
         std::env::var("OUTPUT_DIRECTORY")
@@ -166,7 +91,6 @@ pub fn resolve_dir(dir_param: Option<&str>) -> String {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn guess_mime_type(path: &Path) -> &'static str {
     match path
         .extension()
@@ -198,7 +122,6 @@ fn guess_mime_type(path: &Path) -> &'static str {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn resolve_account_config(args: &Value) -> Result<EmailAccountConfig, String> {
     let preset = get_config_str(args, "preset", "preset")
         .or_else(|| std::env::var("EMAIL_PRESET").ok())
@@ -270,7 +193,6 @@ pub fn resolve_account_config(args: &Value) -> Result<EmailAccountConfig, String
     })
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn connect_imap(
     config: &EmailAccountConfig,
 ) -> Result<Session<native_tls::TlsStream<std::net::TcpStream>>, String> {
@@ -303,7 +225,6 @@ fn connect_imap(
     Ok(session)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn detect_sent_mailbox(
     session: &mut Session<native_tls::TlsStream<std::net::TcpStream>>,
     preset: Option<&str>,
@@ -326,7 +247,6 @@ fn detect_sent_mailbox(
     "Sent".to_string()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn detect_drafts_mailbox(
     session: &mut Session<native_tls::TlsStream<std::net::TcpStream>>,
     preset: Option<&str>,
@@ -348,7 +268,6 @@ fn detect_drafts_mailbox(
     "Drafts".to_string()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn build_smtp_transport(config: &EmailAccountConfig) -> Result<SmtpTransport, String> {
     let creds = Credentials::new(config.smtp_user.clone(), config.smtp_pass.clone());
     let builder = if config.smtp_port == 587 {
@@ -366,7 +285,6 @@ fn build_smtp_transport(config: &EmailAccountConfig) -> Result<SmtpTransport, St
     Ok(transport)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     const KNOWN_TOOLS: &[&str] = &[
         "verify_email_connection",
@@ -405,7 +323,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             Ok(json!({
                 "status": "connected",
                 "account": config.from_email,
-                "imap": { "host": config.imap_host, "port": config.imap_port, "authenticated": true, "mailbox_count": mb_count },
+                "imap": { "host": config.imap_host, "port": config.imap_port, "authenticated": true, "mailboxCount": mb_count },
                 "smtp": { "host": config.smtp_host, "port": config.smtp_port, "connected": smtp_tested }
             }))
         }
@@ -524,7 +442,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let _ = imap_session.logout();
             Ok(json!({
                 "mailbox": mailbox,
-                "total_messages": total_found,
+                "totalMessages": total_found,
                 "page": page,
                 "limit": limit,
                 "messages": summaries
@@ -650,8 +568,8 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
             let _ = imap_session.logout();
             Ok(json!({
                 "mailbox": mailbox,
-                "search_criteria": search_str,
-                "total_matches": total_found,
+                "searchCriteria": search_str,
+                "totalMatches": total_found,
                 "limit": limit,
                 "messages": summaries
             }))
@@ -730,9 +648,9 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 "subject": subject,
                 "from": from,
                 "date": date,
-                "message_id": message_id,
-                "body_text": body_text,
-                "body_html": body_html,
+                "messageId": message_id,
+                "bodyText": body_text,
+                "bodyHtml": body_html,
                 "attachments": attachments
             }))
         }
@@ -811,7 +729,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
             Ok(json!({
                 "status": "success",
-                "saved_files": saved_files
+                "savedFiles": saved_files
             }))
         }
 
@@ -919,7 +837,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                         .map(|f| f.to_string_lossy().to_string())
                         .unwrap_or_else(|| "attachment.bin".to_string());
                     let mime = guess_mime_type(&path);
-                    let content_type = ContentType::parse(&mime).unwrap_or_else(|_| {
+                    let content_type = ContentType::parse(mime).unwrap_or_else(|_| {
                         ContentType::parse("application/octet-stream").unwrap()
                     });
 
@@ -1052,7 +970,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
             let _ = imap_session.logout();
 
-            Ok(json!({ "status": "replied", "in_reply_to": orig_msg_id, "to": orig_from }))
+            Ok(json!({ "status": "replied", "inReplyTo": orig_msg_id, "to": orig_from }))
         }
 
         "draft_email" => {
@@ -1138,7 +1056,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .map_err(|e| format!("Flag store error: {}", e))?;
 
             let _ = imap_session.logout();
-            Ok(json!({ "status": "success", "uid": uid, "action_performed": action }))
+            Ok(json!({ "status": "success", "uid": uid, "actionPerformed": action }))
         }
 
         "move_message" => {
@@ -1176,7 +1094,9 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .map_err(|e| format!("Expunge error: {}", e))?;
 
             let _ = imap_session.logout();
-            Ok(json!({ "status": "moved", "uid": uid, "from": src_mailbox, "to": dst_mailbox }))
+            Ok(
+                json!({ "status": "moved", "uid": uid, "sourceMailbox": src_mailbox, "destinationMailbox": dst_mailbox }),
+            )
         }
 
         unknown => Err(format!("Unknown tool: {}", unknown)),

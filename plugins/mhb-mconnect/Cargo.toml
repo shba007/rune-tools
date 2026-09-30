@@ -1,7 +1,7 @@
 [package]
 name = "mhb-mconnect"
 description = "Modest Human Brands external interaction API connector for email template management, schema retrieval, and rendering previews."
-version = "0.1.2"
+version = "0.1.3"
 edition.workspace = true
 license.workspace = true
 
@@ -17,12 +17,12 @@ required-features = ["native"]
 native = []
 
 [dependencies]
-rune-pdk = { path = "../../crates/rune-pdk" }
+rune-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rune-sidecar = { path = "../../crates/rune-sidecar" }
+rune-sidecar.workspace = true
 reqwest = { workspace = true, features = ["json", "blocking"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

@@ -7,10 +7,33 @@ use crate::types::{FetchPayload, FetchResult};
 /// Complies with `test_plugin_contract!` requirements.
 pub fn execute_tool(req: ToolCallRequest) -> Result<Value, String> {
     execute_tool_with_fetcher(req, |url| {
-        Err(format!(
-            "Network fetch is managed by the host environment. Standalone fetching for '{}' is disabled. Use execute_tool_with_fetcher to inject a custom fetcher.",
-            url
-        ))
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let client = reqwest::blocking::Client::builder()
+                .timeout(std::time::Duration::from_secs(10))
+                .user_agent("rune-fetch")
+                .build()
+                .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
+            let resp = client
+                .get(url)
+                .send()
+                .map_err(|e| format!("HTTP request failed: {}", e))?;
+            if !resp.status().is_success() {
+                return Err(format!(
+                    "HTTP request returned error status: {}",
+                    resp.status()
+                ));
+            }
+            resp.text()
+                .map_err(|e| format!("Failed to read response body: {}", e))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Err(format!(
+                "Network fetch is managed by the host environment. Standalone fetching for '{}' is disabled. Use execute_tool_with_fetcher to inject a custom fetcher.",
+                url
+            ))
+        }
     })
 }
 
@@ -129,8 +152,9 @@ pub fn process_content(
 }
 
 pub fn read_resource(uri: &str) -> Result<Value, String> {
-    match uri {
-        "rune://fetch/help" => Ok(json!({
+    let clean_uri = uri.strip_prefix("rune://rune-fetch/").unwrap_or(uri);
+    match clean_uri {
+        "rune://fetch/help" | "fetch/help" | "help" => Ok(json!({
             "contents": [
                 {
                     "uri": "rune://fetch/help",
@@ -140,7 +164,7 @@ pub fn read_resource(uri: &str) -> Result<Value, String> {
                              ## Features\n\
                              - Converts HTML into structured Markdown (headers, links, lists, code blocks)\n\
                              - Strips scripts, styles, and unwanted tags\n\
-                             - Character-based pagination with `max_length`, `start_index`, and `paginate`\n\
+                             - Character-based pagination with `maxLength`, `startIndex`, and `paginate`\n\
                              - Option for `raw` content retrieval when exact HTML/text is needed."
                 }
             ]
@@ -239,19 +263,17 @@ pub fn is_html(content: &str) -> bool {
 }
 
 /// Converts HTML into clean Markdown without external dependencies.
-/// Strips scripts and styles, converts headings, links, lists, code, and decodes HTML entities.
 pub fn html_to_markdown(html: &str) -> String {
     let mut output = String::with_capacity(html.len());
     let mut chars = html.chars().peekable();
     let mut skip_tags_depth = 0usize;
     let mut link_href_stack: Vec<Option<String>> = Vec::new();
-    let mut list_stack: Vec<char> = Vec::new(); // 'u' for unordered, 'o' for ordered
+    let mut list_stack: Vec<char> = Vec::new();
     let mut ol_counter: Vec<usize> = Vec::new();
     let mut in_pre = false;
 
     while let Some(c) = chars.next() {
         if c == '<' {
-            // Strip HTML comments (<!-- ... -->) and doctype directives
             if chars.peek() == Some(&'!') {
                 let mut directive_buf = String::new();
                 while let Some(&nc) = chars.peek() {
@@ -295,7 +317,6 @@ pub fn html_to_markdown(html: &str) -> String {
                 .trim_end_matches('/')
                 .to_lowercase();
 
-            // Ignore scripts, styles, SVGs, noscript, and head tags
             if matches!(
                 tag_name.as_str(),
                 "script" | "style" | "svg" | "noscript" | "head"
@@ -308,7 +329,6 @@ pub fn html_to_markdown(html: &str) -> String {
                 continue;
             }
 
-            // Reset skip depth on body boundary
             if tag_name == "body" {
                 skip_tags_depth = 0;
                 continue;
@@ -318,7 +338,6 @@ pub fn html_to_markdown(html: &str) -> String {
                 continue;
             }
 
-            // Headings
             if let Some(level) = match tag_name.as_str() {
                 "h1" => Some(1),
                 "h2" => Some(2),
@@ -337,7 +356,6 @@ pub fn html_to_markdown(html: &str) -> String {
                 continue;
             }
 
-            // Links
             if tag_name == "a" {
                 if is_closing {
                     if let Some(href_opt) = link_href_stack.pop() {
@@ -361,7 +379,6 @@ pub fn html_to_markdown(html: &str) -> String {
                 continue;
             }
 
-            // Images
             if tag_name == "img" {
                 let src = extract_attribute(tag_body, "src").unwrap_or_default();
                 let alt = extract_attribute(tag_body, "alt").unwrap_or_default();
@@ -371,7 +388,6 @@ pub fn html_to_markdown(html: &str) -> String {
                 continue;
             }
 
-            // Lists
             match tag_name.as_str() {
                 "ul" => {
                     if is_closing {
@@ -416,18 +432,10 @@ pub fn html_to_markdown(html: &str) -> String {
                     }
                 }
                 "p" => {
-                    if is_closing {
-                        ensure_blank_line(&mut output);
-                    } else {
-                        ensure_blank_line(&mut output);
-                    }
+                    ensure_blank_line(&mut output);
                 }
                 "div" | "article" | "section" | "main" | "header" | "footer" => {
-                    if is_closing {
-                        ensure_newline(&mut output);
-                    } else {
-                        ensure_newline(&mut output);
-                    }
+                    ensure_newline(&mut output);
                 }
                 "br" => {
                     output.push('\n');
@@ -474,10 +482,8 @@ pub fn html_to_markdown(html: &str) -> String {
                         output.push_str("| ");
                     }
                 }
-                "th" | "td" => {
-                    if is_closing {
-                        output.push_str(" | ");
-                    }
+                "th" | "td" if is_closing => {
+                    output.push_str(" | ");
                 }
                 _ => {}
             }
@@ -505,8 +511,8 @@ fn extract_attribute(tag: &str, attr: &str) -> Option<String> {
             if valid_before && end < bytes.len() {
                 let rest = &tag[end..];
                 let trimmed = rest.trim_start();
-                if trimmed.starts_with('=') {
-                    let after_eq = trimmed[1..].trim_start();
+                if let Some(stripped) = trimmed.strip_prefix('=') {
+                    let after_eq = stripped.trim_start();
                     if let Some(quote) = after_eq.chars().next() {
                         if quote == '"' || quote == '\'' {
                             let val_start = 1;

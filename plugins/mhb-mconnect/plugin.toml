@@ -1,16 +1,13 @@
 [plugin]
 name = "mhb-mconnect"
-version = "0.1.2"
+version = "0.1.3"
 execution_model = "native"
-description = "A Modest Human Brands (MHB) external interaction API connector MCP server for email template management and preview rendering"
+description = "MHB Interaction Service connector for email template management and rendering."
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/mhb-mconnect/README.md"
 
 [capabilities]
-network_hosts = [
-  "api.modesthumanbrands.com",
-  "connect.modesthumanbrands.com",
-  "modesthumanbrands.com",
-]
-filesystem = { mode = "none" }
-exec = { allowed_binaries = ["mhb-mconnect-native"] }
-
-[dependencies.binaries]
+network_hosts = ["api.modesthumanbrands.com"]
+filesystem = { mode = "scoped", root_param = "allowed_dir" }
+exec = { allowed_binaries = [] }

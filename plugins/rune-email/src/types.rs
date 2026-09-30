@@ -40,16 +40,23 @@ pub struct MessageHeaderSummary {
     pub from: String,
     pub to: Vec<String>,
     pub date: Option<String>,
+    #[serde(rename = "isRead")]
     pub is_read: bool,
+    #[serde(rename = "isFlagged")]
     pub is_flagged: bool,
+    #[serde(rename = "hasAttachments")]
     pub has_attachments: bool,
+    #[serde(rename = "sizeBytes")]
     pub size_bytes: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttachmentInfo {
     pub filename: String,
+    #[serde(rename = "contentType")]
     pub content_type: String,
+    #[serde(rename = "sizeBytes")]
     pub size_bytes: usize,
+    #[serde(rename = "attachmentIndex")]
     pub attachment_index: usize,
 }

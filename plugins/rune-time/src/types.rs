@@ -4,8 +4,11 @@ use serde::{Deserialize, Serialize};
 pub struct CurrentTimeResponse {
     pub timezone: String,
     pub datetime: String,
+    #[serde(rename = "utcDatetime")]
     pub utc_datetime: String,
+    #[serde(rename = "utcOffset")]
     pub utc_offset: String,
+    #[serde(rename = "timestampEpochSeconds")]
     pub timestamp_epoch_seconds: i64,
 }
 
@@ -13,6 +16,7 @@ pub struct CurrentTimeResponse {
 pub struct TimezoneDetails {
     pub timezone: String,
     pub datetime: String,
+    #[serde(rename = "utcOffset")]
     pub utc_offset: String,
 }
 
@@ -20,5 +24,6 @@ pub struct TimezoneDetails {
 pub struct ConvertTimeResponse {
     pub source: TimezoneDetails,
     pub target: TimezoneDetails,
+    #[serde(rename = "timeDifferenceHours")]
     pub time_difference_hours: f64,
 }

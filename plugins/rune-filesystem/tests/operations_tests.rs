@@ -131,8 +131,8 @@ fn test_edit_file_dry_run() {
         arguments: json!({
             "path": file.to_str().unwrap(),
             "edits": [
-                { "old_text": "let a = 1;", "new_text": "let a = 10;" },
-                { "old_text": "let c = 3;", "new_text": "let c = 30;" }
+                { "oldText": "let a = 1;", "newText": "let a = 10;" },
+                { "oldText": "let c = 3;", "newText": "let c = 30;" }
             ],
             "dryRun": true
         }),
@@ -156,9 +156,9 @@ fn test_edit_file_sequential_chaining() {
         arguments: json!({
             "path": file.to_str().unwrap(),
             "edits": [
-                { "old_text": "let a = 1;", "new_text": "let a = 10;" },
-                { "old_text": "let b = 2;", "new_text": "let b = 20;" },
-                { "old_text": "let c = 3;", "new_text": "let c = 30;" }
+                { "oldText": "let a = 1;", "newText": "let a = 10;" },
+                { "oldText": "let b = 2;", "newText": "let b = 20;" },
+                { "oldText": "let c = 3;", "newText": "let c = 30;" }
             ]
         }),
     };
@@ -573,4 +573,8 @@ fn test_resolve_path_strips_redundant_allowed_root() {
 
     let u2 = resolve_path_with_root("/etc/passwd", unix_root);
     assert!(u2.is_err());
+
+    let u3 = resolve_path_with_root("/tmp/cookies/../../etc/passwd", unix_root);
+    assert!(u3.is_err());
+    assert!(u3.unwrap_err().contains("outside allowed directory"));
 }

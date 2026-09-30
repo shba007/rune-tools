@@ -1,3 +1,12 @@
+[plugin]
+name = "rune-memory"
+version = "0.2.2"
+execution_model = "wasm"
+description = "Persistent knowledge graph memory for storing and querying entities, relations, and observations."
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-memory/README.md"
+
 [capabilities]
 network_hosts = []
 filesystem = { mode = "scoped", root_param = "allowed_dir" }

@@ -1,7 +1,7 @@
 [package]
 name = "rune-image"
 description = "A MCP server for multi-platform image extraction, visual comparison, and flexible format conversion including SVG and raster files."
-version = "0.2.1"
+version = "0.2.2"
 edition.workspace = true
 license.workspace = true
 
@@ -17,19 +17,17 @@ required-features = ["native"]
 native = []
 
 [dependencies]
-rune-pdk = { path = "../../crates/rune-pdk" }
+rune-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 image = { version = "0.25", features = ["png", "jpeg", "gif", "webp"] }
 image-compare = "0.5"
 resvg = { version = "0.48", default-features = false }
 vtracer = "0.6.5"
-# vtracer's `Config.mode` field is typed `visioncortex::PathSimplifyMode`;
-# pinned to the version vtracer 0.6.5 itself depends on so the types match.
 visioncortex = "0.8.8"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rune-sidecar = { path = "../../crates/rune-sidecar" }
+rune-sidecar.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 extism-pdk.workspace = true

@@ -31,6 +31,21 @@ pub fn assert_valid_tool_definitions(tools: &[ToolDefinition]) {
         if let Some(props) = schema.get("properties").and_then(Value::as_object) {
             for (prop_name, prop_val) in props {
                 assert!(
+                    !prop_name.contains('_'),
+                    "Tool '{}' property '{}' must be camelCase (no underscores allowed)",
+                    tool.name,
+                    prop_name
+                );
+                assert!(
+                    prop_name
+                        .chars()
+                        .next()
+                        .is_some_and(|c| c.is_ascii_lowercase()),
+                    "Tool '{}' property '{}' must start with a lowercase letter",
+                    tool.name,
+                    prop_name
+                );
+                assert!(
                     prop_val.get("description").is_some(),
                     "Tool '{}' property '{}' must specify a description",
                     tool.name,
@@ -41,6 +56,17 @@ pub fn assert_valid_tool_definitions(tools: &[ToolDefinition]) {
                     "Tool '{}' property '{}' must specify a type",
                     tool.name,
                     prop_name
+                );
+            }
+        }
+
+        if let Some(req_array) = schema.get("required").and_then(Value::as_array) {
+            for req in req_array.iter().filter_map(Value::as_str) {
+                assert!(
+                    !req.contains('_'),
+                    "Tool '{}' required field '{}' must be camelCase (no underscores allowed)",
+                    tool.name,
+                    req
                 );
             }
         }
@@ -205,6 +231,9 @@ macro_rules! test_plugin_contract {
 
         #[test]
         fn test_all_tools_routable() {
+            unsafe {
+                ::std::env::set_var("RUNE_CONTRACT_TEST", "1");
+            }
             let tools = $tool_fn();
             for tool in tools {
                 let req = $crate::ToolCallRequest {
@@ -224,12 +253,18 @@ macro_rules! test_plugin_contract {
 
         #[test]
         fn test_required_arguments_enforced() {
+            unsafe {
+                ::std::env::set_var("RUNE_CONTRACT_TEST", "1");
+            }
             let tools = $tool_fn();
             $crate::testing::assert_required_fields_enforced(&tools, $exec_fn);
         }
 
         #[test]
         fn test_invalid_types_rejection() {
+            unsafe {
+                ::std::env::set_var("RUNE_CONTRACT_TEST", "1");
+            }
             let tools = $tool_fn();
             $crate::testing::assert_invalid_types_rejected(&tools, $exec_fn);
         }

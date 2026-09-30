@@ -1,12 +1,13 @@
 [plugin]
 name = "rune-figma"
-version = "0.1.2"
+description = "Figma integration for canvas inspection, element creation, and annotations."
+version = "0.2.1"
 execution_model = "native"
-description = "TalkToFigma MCP integration: inspect, create, mutate, and annotate Figma designs"
+authors = ["Shirsendu Bairagi"]
+license = "MIT"
+documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-figma/README.md"
 
 [capabilities]
-network_hosts = ["localhost", "127.0.0.1", "0.0.0.0"]
-filesystem = { mode = "scoped", root_param = "image_dir" }
+network_hosts = ["localhost", "127.0.0.1"]
+filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = [] }
-
-[dependencies.binaries]

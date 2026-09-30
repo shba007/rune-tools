@@ -22,11 +22,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "source_timezone": {
+                    "sourceTimezone": {
                         "type": "string",
                         "description": "Source IANA timezone name (e.g. 'UTC', 'America/Los_Angeles')"
                     },
-                    "target_timezone": {
+                    "targetTimezone": {
                         "type": "string",
                         "description": "Destination IANA timezone name (e.g. 'Asia/Tokyo', 'Europe/London')"
                     },
@@ -35,7 +35,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                         "description": "Datetime string to convert (e.g. '2026-09-02T14:30:00' or '2026-09-02 14:30:00')"
                     }
                 },
-                "required": ["source_timezone", "target_timezone", "time"]
+                "required": ["sourceTimezone", "targetTimezone", "time"]
             }),
         },
     ]

@@ -1,8 +1,9 @@
 [package]
 name = "rune-figma"
-version = "0.1.2"
-edition.workspace = true
-license.workspace = true
+version = "0.2.1"
+edition = "2024"
+license = "MIT"
+authors = ["Shirsendu Bairagi"]
 
 [lib]
 crate-type = ["rlib"]
@@ -13,19 +14,15 @@ path = "src/bin/native_sidecar.rs"
 required-features = ["native"]
 
 [features]
-default = []
-native = ["dep:tokio", "dep:tokio-tungstenite", "dep:futures-util"]
+native = []
 
 [dependencies]
-rune-pdk = { path = "../../crates/rune-pdk" }
-serde = { workspace = true, features = ["derive"] }
+rune-pdk.workspace = true
+serde.workspace = true
 serde_json.workspace = true
-tokio = { version = "1", features = ["full"], optional = true }
-tokio-tungstenite = { version = "0.30", features = [
-  "connect",
-], optional = true }
-futures-util = { version = "0.3", optional = true }
-chrono.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar.workspace = true
 
 [dev-dependencies]
-serde_json.workspace = true
+tempfile.workspace = true

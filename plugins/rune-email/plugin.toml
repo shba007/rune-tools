@@ -1,7 +1,8 @@
 [plugin]
 name = "rune-email"
 description = "Email utilities and management tools."
-version = "0.1.4"
+version = "0.1.5"
+execution_model = "native"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
 documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-email/README.md"
@@ -9,4 +10,4 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-em
 [capabilities]
 network_hosts = ["*"]
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
-exec = { allowed_binaries = ["rune-email-native"] }
+exec = { allowed_binaries = [] }

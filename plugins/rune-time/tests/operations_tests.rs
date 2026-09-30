@@ -12,7 +12,7 @@ fn test_get_current_time_utc() {
     let res = execute_tool(req).expect("Failed to get UTC time");
     assert_eq!(res["timezone"], "UTC");
     assert!(res["datetime"].as_str().is_some());
-    assert_eq!(res["utc_offset"], "+00:00");
+    assert_eq!(res["utcOffset"], "+00:00");
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn test_get_current_time_kolkata() {
 
     let res = execute_tool(req).expect("Failed to get Kolkata time");
     assert_eq!(res["timezone"], "Asia/Kolkata");
-    assert_eq!(res["utc_offset"], "+05:30");
+    assert_eq!(res["utcOffset"], "+05:30");
 }
 
 #[test]
@@ -32,8 +32,8 @@ fn test_convert_time_fixed_difference() {
     let req = ToolCallRequest {
         name: "convert_time".to_string(),
         arguments: json!({
-            "source_timezone": "UTC",
-            "target_timezone": "Asia/Kolkata",
+            "sourceTimezone": "UTC",
+            "targetTimezone": "Asia/Kolkata",
             "time": "2026-09-02T12:00:00"
         }),
     };
@@ -41,7 +41,7 @@ fn test_convert_time_fixed_difference() {
     let res = execute_tool(req).expect("Failed to convert time");
     assert_eq!(res["source"]["timezone"], "UTC");
     assert_eq!(res["target"]["timezone"], "Asia/Kolkata");
-    assert_eq!(res["time_difference_hours"], 5.5);
+    assert_eq!(res["timeDifferenceHours"], 5.5);
     assert_eq!(res["target"]["datetime"], "2026-09-02T17:30:00+05:30");
 }
 
@@ -50,8 +50,8 @@ fn test_convert_time_invalid_timezone() {
     let req = ToolCallRequest {
         name: "convert_time".to_string(),
         arguments: json!({
-            "source_timezone": "Invalid/Zone",
-            "target_timezone": "UTC",
+            "sourceTimezone": "Invalid/Zone",
+            "targetTimezone": "UTC",
             "time": "2026-09-02T12:00:00"
         }),
     };

@@ -1,57 +1,3 @@
-#[cfg(target_arch = "wasm32")]
-use crate::types::{CmdExecRequest, CmdExecResponse};
-#[cfg(target_arch = "wasm32")]
-use rune_pdk::ToolCallRequest;
-#[cfg(target_arch = "wasm32")]
-use serde_json::Value;
-
-#[cfg(target_arch = "wasm32")]
-#[extism_pdk::host_fn("extism:host/user")]
-extern "ExtismHost" {
-    fn host_cmd_exec(input: String) -> String;
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
-    let payload_str =
-        serde_json::to_string(&request).map_err(|e| format!("Serialization error: {}", e))?;
-
-    let cmd_req = CmdExecRequest {
-        program: "rune-slides-native".to_string(),
-        args: vec!["--exec".to_string(), payload_str],
-        cwd: None,
-    };
-
-    let raw_req = serde_json::to_string(&cmd_req).map_err(|e| e.to_string())?;
-    let raw_resp =
-        unsafe { host_cmd_exec(raw_req) }.map_err(|e| format!("Host execution failed: {:?}", e))?;
-
-    let resp: CmdExecResponse = serde_json::from_str(&raw_resp)
-        .map_err(|e| format!("Failed to parse host response: {}", e))?;
-
-    if !resp.success && resp.stdout.trim().is_empty() {
-        return Err(if !resp.stderr.is_empty() {
-            resp.stderr
-        } else {
-            "rune-slides-native exited with failure".to_string()
-        });
-    }
-
-    let parsed_val: Value = serde_json::from_str(&resp.stdout).map_err(|e| {
-        format!(
-            "Failed to parse output JSON: {} (stdout: {})",
-            e, resp.stdout
-        )
-    })?;
-
-    if let Some(err) = parsed_val.get("error").and_then(Value::as_str) {
-        return Err(err.to_string());
-    }
-
-    Ok(parsed_val)
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 pub mod native {
     use crate::types::{SlidePage, SlideProject};
     use printpdf::{Base64OrRaw, GeneratePdfOptions, PdfDocument, PdfSaveOptions, PdfWarnMsg};
@@ -266,16 +212,33 @@ pub mod native {
         Ok(())
     }
 
-    fn export_to_pdf(project: &SlideProject, output_path: &Path) -> Result<(), String> {
-        #[cfg(target_os = "windows")]
-        let font_path = "C:\\Windows\\Fonts\\arial.ttf";
-        #[cfg(target_os = "macos")]
-        let font_path = "/System/Library/Fonts/Supplemental/Arial.ttf";
-        #[cfg(target_os = "linux")]
-        let font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+    fn find_system_font() -> Result<Vec<u8>, String> {
+        let candidate_paths = [
+            // Windows
+            "C:\\Windows\\Fonts\\arial.ttf",
+            "C:\\Windows\\Fonts\\segoeui.ttf",
+            // macOS
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/Library/Fonts/Arial.ttf",
+            // Linux
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans.ttf",
+        ];
 
-        let font_bytes = fs::read(font_path)
-            .map_err(|_| format!("Could not load OS layout font at: {}", font_path))?;
+        for path in &candidate_paths {
+            if let Ok(bytes) = fs::read(path) {
+                return Ok(bytes);
+            }
+        }
+
+        Err("Could not find a supported TrueType layout font on host system".to_string())
+    }
+
+    fn export_to_pdf(project: &SlideProject, output_path: &Path) -> Result<(), String> {
+        let font_bytes = find_system_font()?;
 
         let mut fonts = BTreeMap::new();
         fonts.insert("sans-serif".to_string(), Base64OrRaw::Raw(font_bytes));
@@ -467,5 +430,4 @@ pub mod native {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub use native::execute_tool;

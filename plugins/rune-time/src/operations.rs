@@ -105,16 +105,16 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         "convert_time" => {
             let source_tz_str =
                 get_str_arg(&request.arguments, "sourceTimezone", "source_timezone")
-                    .ok_or_else(|| "Missing 'source_timezone' parameter".to_string())?;
+                    .ok_or_else(|| "Missing 'sourceTimezone' parameter".to_string())?;
             if source_tz_str.trim().is_empty() {
-                return Err("Parameter 'source_timezone' cannot be empty".to_string());
+                return Err("Parameter 'sourceTimezone' cannot be empty".to_string());
             }
 
             let target_tz_str =
                 get_str_arg(&request.arguments, "targetTimezone", "target_timezone")
-                    .ok_or_else(|| "Missing 'target_timezone' parameter".to_string())?;
+                    .ok_or_else(|| "Missing 'targetTimezone' parameter".to_string())?;
             if target_tz_str.trim().is_empty() {
-                return Err("Parameter 'target_timezone' cannot be empty".to_string());
+                return Err("Parameter 'targetTimezone' cannot be empty".to_string());
             }
 
             let time_str = get_str_arg(&request.arguments, "time", "time")

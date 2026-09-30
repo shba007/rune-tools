@@ -14,12 +14,12 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "type": "string",
                     "description": "The full HTTP/HTTPS URL to fetch (e.g. 'https://example.com')"
                 },
-                "max_length": {
+                "maxLength": {
                     "type": "integer",
                     "minimum": 1,
                     "description": "Maximum number of characters to return (default: 50000)"
                 },
-                "start_index": {
+                "startIndex": {
                     "type": "integer",
                     "minimum": 0,
                     "description": "Start character index for pagination (default: 0)"

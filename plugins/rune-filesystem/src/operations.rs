@@ -62,6 +62,7 @@ pub fn resolve_path_with_root(
         let clean_root = normalize_separators(allowed_root);
         let root_trimmed = clean_root.trim_end_matches('/');
         let root_path = PathBuf::from(root_trimmed);
+        let normalized_root = normalize_path(&root_path);
 
         // Check if this is an absolute path (Unix '/', Windows 'C:/', or UNC '//')
         let is_absolute = clean_input.starts_with('/')
@@ -69,51 +70,33 @@ pub fn resolve_path_with_root(
             || clean_input.starts_with("//")
             || Path::new(&clean_input).is_absolute();
 
-        if is_absolute {
-            // For absolute paths, check if they're within the allowed directory
-            let clean_input_lower = clean_input.to_ascii_lowercase();
-            let root_lower = root_trimmed.to_ascii_lowercase();
+        let full_path = if is_absolute {
+            PathBuf::from(&clean_input)
+        } else {
+            let relative_part = if clean_input.eq_ignore_ascii_case(root_trimmed) {
+                ""
+            } else if clean_input
+                .to_ascii_lowercase()
+                .starts_with(&format!("{}/", root_trimmed.to_ascii_lowercase()))
+            {
+                &clean_input[root_trimmed.len() + 1..]
+            } else {
+                clean_input.trim_start_matches("./").trim_start_matches('/')
+            };
 
-            let is_inside = clean_input_lower == root_lower
-                || clean_input_lower.starts_with(&format!("{}/", root_lower));
-
-            if !is_inside {
-                return Err(format!(
-                    "Access denied: path '{}' is outside allowed directory '{}'",
-                    relative_or_abs, allowed_root
-                ));
+            if relative_part.is_empty() {
+                root_path.clone()
+            } else {
+                root_path.join(relative_part)
             }
-            // Path is within allowed directory, use it as-is (already absolute)
-            let normalized = normalize_path(&PathBuf::from(&clean_input));
-            return Ok(normalized);
-        }
-
-        // 1. If path matches root or starts with root prefix, strip it
-        let relative_part = if clean_input.eq_ignore_ascii_case(root_trimmed) {
-            ""
-        } else if clean_input
-            .to_ascii_lowercase()
-            .starts_with(&format!("{}/", root_trimmed.to_ascii_lowercase()))
-        {
-            &clean_input[root_trimmed.len() + 1..]
-        } else {
-            // Relative path (clean up leading ./ or /)
-            clean_input.trim_start_matches("./").trim_start_matches('/')
-        };
-
-        let full_path = if relative_part.is_empty() {
-            root_path.clone()
-        } else {
-            root_path.join(relative_part)
         };
 
         let normalized = normalize_path(&full_path);
-        let normalized_root = normalize_path(&root_path);
 
         if !normalized.starts_with(&normalized_root) {
             return Err(format!(
-                "Access denied: path '{}' escapes allowed directory",
-                relative_or_abs
+                "Access denied: path '{}' is outside allowed directory '{}'",
+                relative_or_abs, allowed_root
             ));
         }
 
