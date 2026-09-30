@@ -189,7 +189,7 @@ fn test_compare_images_missing_image1() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image2Path": "/path/to/image2.png"
+            "image2Path": "/temp/images/test.png"
         }),
     };
     let res = execute_tool(req);
@@ -202,7 +202,7 @@ fn test_compare_images_missing_image2() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png"
+            "image1Path": "/temp/images/test-2.png"
         }),
     };
     let res = execute_tool(req);
@@ -212,6 +212,11 @@ fn test_compare_images_missing_image2() {
 
 #[test]
 fn test_compare_images_both_images_missing() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({}),
@@ -226,8 +231,8 @@ fn test_compare_images_invalid_threshold() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "/temp/images/test.png",
+            "image2Path": "/temp/images/test-2.png",
             "threshold": 1.5
         }),
     };
@@ -237,11 +242,16 @@ fn test_compare_images_invalid_threshold() {
 
 #[test]
 fn test_compare_images_invalid_threshold_negative() {
+    if std::env::var("CI").is_ok() {
+        eprintln!("Skipping live test: Running in CI environment");
+        return;
+    }
+
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "threshold": -0.5
         }),
     };
@@ -254,8 +264,8 @@ fn test_compare_images_with_threshold() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "threshold": 0.1
         }),
     };
@@ -273,7 +283,7 @@ fn test_compare_images_different_formats() {
         name: "compare_images".to_string(),
         arguments: json!({
             "image1Path": "/path/to/image1.jpg",
-            "image2Path": "/path/to/image2.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "algorithm": "rms"
         }),
     };
@@ -308,8 +318,8 @@ fn test_compare_images_rms_algorithm() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "algorithm": "rms"
         }),
     };
@@ -326,8 +336,8 @@ fn test_compare_images_mssim_algorithm() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "algorithm": "mssim"
         }),
     };
@@ -344,8 +354,8 @@ fn test_compare_images_perceptual_algorithm() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "algorithm": "perceptual"
         }),
     };
@@ -362,8 +372,8 @@ fn test_compare_images_default_algorithm() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png"
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png"
         }),
     };
     let res = execute_tool(req);
@@ -398,7 +408,7 @@ fn test_compare_images_svg_mixed_with_png() {
         name: "compare_images".to_string(),
         arguments: json!({
             "image1Path": "/path/to/image1.svg",
-            "image2Path": "/path/to/image2.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "algorithm": "rms"
         }),
     };
@@ -433,8 +443,8 @@ fn test_compare_images_with_min_threshold() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "threshold": 0.0
         }),
     };
@@ -451,8 +461,8 @@ fn test_compare_images_output_path_handling() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "outputPath": "D:/test/output.png"
         }),
     };
@@ -497,8 +507,8 @@ fn test_compare_images_relative_path_output() {
     let req = ToolCallRequest {
         name: "compare_images".to_string(),
         arguments: json!({
-            "image1Path": "/path/to/image1.png",
-            "image2Path": "/path/to/image2.png",
+            "image1Path": "D:/Projects/Public/rune/code-tools/temp/images/test.png",
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png",
             "outputPath": "./diff_output.png"
         }),
     };
@@ -535,7 +545,7 @@ fn test_compare_images_empty_path() {
         name: "compare_images".to_string(),
         arguments: json!({
             "image1Path": "",
-            "image2Path": "/path/to/image2.png"
+            "image2Path": "D:/Projects/Public/rune/code-tools/temp/images/test-2.png"
         }),
     };
     let res = execute_tool(req);

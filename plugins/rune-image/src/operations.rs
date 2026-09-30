@@ -593,30 +593,43 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "compare_images" => {
-            let image1_path = get_str_arg(&request.arguments, "image1_path", "image1Path")
-                .ok_or_else(|| "Missing 'image1_path' parameter".to_string())?;
+            let image1_path = get_str_arg(&request.arguments, "image1Path", "image1_path")
+                .ok_or_else(|| "Missing 'image1Path' parameter".to_string())?;
 
-            let image2_path = get_str_arg(&request.arguments, "image2_path", "image2Path")
-                .ok_or_else(|| "Missing 'image2_path' parameter".to_string())?;
+            let image2_path = get_str_arg(&request.arguments, "image2Path", "image2_path")
+                .ok_or_else(|| "Missing 'image2Path' parameter".to_string())?;
 
-            let output_path = get_str_arg(&request.arguments, "output_path", "outputPath")
+            let output_path = get_str_arg(&request.arguments, "outputPath", "output_path")
                 .unwrap_or_else(|| "./diff.png".to_string());
 
             let algorithm = get_str_arg(&request.arguments, "algorithm", "Algorithm")
                 .unwrap_or_else(|| "rms".to_string());
 
-            let threshold_str = get_str_arg(&request.arguments, "threshold", "Threshold")
-                .unwrap_or_else(|| "0.0".to_string());
+            let threshold = if let Some(val) = request
+                .arguments
+                .get("threshold")
+                .or_else(|| request.arguments.get("Threshold"))
+            {
+                if let Some(n) = val.as_f64() {
+                    n
+                } else if let Some(s) = val.as_str() {
+                    s.parse::<f64>().map_err(
+                        |_| "Invalid threshold value. Must be a number between 0.0 and 1.0",
+                    )?
+                } else {
+                    return Err(
+                        "Invalid threshold value. Must be a number between 0.0 and 1.0".to_string(),
+                    );
+                }
+            } else {
+                0.0
+            };
 
-            let threshold: f64 = threshold_str
-                .parse()
-                .map_err(|_| "Invalid threshold value. Must be a number between 0.0 and 1.0")?;
-
-            let effective_threshold = threshold.max(0.001);
-
-            if effective_threshold > 1.0 {
+            if !(0.0..=1.0).contains(&threshold) {
                 return Err("Threshold must be between 0.0 and 1.0".to_string());
             }
+
+            let effective_threshold = threshold.max(0.001);
 
             if image1_path.trim().is_empty() || image2_path.trim().is_empty() {
                 return Err("Image paths cannot be empty".to_string());
@@ -660,11 +673,11 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "get_image_metadata" => {
-            let image_path = get_str_arg(&request.arguments, "image_path", "imagePath")
-                .ok_or_else(|| "Missing 'image_path' parameter".to_string())?;
+            let image_path = get_str_arg(&request.arguments, "imagePath", "image_path")
+                .ok_or_else(|| "Missing 'imagePath' parameter".to_string())?;
 
             if image_path.trim().is_empty() {
-                return Err("Parameter 'image_path' cannot be empty".to_string());
+                return Err("Parameter 'imagePath' cannot be empty".to_string());
             }
 
             if !Path::new(&image_path).exists() {
@@ -715,11 +728,11 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
         }
 
         "convert_image_format" => {
-            let input_path = get_str_arg(&request.arguments, "input_path", "inputPath")
-                .ok_or_else(|| "Missing 'input_path' parameter".to_string())?;
+            let input_path = get_str_arg(&request.arguments, "inputPath", "input_path")
+                .ok_or_else(|| "Missing 'inputPath' parameter".to_string())?;
 
-            let output_format = get_str_arg(&request.arguments, "output_format", "outputFormat")
-                .ok_or_else(|| "Missing 'output_format' parameter".to_string())?
+            let output_format = get_str_arg(&request.arguments, "outputFormat", "output_format")
+                .ok_or_else(|| "Missing 'outputFormat' parameter".to_string())?
                 .to_lowercase();
 
             let _quality = get_str_arg(&request.arguments, "quality", "quality")
