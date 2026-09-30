@@ -1,7 +1,7 @@
 {
   "mhb-mconnect": {
     "description": "Modest Human Brands external interaction API connector for email template management, schema retrieval, and rendering previews.",
-    "latest": "0.1.2",
+    "latest": "0.1.3",
     "versions": {
       "0.1.0": {
         "native": {
@@ -29,12 +29,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-native-0.1.2-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.2/mhb-mconnect-0.1.2.wasm"
+      },
+      "0.1.3": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.3/mhb-mconnect-native-0.1.3-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.3/mhb-mconnect-native-0.1.3-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.3/mhb-mconnect-native-0.1.3-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.3/mhb-mconnect-native-0.1.3-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.3/mhb-mconnect-0.1.3.wasm"
       }
     }
   },
   "rune-audio": {
     "description": "Audio track extraction using yt-dlp, ffmpeg, and spotdl for podcast and audio content management.",
-    "latest": "0.2.1",
+    "latest": "0.2.3",
     "versions": {
       "0.1.0": {
         "native": {
@@ -71,12 +80,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-native-0.2.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.1/rune-audio-0.2.1.wasm"
+      },
+      "0.2.3": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.3/rune-audio-native-0.2.3-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.3/rune-audio-native-0.2.3-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.3/rune-audio-native-0.2.3-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.3/rune-audio-native-0.2.3-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.3/rune-audio-0.2.3.wasm"
       }
     }
   },
   "rune-browser": {
     "description": "Headless browser automation: page navigation, element interaction, form filling, JavaScript evaluation, screenshots, PDF export, network/console capture, and persistent session profiles",
-    "latest": "0.2.2",
+    "latest": "0.2.4",
     "versions": {
       "0.2.2": {
         "native": {
@@ -86,12 +104,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-native-0.2.2-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.2/rune-browser-0.2.2.wasm"
+      },
+      "0.2.4": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.4/rune-browser-native-0.2.4-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.4/rune-browser-native-0.2.4-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.4/rune-browser-native-0.2.4-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.4/rune-browser-native-0.2.4-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.4/rune-browser-0.2.4.wasm"
       }
     }
   },
   "rune-email": {
     "description": "Universal IMAP/SMTP email client: mailbox listing, search, full message parsing to Markdown, attachment download, send/reply/draft, flag management, and inter-mailbox moves",
-    "latest": "0.1.4",
+    "latest": "0.1.5",
     "versions": {
       "0.1.1": {
         "native": {
@@ -128,12 +155,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-native-0.1.4-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.4/rune-email-0.1.4.wasm"
+      },
+      "0.1.5": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.5/rune-email-native-0.1.5-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.5/rune-email-native-0.1.5-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.5/rune-email-native-0.1.5-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.5/rune-email-native-0.1.5-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.5/rune-email-0.1.5.wasm"
       }
     }
   },
   "rune-fetch": {
     "description": "",
-    "latest": "0.3.1",
+    "latest": "0.3.2",
     "versions": {
       "0.2.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.2.0/rune-fetch-0.2.0.wasm"
@@ -143,12 +179,15 @@
       },
       "0.3.1": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.3.1/rune-fetch-0.3.1.wasm"
+      },
+      "0.3.2": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.3.2/rune-fetch-0.3.2.wasm"
       }
     }
   },
   "rune-figma": {
     "description": "",
-    "latest": "0.1.2",
+    "latest": "0.2.1",
     "versions": {
       "0.1.2": {
         "native": {
@@ -157,12 +196,20 @@
           "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.1.2/rune-figma-native-0.1.2-x86_64-pc-windows-msvc.zip",
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.1.2/rune-figma-native-0.1.2-x86_64-unknown-linux-gnu.tar.gz"
         }
+      },
+      "0.2.1": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.2.1/rune-figma-native-0.2.1-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.2.1/rune-figma-native-0.2.1-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.2.1/rune-figma-native-0.2.1-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.2.1/rune-figma-native-0.2.1-x86_64-unknown-linux-gnu.tar.gz"
+        }
       }
     }
   },
   "rune-filesystem": {
     "description": "Sandboxed filesystem manipulation: line-based reading, multimodal media reads, atomic writes, line edits with dry-run diffs, tree views, glob search, and safe moves within an enforced boundary",
-    "latest": "0.3.4",
+    "latest": "0.3.5",
     "versions": {
       "0.3.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.0/rune-filesystem-0.3.0.wasm"
@@ -175,12 +222,15 @@
       },
       "0.3.4": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.4/rune-filesystem-0.3.4.wasm"
+      },
+      "0.3.5": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.5/rune-filesystem-0.3.5.wasm"
       }
     }
   },
   "rune-git": {
     "description": " Git repository management: status, diff, staging, committing, branching, switching, merging, log inspection, remote management, fetch/pull/push",
-    "latest": "0.2.3",
+    "latest": "0.2.4",
     "versions": {
       "0.2.0": {
         "native": {
@@ -217,12 +267,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.3/rune-git-native-0.2.3-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.3/rune-git-0.2.3.wasm"
+      },
+      "0.2.4": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.4/rune-git-native-0.2.4-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.4/rune-git-native-0.2.4-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.4/rune-git-native-0.2.4-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.4/rune-git-native-0.2.4-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.4/rune-git-0.2.4.wasm"
       }
     }
   },
   "rune-image": {
     "description": "A MCP server for multi-platform image extraction, visual comparison, and flexible format conversion including SVG and raster files.",
-    "latest": "0.2.1",
+    "latest": "0.2.2",
     "versions": {
       "0.1.0": {
         "native": {
@@ -259,36 +318,51 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.1/rune-image-native-0.2.1-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.1/rune-image-0.2.1.wasm"
+      },
+      "0.2.2": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.2/rune-image-native-0.2.2-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.2/rune-image-native-0.2.2-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.2/rune-image-native-0.2.2-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.2/rune-image-native-0.2.2-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.2/rune-image-0.2.2.wasm"
       }
     }
   },
   "rune-memory": {
     "description": "Persistent knowledge-graph memory: typed entities and relations in a JSON file, with batch creation, filtered queries, deletion, and full graph inspection",
-    "latest": "0.2.1",
+    "latest": "0.2.2",
     "versions": {
       "0.2.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-memory-v0.2.0/rune-memory-0.2.0.wasm"
       },
       "0.2.1": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-memory-v0.2.1/rune-memory-0.2.1.wasm"
+      },
+      "0.2.2": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-memory-v0.2.2/rune-memory-0.2.2.wasm"
       }
     }
   },
   "rune-sequential-thinking": {
     "description": "Dynamic step-by-step reasoning workspace with progress tracking, hypothesis revision, thought branching, and automatic total adjustment",
-    "latest": "0.1.1",
+    "latest": "0.2.0",
     "versions": {
       "0.1.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-sequential-thinking-v0.1.0/rune-sequential-thinking-0.1.0.wasm"
       },
       "0.1.1": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-sequential-thinking-v0.1.1/rune-sequential-thinking-0.1.1.wasm"
+      },
+      "0.2.0": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-sequential-thinking-v0.2.0/rune-sequential-thinking-0.2.0.wasm"
       }
     }
   },
   "rune-slides": {
     "description": "Iterative markdown-based presentation builder with modular slide management and native PPTX/PDF export.",
-    "latest": "0.1.4",
+    "latest": "0.2.0",
     "versions": {
       "0.1.3": {
         "native": {
@@ -307,12 +381,21 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.4/rune-slides-native-0.1.4-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.1.4/rune-slides-0.1.4.wasm"
+      },
+      "0.2.0": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.2.0/rune-slides-native-0.2.0-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.2.0/rune-slides-native-0.2.0-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.2.0/rune-slides-native-0.2.0-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.2.0/rune-slides-native-0.2.0-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.2.0/rune-slides-0.2.0.wasm"
       }
     }
   },
   "rune-time": {
     "description": "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions.",
-    "latest": "0.2.1",
+    "latest": "0.2.2",
     "versions": {
       "0.1.0": {
         "native": {
@@ -337,12 +420,15 @@
       },
       "0.2.1": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.2.1/rune-time-0.2.1.wasm"
+      },
+      "0.2.2": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.2.2/rune-time-0.2.2.wasm"
       }
     }
   },
   "rune-video": {
-    "description": "Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg.",
-    "latest": "0.1.2",
+    "description": "Video streaming, playlist extraction, and media trimming using ffmpeg, streamlink, and yt-dlp.",
+    "latest": "0.2.0",
     "versions": {
       "0.1.0": {
         "native": {
@@ -370,6 +456,15 @@
           "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.1.2/rune-video-native-0.1.2-x86_64-unknown-linux-gnu.tar.gz"
         },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.1.2/rune-video-0.1.2.wasm"
+      },
+      "0.2.0": {
+        "native": {
+          "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.2.0/rune-video-native-0.2.0-aarch64-apple-darwin.tar.gz",
+          "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.2.0/rune-video-native-0.2.0-x86_64-apple-darwin.tar.gz",
+          "x86_64-pc-windows-msvc": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.2.0/rune-video-native-0.2.0-x86_64-pc-windows-msvc.zip",
+          "x86_64-unknown-linux-gnu": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.2.0/rune-video-native-0.2.0-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.2.0/rune-video-0.2.0.wasm"
       }
     }
   }
