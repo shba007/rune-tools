@@ -33,36 +33,108 @@ fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Result<String, String>
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn http_get(url: &str) -> Result<String, String> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
+
+    let resp = client
+        .get(url)
+        .send()
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let err_text = resp.text().unwrap_or_default();
+        return Err(format!(
+            "API returned error status [{}]: {}",
+            status, err_text
+        ));
+    }
+
+    resp.text()
+        .map_err(|e| format!("Failed to read response body: {}", e))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn http_post(url: &str, body: &str) -> Result<String, String> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
+
+    let resp = client
+        .post(url)
+        .header("Content-Type", "application/json")
+        .body(body.to_string())
+        .send()
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let err_text = resp.text().unwrap_or_default();
+        return Err(format!("API preview failed [{}]: {}", status, err_text));
+    }
+
+    resp.text()
+        .map_err(|e| format!("Failed to read response body: {}", e))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn http_get(url: &str) -> Result<String, String> {
+    let req = extism_pdk::HttpRequest::new(url)
+        .with_method("GET")
+        .with_header("Accept", "application/json");
+
+    let res = extism_pdk::http::request::<()>(&req, None)
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    let status = res.status_code();
+    if !(200..300).contains(&status) {
+        let err_text = String::from_utf8_lossy(&res.body()).to_string();
+        return Err(format!(
+            "API returned error status [{}]: {}",
+            status, err_text
+        ));
+    }
+
+    Ok(String::from_utf8_lossy(&res.body()).to_string())
+}
+
+#[cfg(target_arch = "wasm32")]
+fn http_post(url: &str, body: &str) -> Result<String, String> {
+    let req = extism_pdk::HttpRequest::new(url)
+        .with_method("POST")
+        .with_header("Content-Type", "application/json")
+        .with_header("Accept", "application/json");
+
+    let res = extism_pdk::http::request::<&str>(&req, Some(body))
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    let status = res.status_code();
+    if !(200..300).contains(&status) {
+        let err_text = String::from_utf8_lossy(&res.body()).to_string();
+        return Err(format!("API preview failed [{}]: {}", status, err_text));
+    }
+
+    Ok(String::from_utf8_lossy(&res.body()).to_string())
+}
+
 pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
     if let Some(pos) = request.name.rfind("__") {
         request.name = request.name[pos + 2..].to_string();
     }
 
     let base_url = get_base_url(&request.arguments);
-    let client = reqwest::blocking::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
 
     match request.name.as_str() {
         "mhb_list_templates" => {
             let url = format!("{}/api/interaction/email/template", base_url);
-            let resp = client
-                .get(&url)
-                .send()
-                .map_err(|e| format!("Network request failed: {}", e))?;
+            let body_str = http_get(&url)?;
 
-            if !resp.status().is_success() {
-                let status = resp.status();
-                let err_text = resp.text().unwrap_or_default();
-                return Err(format!(
-                    "API returned error status [{}]: {}",
-                    status, err_text
-                ));
-            }
-
-            let templates: Vec<EmailTemplateSummary> = resp
-                .json()
+            let templates: Vec<EmailTemplateSummary> = serde_json::from_str(&body_str)
                 .map_err(|e| format!("Failed to parse templates JSON: {}", e))?;
 
             Ok(json!({ "templates": templates }))
@@ -75,22 +147,9 @@ pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
                 "{}/api/interaction/email/template/{}",
                 base_url, template_id
             );
-            let resp = client
-                .get(&url)
-                .send()
-                .map_err(|e| format!("Network request failed: {}", e))?;
+            let body_str = http_get(&url)?;
 
-            if !resp.status().is_success() {
-                let status = resp.status();
-                let err_text = resp.text().unwrap_or_default();
-                return Err(format!(
-                    "API returned error status [{}]: {}",
-                    status, err_text
-                ));
-            }
-
-            let detail: EmailTemplateDetail = resp
-                .json()
+            let detail: EmailTemplateDetail = serde_json::from_str(&body_str)
                 .map_err(|e| format!("Failed to parse template detail JSON: {}", e))?;
 
             Ok(json!(detail))
@@ -112,22 +171,13 @@ pub fn execute_tool(mut request: ToolCallRequest) -> Result<Value, String> {
                 template_id,
                 variables: variables.clone(),
             };
+            let payload_json = serde_json::to_string(&payload)
+                .map_err(|e| format!("Failed to serialize preview request: {}", e))?;
 
             let url = format!("{}/api/interaction/email/template/preview", base_url);
-            let resp = client
-                .post(&url)
-                .json(&payload)
-                .send()
-                .map_err(|e| format!("Network request failed: {}", e))?;
+            let body_str = http_post(&url, &payload_json)?;
 
-            if !resp.status().is_success() {
-                let status = resp.status();
-                let err_text = resp.text().unwrap_or_default();
-                return Err(format!("API preview failed [{}]: {}", status, err_text));
-            }
-
-            let preview: RenderPreviewResponse = resp
-                .json()
+            let preview: RenderPreviewResponse = serde_json::from_str(&body_str)
                 .map_err(|e| format!("Failed to parse preview response JSON: {}", e))?;
 
             Ok(json!(preview))

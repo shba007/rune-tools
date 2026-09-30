@@ -11,6 +11,8 @@ crate-type = ["cdylib", "rlib"]
 rune-pdk.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 reqwest.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

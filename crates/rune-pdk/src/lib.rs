@@ -2,6 +2,7 @@ pub mod testing;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
 #[cfg(target_arch = "wasm32")]

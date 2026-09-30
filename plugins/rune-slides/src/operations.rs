@@ -1,3 +1,4 @@
+#[cfg(not(target_arch = "wasm32"))]
 pub mod native {
     use crate::types::{SlidePage, SlideProject};
     use printpdf::{Base64OrRaw, GeneratePdfOptions, PdfDocument, PdfSaveOptions, PdfWarnMsg};
@@ -430,4 +431,13 @@ pub mod native {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub use native::execute_tool;
+
+#[cfg(target_arch = "wasm32")]
+pub fn execute_tool(request: rune_pdk::ToolCallRequest) -> Result<serde_json::Value, String> {
+    Err(format!(
+        "Tool '{}' requires native layout rendering and font loading. 'rune-slides' must be executed using its native binary sidecar (execution_model = \"native\").",
+        request.name
+    ))
+}

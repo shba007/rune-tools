@@ -20,10 +20,10 @@ native = []
 rune-pdk.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+zip.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rune-sidecar.workspace = true
-zip.workspace = true
 printpdf = { version = "0.12.7", features = ["html"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

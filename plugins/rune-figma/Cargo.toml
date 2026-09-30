@@ -23,6 +23,9 @@ serde_json.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rune-sidecar.workspace = true
+tokio.workspace = true
+futures-util = "0.3"
+tokio-tungstenite = "0.26"
 
 [dev-dependencies]
 tempfile.workspace = true
