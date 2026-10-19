@@ -9,6 +9,9 @@
 // error propagation (a failed wasm build stops the run instead of `&&`
 // silently skipping straight to reporting shell success/failure only).
 
+mod hooks;
+mod registry;
+
 use serde_json::Value;
 use std::process::{Command, ExitCode};
 
@@ -145,8 +148,21 @@ fn print_usage() {
          cargo xtask build <plugin-name> [--wasm-only | --native-only]\n  \
          cargo xtask build-all [--wasm-only | --native-only]\n  \
          cargo xtask test <plugin-name>\n  \
-         cargo xtask test-all"
+         cargo xtask test-all\n  \
+         cargo xtask detect-publishable   (CI: emit release matrices)\n  \
+         cargo xtask update-registry      (CI: record new versions in registry/index.json)\n  \
+         cargo xtask hooks                (install git hooks from .cargo-husky/hooks)"
     );
+}
+
+fn report(result: Result<(), String>) -> ExitCode {
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("error: {e}");
+            ExitCode::FAILURE
+        }
+    }
 }
 
 fn main() -> ExitCode {
@@ -157,6 +173,14 @@ fn main() -> ExitCode {
     let build_native = !wasm_only;
 
     let command = args.first().map(String::as_str);
+    match command {
+        Some("detect-publishable") => {
+            return report(registry::detect_publishable(&cargo_metadata()));
+        }
+        Some("update-registry") => return report(registry::update_registry(&cargo_metadata())),
+        Some("hooks") => return report(hooks::install()),
+        _ => {}
+    }
     let is_build = matches!(command, Some("build") | Some("build-all"));
     let is_test = matches!(command, Some("test") | Some("test-all"));
     let wants_single = matches!(command, Some("build") | Some("test"));

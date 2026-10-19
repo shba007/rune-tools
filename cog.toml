@@ -1,0 +1,54 @@
+from_latest_tag = true
+ignore_merge_commits = true
+tag_prefix = "v"
+
+# Each plugin is versioned and tagged independently (`<plugin>-v<version>`),
+# matching the release tags publish.yml creates. `cog bump --auto` only bumps
+# packages whose directory has releasable commits since their last tag.
+monorepo_version_separator = "-"
+generate_mono_repository_global_tag = false
+
+# Keep each bumped plugin's Cargo.toml in sync with its new tag.
+pre_package_bump_hooks = ["cargo set-version -p {{package}} {{version}}"]
+
+[commit_types]
+feat = { changelog_title = "🚀 Features" }
+fix = { changelog_title = "🐛 Bug Fixes" }
+perf = { changelog_title = "⚡ Performance" }
+refactor = { changelog_title = "🚜 Refactoring" }
+docs = { changelog_title = "📚 Documentation" }
+style = { changelog_title = "🎨 Style" }
+test = { changelog_title = "🧪 Testing" }
+ci = { changelog_title = "🤖 Continuous Integration", omit_from_changelog = true }
+chore = { changelog_title = "⚙️ Miscellaneous", omit_from_changelog = true }
+
+[git_hooks.commit-msg]
+script = "cog verify --file $1"
+
+[changelog]
+path = "CHANGELOG.md"
+template = "remote"
+remote = "github.com"
+repository = "rune-tools"
+owner = "shba007"
+
+# Publishable plugins (workspace members under plugins/). Keep in sync with
+# the `members` list in Cargo.toml.
+[monorepo]
+resolver = "Cargo"
+
+[monorepo.packages]
+mhb-mconnect = { path = "plugins/mhb-mconnect" }
+rune-audio = { path = "plugins/rune-audio" }
+rune-browser = { path = "plugins/rune-browser" }
+rune-email = { path = "plugins/rune-email" }
+rune-fetch = { path = "plugins/rune-fetch" }
+rune-figma = { path = "plugins/rune-figma" }
+rune-filesystem = { path = "plugins/rune-filesystem" }
+rune-git = { path = "plugins/rune-git" }
+rune-image = { path = "plugins/rune-image" }
+rune-memory = { path = "plugins/rune-memory" }
+rune-sequential-thinking = { path = "plugins/rune-sequential-thinking" }
+rune-slides = { path = "plugins/rune-slides" }
+rune-time = { path = "plugins/rune-time" }
+rune-video = { path = "plugins/rune-video" }

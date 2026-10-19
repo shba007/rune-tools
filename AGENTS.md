@@ -288,11 +288,13 @@ pub fn prompt_definitions() -> Vec<PromptDefinition> {
 
 ## 6. CI/CD Pipeline
 
-### 6.1 Development CI (`ci.yml`)
-- Checks: `cargo fmt --all`, `cargo clippy`, `cargo xtask build-all`, `cargo xtask test-all`.
-- Validates clean compilation across WASM and native targets.
+### 6.1 Development CI (`integrate.yml`)
+- Runs on pushes to `develop` and PRs to `develop`/`main`: `cargo xtask build-all`, `cargo xtask test-all`, `cargo clippy -D warnings`, `cargo fmt --all`.
+- On `develop` pushes: auto-commits formatting fixes, then runs `cog bump --auto` (per-plugin SemVer via Conventional Commits, `cog.toml`) and opens a `ci(release): update version` PR.
+- Local hooks (`.cargo-husky/hooks`, install with `cargo xtask hooks`): gitleaks, rustfmt, clippy auto-fix + `-D warnings`, `cog verify` on commit messages.
 
 ### 6.2 Release Pipeline (`publish.yml`)
+- `cargo xtask detect-publishable` emits build matrices for plugin versions missing from `registry/index.json`; `cargo xtask update-registry` records them afterwards (no Python).
 - Compiles `wasm32-wasip1` modules for Pure WASM plugins.
 - Cross-compiles native companion binaries (`rune-<name>-native`) across host architectures (`x86_64-unknown-linux-gnu`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`).
 - Release packages **never bundle third-party tools** (`ffmpeg`, `yt-dlp`); `rune-kit` provisions these dynamically at runtime (§13).

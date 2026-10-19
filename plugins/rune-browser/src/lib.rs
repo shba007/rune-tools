@@ -31,18 +31,17 @@ pub fn resolve_dir(dir_param: Option<&str>) -> String {
     });
 
     let raw = explicit.unwrap_or_else(|| ".".to_string());
-    let target = PathBuf::from(raw);
-
-    if let Some(allowed_root) = get_config("allowed_dir") {
-        let root = PathBuf::from(allowed_root);
-        if target.is_relative() {
-            root.join(target).to_string_lossy().to_string()
-        } else {
-            target.to_string_lossy().to_string()
+    if let Some(allowed_root) = get_config("allowed_dir")
+        && !allowed_root.trim().is_empty()
+    {
+        match rune_pdk::resolve_scoped_path(&raw, Some(&allowed_root)) {
+            Ok(p) => return p.to_string_lossy().replace('\\', "/"),
+            Err(_) => return allowed_root.replace('\\', "/"),
         }
-    } else {
-        target.to_string_lossy().to_string()
     }
+    rune_pdk::normalize_path(&PathBuf::from(raw))
+        .to_string_lossy()
+        .replace('\\', "/")
 }
 
 #[cfg(target_arch = "wasm32")]

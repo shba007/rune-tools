@@ -79,18 +79,20 @@ mod native {
         });
 
         let raw = explicit.unwrap_or_else(|| ".".to_string());
-        let target = PathBuf::from(raw);
+        let allowed_root = std::env::var("ALLOWED_DIR").ok();
 
-        if let Ok(allowed_root) = std::env::var("ALLOWED_DIR") {
-            let root = PathBuf::from(allowed_root);
-            if target.is_relative() {
-                root.join(target).to_string_lossy().to_string()
-            } else {
-                target.to_string_lossy().to_string()
+        if let Some(ref root) = allowed_root
+            && !root.trim().is_empty()
+        {
+            match rune_pdk::resolve_scoped_path(&raw, Some(root)) {
+                Ok(p) => return p.to_string_lossy().to_string(),
+                Err(_) => return root.clone(),
             }
-        } else {
-            target.to_string_lossy().to_string()
         }
+
+        rune_pdk::normalize_path(&PathBuf::from(raw))
+            .to_string_lossy()
+            .to_string()
     }
 
     fn guess_mime_type(path: &Path) -> &'static str {
@@ -837,8 +839,18 @@ mod native {
                 let email_msg = if !attachment_paths.is_empty() {
                     let mut mixed = MultiPart::mixed().multipart(multipart);
                     for path_str in attachment_paths {
-                        let resolved = resolve_dir(Some(&path_str));
-                        let path = PathBuf::from(&resolved);
+                        let allowed_root = std::env::var("ALLOWED_DIR").ok();
+                        let path = if let Some(ref root) = allowed_root {
+                            if !root.trim().is_empty() {
+                                rune_pdk::resolve_scoped_path(&path_str, Some(root)).map_err(
+                                    |e| format!("Attachment security check failed: {}", e),
+                                )?
+                            } else {
+                                PathBuf::from(resolve_dir(Some(&path_str)))
+                            }
+                        } else {
+                            PathBuf::from(resolve_dir(Some(&path_str)))
+                        };
                         let file_bytes = fs::read(&path).map_err(|e| {
                             format!("Failed to read attachment '{}': {}", path_str, e)
                         })?;

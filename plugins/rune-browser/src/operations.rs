@@ -36,17 +36,36 @@ fn get_bool_arg(args: &Value, camel: &str, snake: &str, default: bool) -> bool {
 // Session Management
 // =========================================================================
 
-fn get_session_path(session_id: &str) -> PathBuf {
+pub fn validate_session_id(session_id: &str) -> Result<(), String> {
+    let trimmed = session_id.trim();
+    if trimmed.is_empty() {
+        return Err("Session ID cannot be empty".to_string());
+    }
+    if !trimmed
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err(format!(
+            "Invalid session ID '{}': must contain only alphanumeric characters, hyphens, and underscores",
+            session_id
+        ));
+    }
+    Ok(())
+}
+
+fn get_session_path(session_id: &str) -> Result<PathBuf, String> {
+    validate_session_id(session_id)?;
     let base = crate::resolve_dir(None);
-    PathBuf::from(&base)
+    Ok(PathBuf::from(&base)
         .join(SESSIONS_DIR)
-        .join(format!("{}.json", session_id))
+        .join(format!("{}.json", session_id)))
 }
 
 fn save_session(
     session_id: &str,
     config: &crate::types::BrowserSessionConfig,
 ) -> Result<String, String> {
+    validate_session_id(session_id)?;
     let session_info = SessionInfo {
         session_id: session_id.to_string(),
         engine: config.engine.clone(),
@@ -61,7 +80,7 @@ fn save_session(
         map.insert(session_id.to_string(), session_info.clone());
     }
 
-    let path = get_session_path(session_id);
+    let path = get_session_path(session_id)?;
     if let Some(dir) = path.parent() {
         let _ = fs::create_dir_all(dir);
     }
@@ -73,6 +92,10 @@ fn save_session(
 }
 
 fn load_session(session_id: &str) -> Option<SessionInfo> {
+    if validate_session_id(session_id).is_err() {
+        return None;
+    }
+
     if let Ok(lock) = IN_MEMORY_SESSIONS.lock()
         && let Some(ref map) = *lock
         && let Some(s) = map.get(session_id)
@@ -80,7 +103,7 @@ fn load_session(session_id: &str) -> Option<SessionInfo> {
         return Some(s.clone());
     }
 
-    let path = get_session_path(session_id);
+    let path = get_session_path(session_id).ok()?;
     if path.exists()
         && let Ok(content) = fs::read_to_string(&path)
         && let Ok(s) = serde_json::from_str::<SessionInfo>(&content)
@@ -126,6 +149,7 @@ fn list_sessions() -> Vec<SessionInfo> {
 }
 
 fn delete_session(session_id: &str) -> Result<(), String> {
+    validate_session_id(session_id)?;
     let mut found = false;
 
     if let Ok(mut lock) = IN_MEMORY_SESSIONS.lock()
@@ -135,7 +159,7 @@ fn delete_session(session_id: &str) -> Result<(), String> {
         found = true;
     }
 
-    let path = get_session_path(session_id);
+    let path = get_session_path(session_id)?;
     if path.exists() && fs::remove_file(&path).is_ok() {
         found = true;
     }

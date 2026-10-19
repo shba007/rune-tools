@@ -29,16 +29,11 @@ jobs:
           fetch-depth: 0
 
       - name: 🛠️ Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rust-lang/setup-rust-toolchain@v2
 
       - name: 🔎 Detect publishable plugin versions
         id: detect
-        run: |
-          RESULT=$(python3 scripts/detect-publishable.py)
-          echo "wasm_matrix=$(echo "$RESULT" | jq -c '.wasm')" >> "$GITHUB_OUTPUT"
-          echo "native_matrix=$(echo "$RESULT" | jq -c '.native')" >> "$GITHUB_OUTPUT"
-          echo "has_wasm=$(echo "$RESULT" | jq '.wasm.include | length > 0')" >> "$GITHUB_OUTPUT"
-          echo "has_native=$(echo "$RESULT" | jq '.native.include | length > 0')" >> "$GITHUB_OUTPUT"
+        run: cargo xtask detect-publishable
 
   build-wasm:
     needs: detect
@@ -79,7 +74,7 @@ jobs:
       # already created. --clobber makes the upload itself idempotent too.
       - name: ⬆️ Publish release + upload asset
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           TAG="${{ matrix.name }}-v${{ matrix.version }}"
           gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
@@ -133,7 +128,7 @@ jobs:
       - name: ⬆️ Publish release + upload asset
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           TAG="${{ matrix.name }}-v${{ matrix.version }}"
           gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
@@ -154,12 +149,12 @@ jobs:
           fetch-depth: 0
 
       - name: 🛠️ Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rust-lang/setup-rust-toolchain@v2
 
       - name: 🏷️ Update registry/index.json
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python3 scripts/update-registry.py
+        run: cargo xtask update-registry
 
       # [skip ci] on this commit relies on GitHub's built-in skip-ci detection
       # for push events, so pushing the registry update doesn't re-trigger
