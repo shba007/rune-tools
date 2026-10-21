@@ -319,6 +319,8 @@ description = "Video streaming and playlist metadata extraction"
 
 ---
 
+See [plugin contracts and integration limits](docs/PLUGIN-CONTRACT.md) for tool rules, read-only classification, persistence and cancellation limits.
+
 ## Development & Contribution
 
 <details>
