@@ -1,4 +1,4 @@
-use rune_pdk::{PromptDefinition, ResourceDefinition, ToolDefinition};
+use rune_pdk::{PromptDefinition, ResourceDefinition, ToolDefinition, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -35,6 +35,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             },
             "required": ["url"]
         }),
+        rules: Some(ToolRules::read_only_network(["*"])),
     }]
 }
 

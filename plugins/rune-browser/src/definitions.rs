@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -18,6 +18,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": []
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Network],
+                ["127.0.0.1", "localhost"],
+            )),
         },
         ToolDefinition {
             name: "browser_session_stop".to_string(),
@@ -29,6 +34,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["sessionId"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Network],
+                ["127.0.0.1", "localhost"],
+            )),
         },
         ToolDefinition {
             name: "browser_session_list".to_string(),
@@ -37,6 +47,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
+            rules: Some(ToolRules::read_only_network(["127.0.0.1", "localhost"])),
         },
         // Navigation & Interaction Tools
         ToolDefinition {
@@ -54,6 +65,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_type".to_string(),
@@ -69,6 +85,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["target", "value"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_click".to_string(),
@@ -85,6 +106,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["target"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_fill".to_string(),
@@ -99,6 +125,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["target", "value"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_select_option".to_string(),
@@ -113,6 +144,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["target"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_hover".to_string(),
@@ -125,6 +161,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["target"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Network],
+                ["*"],
+            )),
         },
         // Content & Execution Tools
         ToolDefinition {
@@ -139,6 +180,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["script"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::High,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_screenshot".to_string(),
@@ -153,6 +199,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "outputDir": { "type": "string", "description": "Custom destination folder" }
                 }
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "browser_pdf".to_string(),
@@ -167,6 +218,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "outputDir": { "type": "string", "description": "Custom destination folder" }
                 }
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         // Diagnostics Tools
         ToolDefinition {
@@ -180,6 +236,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "limit": { "type": "number", "description": "Maximum number of messages to return" }
                 }
             }),
+            rules: Some(ToolRules::read_only_network(["127.0.0.1", "localhost"])),
         },
         ToolDefinition {
             name: "browser_network_requests".to_string(),
@@ -192,6 +249,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "method": { "type": "string", "enum": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"], "description": "Filter by HTTP method" }
                 }
             }),
+            rules: Some(ToolRules::read_only_network(["127.0.0.1", "localhost"])),
         },
         // CDP Tools
         ToolDefinition {
@@ -205,6 +263,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": []
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Network],
+                ["127.0.0.1", "localhost"],
+            )),
         },
         ToolDefinition {
             name: "browser_cdp_request".to_string(),
@@ -218,6 +281,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["sessionId", "method"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["127.0.0.1", "localhost"],
+            )),
         },
         ToolDefinition {
             name: "browser_cdp_disconnect".to_string(),
@@ -229,6 +297,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["sessionId"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Network],
+                ["127.0.0.1", "localhost"],
+            )),
         },
     ]
 }

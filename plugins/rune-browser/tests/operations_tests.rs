@@ -108,6 +108,18 @@ fn test_session_stop_with_invalid_session() {
 }
 
 #[test]
+fn test_session_stop_with_path_traversal_rejection() {
+    let req = ToolCallRequest {
+        name: "browser_session_stop".to_string(),
+        arguments: json!({ "sessionId": "../../etc/malicious" }),
+    };
+    let res = execute_tool(req);
+    assert!(res.is_err());
+    let err = res.unwrap_err();
+    assert!(err.contains("Invalid session ID"));
+}
+
+#[test]
 fn test_session_stop_without_session_id() {
     let req = ToolCallRequest {
         name: "browser_session_stop".to_string(),

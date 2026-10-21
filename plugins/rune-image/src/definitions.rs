@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -32,6 +32,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(RiskLevel::Medium, vec![ToolEffect::Read, ToolEffect::Network], ["gallery-dl"])),
         },
         ToolDefinition {
             name: "download_image_collection".to_string(),
@@ -70,6 +71,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["gallery-dl"],
+            )),
         },
         ToolDefinition {
             name: "compare_images".to_string(),
@@ -100,6 +106,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["image1Path", "image2Path"]
             }),
+            rules: Some(ToolRules::write_fs("output_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "get_image_metadata".to_string(),
@@ -114,6 +121,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["imagePath"]
             }),
+            rules: Some(ToolRules::read_only_fs("output_dir")),
         },
         ToolDefinition {
             name: "convert_image_format".to_string(),
@@ -182,6 +190,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["inputPath", "outputFormat"]
             }),
+            rules: Some(ToolRules::mutate_fs(
+                "output_dir",
+                RiskLevel::Low,
+                vec![ToolEffect::Write],
+            )),
         },
     ]
 }

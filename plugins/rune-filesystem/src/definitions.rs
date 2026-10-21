@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -20,6 +20,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "read_media_file".to_string(),
@@ -36,6 +37,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "read_multiple_files".to_string(),
@@ -51,6 +53,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["paths"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "write_file".to_string(),
@@ -66,6 +69,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path", "content"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Medium)),
         },
         ToolDefinition {
             name: "edit_file".to_string(),
@@ -93,6 +97,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path", "edits"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Medium)),
         },
         ToolDefinition {
             name: "create_directory".to_string(),
@@ -107,6 +112,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "list_directory".to_string(),
@@ -121,6 +127,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "list_directory_with_sizes".to_string(),
@@ -136,6 +143,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "directory_tree".to_string(),
@@ -151,6 +159,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "move_file".to_string(),
@@ -169,6 +178,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["source", "destination"]
             }),
+            rules: Some(ToolRules::mutate_fs(
+                "allowed_dir",
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Delete],
+            )),
         },
         ToolDefinition {
             name: "search_files".to_string(),
@@ -185,6 +199,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path", "pattern"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "get_file_info".to_string(),
@@ -199,6 +214,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "list_allowed_directories".to_string(),
@@ -207,6 +223,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
     ]
 }

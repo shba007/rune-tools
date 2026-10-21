@@ -1,6 +1,6 @@
 [plugin]
 name = "mhb-mconnect"
-version = "0.1.3"
+version = "0.1.4"
 execution_model = "native"
 description = "MHB Interaction Service connector for email template management and rendering."
 authors = ["Shirsendu Bairagi"]

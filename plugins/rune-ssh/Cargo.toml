@@ -1,0 +1,32 @@
+[package]
+name = "rune-ssh"
+description = "Secure remote server management via SSH execution and SFTP file transfers."
+version = "0.1.1"
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rune-ssh-native"
+path = "src/bin/native_sidecar.rs"
+required-features = ["native"]
+
+[features]
+native = []
+
+[dependencies]
+rune-pdk = { path = "../../crates/rune-pdk" }
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rune-sidecar = { path = "../../crates/rune-sidecar" }
+ssh2 = "0.9"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+extism-pdk.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

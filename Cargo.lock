@@ -453,6 +453,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
+name = "cargo-husky"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
+
+[[package]]
 name = "cbc"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2022,7 +2028,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "mhb-mconnect"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "extism-pdk",
  "reqwest",
@@ -3035,7 +3041,7 @@ dependencies = [
 
 [[package]]
 name = "rune-audio"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
  "reqwest",
@@ -3048,7 +3054,7 @@ dependencies = [
 
 [[package]]
 name = "rune-browser"
-version = "0.2.4"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -3067,7 +3073,7 @@ dependencies = [
 
 [[package]]
 name = "rune-email"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -3084,7 +3090,7 @@ dependencies = [
 
 [[package]]
 name = "rune-fetch"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "extism-pdk",
  "reqwest",
@@ -3095,7 +3101,7 @@ dependencies = [
 
 [[package]]
 name = "rune-figma"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "futures-util",
  "rune-pdk",
@@ -3109,7 +3115,7 @@ dependencies = [
 
 [[package]]
 name = "rune-filesystem"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -3125,7 +3131,7 @@ dependencies = [
 
 [[package]]
 name = "rune-git"
-version = "0.2.4"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -3137,7 +3143,7 @@ dependencies = [
 
 [[package]]
 name = "rune-image"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
  "image 0.25.10",
@@ -3154,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "rune-memory"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -3165,7 +3171,7 @@ dependencies = [
 
 [[package]]
 name = "rune-pdk"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "serde",
@@ -3174,7 +3180,7 @@ dependencies = [
 
 [[package]]
 name = "rune-sequential-thinking"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -3194,7 +3200,7 @@ dependencies = [
 
 [[package]]
 name = "rune-slides"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "extism-pdk",
  "printpdf",
@@ -3208,7 +3214,7 @@ dependencies = [
 
 [[package]]
 name = "rune-time"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -3221,7 +3227,7 @@ dependencies = [
 
 [[package]]
 name = "rune-video"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -4580,6 +4586,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
+ "cargo-husky",
  "serde_json",
 ]
 

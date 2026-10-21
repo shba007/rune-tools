@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rune-print": {
+      "command": "rune",
+      "args": ["run", "rune-print"],
+      "env": {
+        "PRINTER_IP": "192.168.1.2",
+        "IPP_PATH": "/ipp/printer",
+        "USE_HTTPS": "true",
+        "ALLOWED_DIR": "./test-dir"
+      }
+    }
+  }
+}

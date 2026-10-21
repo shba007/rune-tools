@@ -86,16 +86,20 @@ rune-tools/
     ├── rune-filesystem/                # Pure WASM (pure compute: fs walk, paging)
     ├── rune-time/                      # Pure WASM (pure compute)
     ├── rune-fetch/                     # Pure WASM (HTML→Markdown, network via host_fn)
-    ├── rune-git/                       # Pure WASM or Direct Native candidate
+    ├── rune-memory/                    # Pure WASM (knowledge graph storage)
+    ├── rune-sequential-thinking/       # Pure WASM (workflow evaluation)
+    ├── rune-git/                       # Direct Native (git repository inspection)
     ├── rune-figma/                     # Direct Native (WebSocket bridge to Figma canvas)
     ├── rune-audio/                     # Direct Native (ffmpeg, yt-dlp via rune-kit)
     ├── rune-video/                     # Direct Native (ffmpeg via rune-kit)
     ├── rune-image/                     # Direct Native (gallery-dl via rune-kit)
-    ├── rune-email/                     # Pure WASM
     ├── rune-browser/                   # Direct Native (agent-browser engine)
-    ├── rune-print/                     # Direct Native (native print dispatch: CUPS/WinSpool)
-    ├── rune-memory/                    # Pure WASM (knowledge graph storage)
-    └── rune-sequential-thinking/       # Pure WASM (workflow evaluation)
+    ├── rune-email/                     # Direct Native / Dual (IMAP/SMTP email client)
+    ├── rune-slides/                    # Direct Native / Dual (presentation builder)
+    ├── mhb-mconnect/                   # Direct Native / Dual (REST API connector)
+    ├── rune-print/                     # Direct Native (draft/inactive, CUPS/WinSpool)
+    ├── rune-scan/                      # Direct Native (draft/inactive, AirScan/mDNS)
+    └── rune-ssh/                       # Direct Native (draft/inactive, SSH/SFTP)
 ```
 
 ---
@@ -288,11 +292,13 @@ pub fn prompt_definitions() -> Vec<PromptDefinition> {
 
 ## 6. CI/CD Pipeline
 
-### 6.1 Development CI (`ci.yml`)
-- Checks: `cargo fmt --all`, `cargo clippy`, `cargo xtask build-all`, `cargo xtask test-all`.
-- Validates clean compilation across WASM and native targets.
+### 6.1 Development CI (`integrate.yml`)
+- Runs on pushes to `develop` and PRs to `develop`/`main`: `cargo xtask build-all`, `cargo xtask test-all`, `cargo clippy -D warnings`, `cargo fmt --all`.
+- On `develop` pushes: auto-commits formatting fixes, then runs `cog bump --auto` (per-plugin SemVer via Conventional Commits, `cog.toml`) and opens a `ci(release): update version` PR.
+- Local hooks (`.cargo-husky/hooks`, install with `cargo xtask hooks`): gitleaks, rustfmt, clippy auto-fix + `-D warnings`, `cog verify` on commit messages.
 
 ### 6.2 Release Pipeline (`publish.yml`)
+- `cargo xtask detect-publishable` emits build matrices for plugin versions missing from `registry/index.json`; `cargo xtask update-registry` records them afterwards (no Python).
 - Compiles `wasm32-wasip1` modules for Pure WASM plugins.
 - Cross-compiles native companion binaries (`rune-<name>-native`) across host architectures (`x86_64-unknown-linux-gnu`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`).
 - Release packages **never bundle third-party tools** (`ffmpeg`, `yt-dlp`); `rune-kit` provisions these dynamically at runtime (§13).
@@ -494,29 +500,32 @@ Use this checklist to choose the correct model when creating or refactoring a pl
 
 ### 9.1 Current Plugin Set
 
-| Plugin | Description | Execution Model | External Binaries / Protocols |
-|---|---|---|---|
-| rune-filesystem | Filesystem operations (walk, paging) | Pure WASM | None |
-| rune-time | Time-related utilities | Pure WASM | None |
-| rune-fetch | HTML $\to$ Markdown conversion | Pure WASM | None |
-| rune-git | Git repository inspection | Direct Native | `git` (host-provisioned) |
-| rune-figma | Canvas inspection, shape creation, annotation | Direct Native | WebSockets (`ws://localhost:3055`) |
-| rune-audio | Audio track extraction & conversion | Direct Native | `ffmpeg`, `yt-dlp` |
-| rune-video | Video slicing, scene detection, inspection | Direct Native | `ffmpeg` |
-| rune-image | Image processing & gallery scraping | Direct Native | `gallery-dl` |
-| rune-email | Email templates & MIME parsing | Pure WASM | None |
-| rune-browser | Browser automation engine | Direct Native | Browser engine |
-| rune-print | Print rasterization & OS spooling | Direct Native | CUPS / WinSpool |
-| rune-memory | Knowledge graph storage | Pure WASM | None |
-| rune-sequential-thinking | Sequential thinking workflow engine | Pure WASM | None |
-| rune-scan | eSCL AirScan scanner client | Direct Native | Raw TCP / mDNS |
-| rune-slides | Markdown presentation builder | Pure WASM | None |
-| rune-ssh | Remote command execution & SFTP | Direct Native | Native SSH/TCP |
+| Plugin | Description | Execution Model | External Binaries / Protocols | Status |
+|---|---|---|---|---|
+| rune-filesystem | Filesystem operations (walk, paging) | Pure WASM | None | Active |
+| rune-time | Time-related utilities | Pure WASM | None | Active |
+| rune-fetch | HTML $\to$ Markdown conversion | Pure WASM | None | Active |
+| rune-memory | Knowledge graph storage | Pure WASM | None | Active |
+| rune-sequential-thinking | Sequential thinking workflow engine | Pure WASM | None | Active |
+| rune-git | Git repository inspection | Direct Native | `git` (host-provisioned) | Active |
+| rune-figma | Canvas inspection, shape creation, annotation | Direct Native | WebSockets (`ws://localhost:3055`) | Active |
+| rune-audio | Audio track extraction & conversion | Direct Native | `ffmpeg`, `yt-dlp` | Active |
+| rune-video | Video slicing, scene detection, inspection | Direct Native | `ffmpeg`, `yt-dlp` | Active |
+| rune-image | Image processing & gallery scraping | Direct Native | `gallery-dl` | Active |
+| rune-browser | Browser automation engine | Direct Native | Browser engine | Active |
+| rune-email | Email templates & MIME parsing (IMAP/SMTP) | Direct Native / Dual | IMAP / SMTP | Active |
+| rune-slides | Markdown presentation builder & export | Direct Native / Dual | None (PDF / PPTX) | Active |
+| mhb-mconnect | External interaction API connector | Direct Native / Dual | REST API | Active |
+| rune-print | Print rasterization & OS spooling | Direct Native | CUPS / WinSpool | Draft / Inactive |
+| rune-scan | eSCL AirScan scanner client | Direct Native | Raw TCP / mDNS | Draft / Inactive |
+| rune-ssh | Remote command execution & SFTP | Direct Native | Native SSH/TCP | Draft / Inactive |
 
 ### 9.2 Plugin Development Status
 
-- **Enabled plugins**: `rune-filesystem`, `rune-time`, `rune-fetch`, `rune-memory`, `rune-sequential-thinking`, `rune-slides`, `rune-figma`, `rune-audio`, `rune-video`, `rune-image`, `rune-browser`, `rune-email`
-- **Active migration**: `rune-print`, `rune-scan`, `rune-ssh`
+- **Enabled workspace plugins (14)**: `rune-filesystem`, `rune-time`, `rune-fetch`, `rune-memory`, `rune-sequential-thinking`, `rune-git`, `rune-figma`, `rune-audio`, `rune-video`, `rune-image`, `rune-browser`, `rune-email`, `rune-slides`, `mhb-mconnect`
+- **Draft / inactive plugins (3)**: `rune-print`, `rune-scan`, `rune-ssh` (source code present in `plugins/`, commented out from `Cargo.toml` workspace members pending active maintenance)
+- **Non-existent plugins**: `game-engine` does **not** exist in this repository.
+- **Naming note**: Figma canvas integration is named `rune-figma` (formerly mislabeled `rune-design` in draft documentation).
 
 ---
 

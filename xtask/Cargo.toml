@@ -6,3 +6,9 @@ publish = false
 
 [dependencies]
 serde_json.workspace = true
+
+# Installs .cargo-husky/hooks/* into .git/hooks when xtask's tests are built.
+[dev-dependencies.cargo-husky]
+version = "1"
+default-features = false
+features = ["user-hooks"]

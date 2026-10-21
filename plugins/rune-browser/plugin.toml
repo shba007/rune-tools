@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-browser"
-version = "0.2.4"
+version = "0.2.5"
 execution_model = "native"
 description = "Browser automation with agent-browser (headless) and CDP (existing browser) support. Features: navigation, element interaction, form filling, screenshots, PDF export, console/network diagnostics, and persistent sessions."
 authors = ["Shirsendu Bairagi"]

@@ -1,0 +1,9 @@
+{"version":"0.8.0","type":"Card","id":"fs_list_card","props":{"title":"Directory Browser"}}
+{"type":"Box","id":"header_box","parent":"fs_list_card","props":{"layout":"horizontal","justify":"space-between","align":"center"}}
+{"type":"Text","id":"dir_path","parent":"header_box","props":{"bind":"result.canonical_path"}}
+{"type":"Badge","id":"item_count","parent":"header_box","props":{"bind":"result.total_entries","suffix":" items"}}
+{"type":"Divider","id":"div_top","parent":"fs_list_card","props":{}}
+{"type":"Table","id":"entries_table","parent":"fs_list_card","props":{"bind":"result.entries","columns":[{"key":"name","label":"Name"},{"key":"kind","label":"Type"},{"key":"size","label":"Size"},{"key":"modified","label":"Modified"}],"emptyText":"Directory is empty"}}
+{"type":"Divider","id":"div_bottom","parent":"fs_list_card","props":{}}
+{"type":"Box","id":"footer_box","parent":"fs_list_card","props":{"layout":"horizontal","justify":"flex-end"}}
+{"type":"Button","id":"btn_refresh_dir","parent":"footer_box","props":{"label":"Refresh","icon":"refresh","action":{"type":"call_tool","tool":"list_directory","args":{"path":{"bind":"result.canonical_path"}}}}}

@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -12,6 +12,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "repoPath": { "type": "string", "description": "Path to the repository (default: current directory or REPO_PATH)" }
                 }
             }),
+            rules: Some(ToolRules::read_only_exec(["git"])),
         },
         ToolDefinition {
             name: "git_diff_unstaged".to_string(),
@@ -22,6 +23,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "repoPath": { "type": "string", "description": "Path to the repository" }
                 }
             }),
+            rules: Some(ToolRules::read_only_exec(["git"])),
         },
         ToolDefinition {
             name: "git_diff_staged".to_string(),
@@ -32,6 +34,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "repoPath": { "type": "string", "description": "Path to the repository" }
                 }
             }),
+            rules: Some(ToolRules::read_only_exec(["git"])),
         },
         ToolDefinition {
             name: "git_diff".to_string(),
@@ -43,6 +46,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "target": { "type": "string", "description": "Target commit/branch (default: HEAD)" }
                 }
             }),
+            rules: Some(ToolRules::read_only_exec(["git"])),
         },
         ToolDefinition {
             name: "git_commit".to_string(),
@@ -55,6 +59,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["message"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write],
+                ["git"],
+            )),
         },
         ToolDefinition {
             name: "git_add".to_string(),
@@ -66,6 +75,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "files": { "type": "array", "items": { "type": "string" }, "description": "List of files to add (default: all)" }
                 }
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Low,
+                vec![ToolEffect::Write],
+                ["git"],
+            )),
         },
         ToolDefinition {
             name: "git_reset".to_string(),
@@ -76,6 +90,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "repoPath": { "type": "string", "description": "Path to the repository" }
                 }
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::High,
+                vec![ToolEffect::Write, ToolEffect::Delete],
+                ["git"],
+            )),
         },
         ToolDefinition {
             name: "git_log".to_string(),
@@ -87,6 +106,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "maxCount": { "type": "integer", "description": "Max number of commits to return (default: 10)" }
                 }
             }),
+            rules: Some(ToolRules::read_only_exec(["git"])),
         },
         ToolDefinition {
             name: "git_create_branch".to_string(),
@@ -99,6 +119,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["branchName"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Low,
+                vec![ToolEffect::Write],
+                ["git"],
+            )),
         },
         ToolDefinition {
             name: "git_checkout".to_string(),
@@ -111,6 +136,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["branchName"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write],
+                ["git"],
+            )),
         },
         ToolDefinition {
             name: "git_show".to_string(),
@@ -122,6 +152,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "revision": { "type": "string", "description": "Commit SHA or ref (default: HEAD)" }
                 }
             }),
+            rules: Some(ToolRules::read_only_exec(["git"])),
         },
         ToolDefinition {
             name: "git_init".to_string(),
@@ -132,6 +163,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "repoPath": { "type": "string", "description": "Directory path to initialize" }
                 }
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Low,
+                vec![ToolEffect::Write],
+                ["git"],
+            )),
         },
         ToolDefinition {
             name: "validate_commit_message".to_string(),
@@ -154,6 +190,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["message"]
             }),
+            rules: Some(ToolRules::read_only()),
         },
     ]
 }

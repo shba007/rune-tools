@@ -1,0 +1,8 @@
+{"version":"0.8.0","type":"Card","id":"time_card","props":{"title":"System Clock"}}
+{"type":"Box","id":"time_display","parent":"time_card","props":{"layout":"vertical","align":"center"}}
+{"type":"Text","id":"time_val","parent":"time_display","props":{"bind":"result.datetime"}}
+{"type":"Badge","id":"time_zone","parent":"time_display","props":{"bind":"result.timezone"}}
+{"type":"Divider","id":"div_1","parent":"time_card","props":{}}
+{"type":"Box","id":"action_bar","parent":"time_card","props":{"layout":"horizontal","justify":"space-between"}}
+{"type":"Text","id":"utc_offset","parent":"action_bar","props":{"bind":"result.utc_offset"}}
+{"type":"Button","id":"btn_refresh","parent":"action_bar","props":{"label":"Refresh","icon":"refresh","action":{"type":"call_tool","tool":"get_current_time","args":{}}}}

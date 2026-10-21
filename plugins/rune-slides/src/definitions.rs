@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -17,6 +17,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["title"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "slide_update_theme".to_string(),
@@ -31,6 +32,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["themeDefinition"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "slide_add_page".to_string(),
@@ -47,6 +49,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["slideTitle", "content"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "slide_delete_page".to_string(),
@@ -61,8 +64,9 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["index"]
             }),
+            rules: Some(ToolRules::delete_fs("allowed_dir", RiskLevel::Medium)),
         },
-ToolDefinition {
+        ToolDefinition {
             name: "slide_export".to_string(),
             description: "Exports the presentation project into a native PowerPoint (.pptx) or a styled PDF (.pdf).".to_string(),
             input_schema: json!({
@@ -73,6 +77,7 @@ ToolDefinition {
                     "format": { "type": "string", "enum": ["pptx", "pdf"], "default": "pptx", "description": "Target export format" }
                 }
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
     ]
 }

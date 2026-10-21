@@ -52,6 +52,32 @@ fn test_empty_send_email_parameters() {
 }
 
 #[test]
+fn test_send_email_attachment_outside_allowed_dir_rejected() {
+    unsafe {
+        std::env::set_var("ALLOWED_DIR", "d:/safe/email/dir");
+    }
+    let req = ToolCallRequest {
+        name: "send_email".to_string(),
+        arguments: json!({
+            "preset": "gmail",
+            "email": "user@gmail.com",
+            "password": "secret_password",
+            "to": "recipient@example.com",
+            "subject": "Test",
+            "bodyText": "Hello",
+            "attachmentPaths": ["../../etc/shadow"]
+        }),
+    };
+    let res = execute_tool(req);
+    assert!(res.is_err());
+    let err = res.unwrap_err();
+    assert!(
+        err.contains("Attachment security check failed")
+            || err.contains("outside allowed directory")
+    );
+}
+
+#[test]
 fn test_send_email_empty_strings_rejected() {
     let req = ToolCallRequest {
         name: "send_email".to_string(),

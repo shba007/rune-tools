@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -51,5 +51,6 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             },
             "required": ["thought", "nextThoughtNeeded", "thoughtNumber", "totalThoughts"]
         }),
+        rules: Some(ToolRules::new(false, RiskLevel::Low, vec![ToolEffect::Write])),
     }]
 }

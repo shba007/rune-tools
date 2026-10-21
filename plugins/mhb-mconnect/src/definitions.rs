@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{ToolDefinition, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -10,6 +10,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "mhb_get_template".to_string(),
@@ -24,6 +25,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["templateId"]
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "mhb_render_template_preview".to_string(),
@@ -42,6 +44,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["templateId", "variables"]
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
     ]
 }
