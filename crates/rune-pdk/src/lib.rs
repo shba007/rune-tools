@@ -32,6 +32,7 @@ pub enum ToolEffect {
     Delete,
     Send,
     Network,
+    Exec,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
@@ -80,9 +81,12 @@ impl ToolRules {
         }
     }
 
+    /// Legacy helper name. File reads stay outside strict read-only mode until
+    /// callers establish root confinement for symlinks and Windows reparse points.
     pub fn read_only_fs(root_param: impl Into<String>) -> Self {
         Self {
-            read_only: true,
+            // Root confinement (including symlinks) has not been established.
+            read_only: false,
             risk: RiskLevel::Low,
             effects: vec![ToolEffect::Read],
             limits: Some(ToolLimits {
@@ -92,9 +96,10 @@ impl ToolRules {
         }
     }
 
+    /// Reads remote state, but network access excludes strict read-only mode.
     pub fn read_only_network(hosts: impl IntoIterator<Item = impl Into<String>>) -> Self {
         Self {
-            read_only: true,
+            read_only: false,
             risk: RiskLevel::Low,
             effects: vec![ToolEffect::Read, ToolEffect::Network],
             limits: Some(ToolLimits {
@@ -104,11 +109,12 @@ impl ToolRules {
         }
     }
 
+    /// Inspects via a subprocess, which excludes strict read-only mode.
     pub fn read_only_exec(binaries: impl IntoIterator<Item = impl Into<String>>) -> Self {
         Self {
-            read_only: true,
+            read_only: false,
             risk: RiskLevel::Low,
-            effects: vec![ToolEffect::Read],
+            effects: vec![ToolEffect::Read, ToolEffect::Exec],
             limits: Some(ToolLimits {
                 allowed_binaries: binaries.into_iter().map(Into::into).collect(),
                 ..Default::default()
@@ -174,9 +180,12 @@ impl ToolRules {
 
     pub fn exec(
         risk: RiskLevel,
-        effects: Vec<ToolEffect>,
+        mut effects: Vec<ToolEffect>,
         binaries: impl IntoIterator<Item = impl Into<String>>,
     ) -> Self {
+        if !effects.contains(&ToolEffect::Exec) {
+            effects.push(ToolEffect::Exec);
+        }
         Self {
             read_only: false,
             risk,
@@ -187,6 +196,19 @@ impl ToolRules {
             }),
         }
     }
+}
+
+/// Transitional MCP aliases live here so they can be removed together later.
+/// Idempotence is deliberately unspecified: rules do not establish it.
+pub fn annotations_from_rules(rules: &ToolRules) -> Value {
+    let destructive =
+        rules.effects.contains(&ToolEffect::Delete) || rules.effects.contains(&ToolEffect::Exec);
+    let open_world = rules.effects.contains(&ToolEffect::Network);
+    serde_json::json!({
+        "readOnly": rules.read_only, "readOnlyHint": rules.read_only,
+        "destructive": destructive, "destructiveHint": destructive,
+        "openWorld": open_world, "openWorldHint": open_world
+    })
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -205,7 +227,8 @@ impl Serialize for ToolDefinition {
         S: serde::Serializer,
     {
         use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("ToolDefinition", 4)?;
+        let mut state = serializer
+            .serialize_struct("ToolDefinition", if self.rules.is_some() { 5 } else { 3 })?;
         state.serialize_field("name", &self.name)?;
         state.serialize_field("description", &self.description)?;
 
@@ -219,6 +242,7 @@ impl Serialize for ToolDefinition {
             }
             state.serialize_field("inputSchema", &schema)?;
             state.serialize_field("rules", rules)?;
+            state.serialize_field("annotations", &annotations_from_rules(rules))?;
         } else {
             state.serialize_field("inputSchema", &self.input_schema)?;
         }
@@ -556,13 +580,13 @@ mod tests {
         let val: serde_json::Value = serde_json::from_str(&serialized).expect("parse json");
 
         // Verify top-level rules field
-        assert_eq!(val["rules"]["read_only"], true);
+        assert_eq!(val["rules"]["read_only"], false);
         assert_eq!(val["rules"]["risk"], "low");
         assert_eq!(val["rules"]["effects"][0], "read");
         assert_eq!(val["rules"]["limits"]["root_param"], "allowed_dir");
 
         // Verify injected x-rune-rules inside inputSchema
-        assert_eq!(val["inputSchema"]["x-rune-rules"]["read_only"], true);
+        assert_eq!(val["inputSchema"]["x-rune-rules"]["read_only"], false);
         assert_eq!(val["inputSchema"]["x-rune-rules"]["risk"], "low");
         assert_eq!(val["inputSchema"]["x-rune-rules"]["effects"][0], "read");
 
@@ -571,7 +595,7 @@ mod tests {
         assert_eq!(deserialized.name, "test_read");
         assert!(deserialized.rules.is_some());
         let rules = deserialized.rules.unwrap();
-        assert!(rules.read_only);
+        assert!(!rules.read_only);
         assert_eq!(rules.risk, RiskLevel::Low);
     }
 }

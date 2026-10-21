@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-memory"
-version = "0.2.2"
+version = "0.2.3"
 execution_model = "wasm"
 description = "Persistent knowledge graph memory for storing and querying entities, relations, and observations."
 authors = ["Shirsendu Bairagi"]

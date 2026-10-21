@@ -1,5 +1,10 @@
 # Rune Tools Handoff Report
 
+> Historical report. Corrections and follow-up evidence are in
+> [rune-tools-follow-up-report.md](rune-tools-follow-up-report.md).
+> In particular, the claims below about memory being in-memory, working A2UI
+> consumption, and implemented process-group cancellation are superseded.
+
 **Date:** 2026-10-21  
 **Project:** `rune-tools`  
 **Author:** Rune Tools Project Manager / Agent  

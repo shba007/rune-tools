@@ -10,7 +10,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
-            rules: Some(ToolRules::read_only()),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "printer_print_document".to_string(),

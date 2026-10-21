@@ -1,7 +1,7 @@
 [package]
 name = "rune-scan"
 description = "Driverless eSCL AirScan scanner client: scanner capability discovery, flatbed/ADF capture, and direct JPEG/PDF packaging"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 

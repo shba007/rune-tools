@@ -1,7 +1,7 @@
 [plugin]
 name = "rune-slides"
 description = "Markdown presentation builder and native PowerPoint/PDF exporter."
-version = "0.2.0"
+version = "0.2.1"
 execution_model = "native"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"

@@ -1,7 +1,7 @@
 [plugin]
 name = "rune-git"
 description = "Git repository management: status, diff, staging, committing, branching, and logging."
-version = "0.2.4"
+version = "0.2.5"
 execution_model = "native"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"

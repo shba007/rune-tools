@@ -36,7 +36,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
-            rules: Some(ToolRules::read_only_exec(["yt-dlp"])),
+            rules: Some(ToolRules::exec(RiskLevel::Medium, vec![ToolEffect::Read, ToolEffect::Network], ["yt-dlp"])),
         },
         ToolDefinition {
             name: "download_video_stream".to_string(),

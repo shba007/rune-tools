@@ -2028,7 +2028,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "mhb-mconnect"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "extism-pdk",
  "reqwest",
@@ -3041,7 +3041,7 @@ dependencies = [
 
 [[package]]
 name = "rune-audio"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "extism-pdk",
  "reqwest",
@@ -3054,7 +3054,7 @@ dependencies = [
 
 [[package]]
 name = "rune-browser"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -3073,7 +3073,7 @@ dependencies = [
 
 [[package]]
 name = "rune-email"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "chrono",
  "extism-pdk",
@@ -3090,7 +3090,7 @@ dependencies = [
 
 [[package]]
 name = "rune-fetch"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "extism-pdk",
  "reqwest",
@@ -3101,7 +3101,7 @@ dependencies = [
 
 [[package]]
 name = "rune-figma"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "futures-util",
  "rune-pdk",
@@ -3115,7 +3115,7 @@ dependencies = [
 
 [[package]]
 name = "rune-filesystem"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -3131,7 +3131,7 @@ dependencies = [
 
 [[package]]
 name = "rune-git"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -3143,7 +3143,7 @@ dependencies = [
 
 [[package]]
 name = "rune-image"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "extism-pdk",
  "image 0.25.10",
@@ -3160,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "rune-memory"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -3171,7 +3171,7 @@ dependencies = [
 
 [[package]]
 name = "rune-pdk"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "serde",
@@ -3180,7 +3180,7 @@ dependencies = [
 
 [[package]]
 name = "rune-sequential-thinking"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "extism-pdk",
  "rune-pdk",
@@ -3200,7 +3200,7 @@ dependencies = [
 
 [[package]]
 name = "rune-slides"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "extism-pdk",
  "printpdf",
@@ -3214,7 +3214,7 @@ dependencies = [
 
 [[package]]
 name = "rune-time"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -3227,7 +3227,7 @@ dependencies = [
 
 [[package]]
 name = "rune-video"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "extism-pdk",

@@ -32,7 +32,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
-            rules: Some(ToolRules::read_only_exec(["gallery-dl"])),
+            rules: Some(ToolRules::exec(RiskLevel::Medium, vec![ToolEffect::Read, ToolEffect::Network], ["gallery-dl"])),
         },
         ToolDefinition {
             name: "download_image_collection".to_string(),
@@ -106,7 +106,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["image1Path", "image2Path"]
             }),
-            rules: Some(ToolRules::read_only_fs("output_dir")),
+            rules: Some(ToolRules::write_fs("output_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "get_image_metadata".to_string(),
@@ -121,7 +121,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["imagePath"]
             }),
-            rules: Some(ToolRules::read_only()),
+            rules: Some(ToolRules::read_only_fs("output_dir")),
         },
         ToolDefinition {
             name: "convert_image_format".to_string(),

@@ -81,7 +81,27 @@ pub fn assert_valid_tool_rules(tools: &[ToolDefinition]) {
             tool.name
         );
         let rules = tool.rules.as_ref().unwrap();
+        let wire = serde_json::to_value(tool).expect("tool must serialize");
+        assert_eq!(wire["annotations"], crate::annotations_from_rules(rules));
+        assert_eq!(wire["rules"], wire["inputSchema"]["x-rune-rules"]);
         if rules.read_only {
+            assert!(
+                rules
+                    .effects
+                    .iter()
+                    .all(|effect| *effect == crate::ToolEffect::Read),
+                "Tool '{}': read_only cannot write, delete, send, execute or use network",
+                tool.name
+            );
+            assert!(
+                rules
+                    .limits
+                    .as_ref()
+                    .is_none_or(|limits| limits.allowed_binaries.is_empty()
+                        && limits.network_hosts.is_empty()),
+                "Tool '{}': read_only cannot declare external binaries or hosts",
+                tool.name
+            );
             assert_eq!(
                 rules.risk,
                 crate::RiskLevel::Low,

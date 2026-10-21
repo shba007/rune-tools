@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-time"
-version = "0.2.2"
+version = "0.2.3"
 execution_model = "wasm"
 description = "Deterministic timezone queries, ISO-8601 formatting, and DST-aware cross-timezone conversions."
 authors = ["Shirsendu Bairagi"]

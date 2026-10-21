@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-sequential-thinking"
-version = "0.2.0"
+version = "0.2.1"
 execution_model = "wasm"
 description = "A detailed tool for dynamic and reflective problem-solving through structured, step-by-step thinking processes."
 authors = ["Shirsendu Bairagi"]
