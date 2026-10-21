@@ -73,6 +73,56 @@ pub fn assert_valid_tool_definitions(tools: &[ToolDefinition]) {
     }
 }
 
+pub fn assert_valid_tool_rules(tools: &[ToolDefinition]) {
+    for tool in tools {
+        assert!(
+            tool.rules.is_some(),
+            "Tool '{}' must declare rules for Rune Studio safety gate classification",
+            tool.name
+        );
+        let rules = tool.rules.as_ref().unwrap();
+        if rules.read_only {
+            assert_eq!(
+                rules.risk,
+                crate::RiskLevel::Low,
+                "Tool '{}': read_only tools must have 'low' risk",
+                tool.name
+            );
+            assert!(
+                !rules.effects.contains(&crate::ToolEffect::Write),
+                "Tool '{}': read_only tools cannot declare 'write' effect",
+                tool.name
+            );
+            assert!(
+                !rules.effects.contains(&crate::ToolEffect::Delete),
+                "Tool '{}': read_only tools cannot declare 'delete' effect",
+                tool.name
+            );
+            assert!(
+                !rules.effects.contains(&crate::ToolEffect::Send),
+                "Tool '{}': read_only tools cannot declare 'send' effect",
+                tool.name
+            );
+        }
+        if rules.effects.contains(&crate::ToolEffect::Delete) {
+            assert_ne!(
+                rules.risk,
+                crate::RiskLevel::Low,
+                "Tool '{}': tools with 'delete' effect cannot be low risk",
+                tool.name
+            );
+        }
+        if rules.effects.contains(&crate::ToolEffect::Send) {
+            assert_ne!(
+                rules.risk,
+                crate::RiskLevel::Low,
+                "Tool '{}': tools with 'send' effect cannot be low risk",
+                tool.name
+            );
+        }
+    }
+}
+
 pub fn assert_valid_resource_definitions(resources: &[ResourceDefinition]) {
     for res in resources {
         assert!(!res.uri.trim().is_empty(), "Resource URI cannot be empty");
@@ -227,6 +277,12 @@ macro_rules! test_plugin_contract {
         fn test_schema_validity() {
             let tools = $tool_fn();
             $crate::testing::assert_valid_tool_definitions(&tools);
+        }
+
+        #[test]
+        fn test_tool_rules_declared() {
+            let tools = $tool_fn();
+            $crate::testing::assert_valid_tool_rules(&tools);
         }
 
         #[test]

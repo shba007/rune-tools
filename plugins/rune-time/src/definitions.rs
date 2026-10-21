@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{ToolDefinition, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -15,6 +15,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     }
                 }
             }),
+            rules: Some(ToolRules::read_only()),
         },
         ToolDefinition {
             name: "convert_time".to_string(),
@@ -37,6 +38,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["sourceTimezone", "targetTimezone", "time"]
             }),
+            rules: Some(ToolRules::read_only()),
         },
     ]
 }

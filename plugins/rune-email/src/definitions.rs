@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -14,6 +14,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "password": { "type": "string", "description": "Account password or App Password" }
                 }
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "list_mailboxes".to_string(),
@@ -22,6 +23,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "list_messages".to_string(),
@@ -35,6 +37,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "unreadOnly": { "type": "boolean", "default": false, "description": "Filter strictly for unseen messages" }
                 }
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "search_messages".to_string(),
@@ -51,6 +54,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                     "limit": { "type": "integer", "default": 20, "description": "Maximum results to return" }
                 }
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "read_message".to_string(),
@@ -64,6 +68,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["uid"]
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
         ToolDefinition {
             name: "download_attachment".to_string(),
@@ -79,6 +84,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["uid"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "send_email".to_string(),
@@ -100,6 +110,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["to", "subject", "bodyText"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::High,
+                vec![ToolEffect::Send, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "reply_email".to_string(),
@@ -114,6 +129,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["originalUid", "replyBody"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::High,
+                vec![ToolEffect::Send, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "draft_email".to_string(),
@@ -127,6 +147,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["to", "subject", "bodyText"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "manage_message_flags".to_string(),
@@ -140,6 +165,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["uid", "action"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "move_message".to_string(),
@@ -153,6 +183,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["uid", "destinationMailbox"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Delete, ToolEffect::Network],
+                ["*"],
+            )),
         },
     ]
 }

@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -25,6 +25,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["entities"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "create_relations".to_string(),
@@ -49,6 +50,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["relations"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "add_observations".to_string(),
@@ -72,6 +74,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["observations"]
             }),
+            rules: Some(ToolRules::write_fs("allowed_dir", RiskLevel::Low)),
         },
         ToolDefinition {
             name: "delete_entities".to_string(),
@@ -88,6 +91,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["entityNames"]
             }),
+            rules: Some(ToolRules::delete_fs("allowed_dir", RiskLevel::Medium)),
         },
         ToolDefinition {
             name: "delete_observations".to_string(),
@@ -111,6 +115,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["deletions"]
             }),
+            rules: Some(ToolRules::delete_fs("allowed_dir", RiskLevel::Medium)),
         },
         ToolDefinition {
             name: "delete_relations".to_string(),
@@ -134,6 +139,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["relations"]
             }),
+            rules: Some(ToolRules::delete_fs("allowed_dir", RiskLevel::Medium)),
         },
         ToolDefinition {
             name: "read_graph".to_string(),
@@ -142,6 +148,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "search_nodes".to_string(),
@@ -155,6 +162,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["query"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
         ToolDefinition {
             name: "open_nodes".to_string(),
@@ -171,6 +179,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["names"]
             }),
+            rules: Some(ToolRules::read_only_fs("allowed_dir")),
         },
     ]
 }

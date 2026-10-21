@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -10,6 +10,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
+            rules: Some(ToolRules::read_only()),
         },
         ToolDefinition {
             name: "printer_print_document".to_string(),
@@ -33,6 +34,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["filePath"]
             }),
+            rules: Some(ToolRules::new(
+                false,
+                RiskLevel::High,
+                vec![ToolEffect::Send],
+            )),
         },
         ToolDefinition {
             name: "printer_scan_document".to_string(),
@@ -69,6 +75,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["outputPath", "printerIp"]
             }),
+            rules: Some(ToolRules::new(
+                false,
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+            )),
         },
         ToolDefinition {
             name: "printer_get_scanner_capabilities".to_string(),
@@ -83,6 +94,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["printerIp"]
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
     ]
 }

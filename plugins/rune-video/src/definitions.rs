@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -36,6 +36,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::read_only_exec(["yt-dlp"])),
         },
         ToolDefinition {
             name: "download_video_stream".to_string(),
@@ -90,6 +91,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["yt-dlp", "ffmpeg"],
+            )),
         },
         ToolDefinition {
             name: "download_video_playlist".to_string(),
@@ -141,6 +147,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["yt-dlp", "ffmpeg"],
+            )),
         },
         ToolDefinition {
             name: "record_live_stream".to_string(),
@@ -170,6 +181,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["streamlink"],
+            )),
         },
         ToolDefinition {
             name: "trim_media_clip".to_string(),
@@ -201,6 +217,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["inputFile", "startTime", "endTime"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Low,
+                vec![ToolEffect::Write],
+                ["ffmpeg"],
+            )),
         },
     ]
 }

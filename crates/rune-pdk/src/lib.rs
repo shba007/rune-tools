@@ -15,12 +15,244 @@ pub struct PluginInfo {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum RiskLevel {
+    #[default]
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolEffect {
+    Read,
+    Write,
+    Delete,
+    Send,
+    Network,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct ToolLimits {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub root_param: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub network_hosts: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_binaries: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct ToolRules {
+    #[serde(default)]
+    pub read_only: bool,
+    #[serde(default)]
+    pub risk: RiskLevel,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub effects: Vec<ToolEffect>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limits: Option<ToolLimits>,
+}
+
+impl ToolRules {
+    pub fn new(read_only: bool, risk: RiskLevel, effects: Vec<ToolEffect>) -> Self {
+        Self {
+            read_only,
+            risk,
+            effects,
+            limits: None,
+        }
+    }
+
+    pub fn with_limits(mut self, limits: ToolLimits) -> Self {
+        self.limits = Some(limits);
+        self
+    }
+
+    pub fn read_only() -> Self {
+        Self {
+            read_only: true,
+            risk: RiskLevel::Low,
+            effects: vec![ToolEffect::Read],
+            limits: None,
+        }
+    }
+
+    pub fn read_only_fs(root_param: impl Into<String>) -> Self {
+        Self {
+            read_only: true,
+            risk: RiskLevel::Low,
+            effects: vec![ToolEffect::Read],
+            limits: Some(ToolLimits {
+                root_param: Some(root_param.into()),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn read_only_network(hosts: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            read_only: true,
+            risk: RiskLevel::Low,
+            effects: vec![ToolEffect::Read, ToolEffect::Network],
+            limits: Some(ToolLimits {
+                network_hosts: hosts.into_iter().map(Into::into).collect(),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn read_only_exec(binaries: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            read_only: true,
+            risk: RiskLevel::Low,
+            effects: vec![ToolEffect::Read],
+            limits: Some(ToolLimits {
+                allowed_binaries: binaries.into_iter().map(Into::into).collect(),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn write_fs(root_param: impl Into<String>, risk: RiskLevel) -> Self {
+        Self {
+            read_only: false,
+            risk,
+            effects: vec![ToolEffect::Write],
+            limits: Some(ToolLimits {
+                root_param: Some(root_param.into()),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn delete_fs(root_param: impl Into<String>, risk: RiskLevel) -> Self {
+        Self {
+            read_only: false,
+            risk,
+            effects: vec![ToolEffect::Delete],
+            limits: Some(ToolLimits {
+                root_param: Some(root_param.into()),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn mutate_fs(
+        root_param: impl Into<String>,
+        risk: RiskLevel,
+        effects: Vec<ToolEffect>,
+    ) -> Self {
+        Self {
+            read_only: false,
+            risk,
+            effects,
+            limits: Some(ToolLimits {
+                root_param: Some(root_param.into()),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn network(
+        risk: RiskLevel,
+        effects: Vec<ToolEffect>,
+        hosts: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        Self {
+            read_only: false,
+            risk,
+            effects,
+            limits: Some(ToolLimits {
+                network_hosts: hosts.into_iter().map(Into::into).collect(),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn exec(
+        risk: RiskLevel,
+        effects: Vec<ToolEffect>,
+        binaries: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        Self {
+            read_only: false,
+            risk,
+            effects,
+            limits: Some(ToolLimits {
+                allowed_binaries: binaries.into_iter().map(Into::into).collect(),
+                ..Default::default()
+            }),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct ToolDefinition {
     pub name: String,
     pub description: String,
     #[serde(rename = "inputSchema", alias = "input_schema")]
     pub input_schema: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rules: Option<ToolRules>,
+}
+
+impl Serialize for ToolDefinition {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("ToolDefinition", 4)?;
+        state.serialize_field("name", &self.name)?;
+        state.serialize_field("description", &self.description)?;
+
+        if let Some(ref rules) = self.rules {
+            let mut schema = self.input_schema.clone();
+            if let Value::Object(ref mut map) = schema
+                && !map.contains_key("x-rune-rules")
+                && let Ok(rv) = serde_json::to_value(rules)
+            {
+                map.insert("x-rune-rules".to_string(), rv);
+            }
+            state.serialize_field("inputSchema", &schema)?;
+            state.serialize_field("rules", rules)?;
+        } else {
+            state.serialize_field("inputSchema", &self.input_schema)?;
+        }
+        state.end()
+    }
+}
+
+impl ToolDefinition {
+    pub fn new(
+        name: impl Into<String>,
+        description: impl Into<String>,
+        input_schema: Value,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            description: description.into(),
+            input_schema,
+            rules: None,
+        }
+    }
+
+    pub fn with_rules(mut self, rules: ToolRules) -> Self {
+        self.set_rules(rules);
+        self
+    }
+
+    pub fn set_rules(&mut self, rules: ToolRules) {
+        if let Value::Object(ref mut map) = self.input_schema
+            && let Ok(val) = serde_json::to_value(&rules)
+        {
+            map.insert("x-rune-rules".to_string(), val);
+        }
+        self.rules = Some(rules);
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -304,5 +536,42 @@ mod tests {
     fn test_resolve_scoped_path_empty_rejected() {
         let res = resolve_scoped_path("", Some("/safe/dir"));
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_tool_definition_rules_serialization() {
+        let tool = ToolDefinition::new(
+            "test_read",
+            "Reads a file safely",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "file path" }
+                }
+            }),
+        )
+        .with_rules(ToolRules::read_only_fs("allowed_dir"));
+
+        let serialized = serde_json::to_string(&tool).expect("serialize tool");
+        let val: serde_json::Value = serde_json::from_str(&serialized).expect("parse json");
+
+        // Verify top-level rules field
+        assert_eq!(val["rules"]["read_only"], true);
+        assert_eq!(val["rules"]["risk"], "low");
+        assert_eq!(val["rules"]["effects"][0], "read");
+        assert_eq!(val["rules"]["limits"]["root_param"], "allowed_dir");
+
+        // Verify injected x-rune-rules inside inputSchema
+        assert_eq!(val["inputSchema"]["x-rune-rules"]["read_only"], true);
+        assert_eq!(val["inputSchema"]["x-rune-rules"]["risk"], "low");
+        assert_eq!(val["inputSchema"]["x-rune-rules"]["effects"][0], "read");
+
+        // Verify deserialization back to ToolDefinition
+        let deserialized: ToolDefinition = serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(deserialized.name, "test_read");
+        assert!(deserialized.rules.is_some());
+        let rules = deserialized.rules.unwrap();
+        assert!(rules.read_only);
+        assert_eq!(rules.risk, RiskLevel::Low);
     }
 }

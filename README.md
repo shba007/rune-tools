@@ -24,7 +24,7 @@ Every plugin enforces a strict internal separation between declarative MCP schem
 
 - 🛡️ **Dual Execution Architecture**: Pure WASM sandboxing via Extism/Wasmtime for zero-host-side-effect compute, paired with Direct Native processes for persistent sockets and hardware workloads.
 - 🔌 **Strict MCP Protocol Compliance**: Implements the Model Context Protocol (2024-11-05 specification) across `tools`, `resources`, and `prompts` with automated contract and schema validation.
-- 🗂️ **Comprehensive Domain Catalog**: 18 modular plugins covering sandboxed filesystem manipulation, media transcoding (`ffmpeg`, `yt-dlp`), browser automation, Git inspection, IMAP/SMTP email, knowledge graphs, and time conversions.
+- 🗂️ **Comprehensive Domain Catalog**: 17 modular plugins (14 active workspace members, 3 draft/inactive) covering sandboxed filesystem manipulation, media transcoding (`ffmpeg`, `yt-dlp`), browser automation, Git inspection, IMAP/SMTP email, knowledge graphs, time conversions, and Figma canvas design. Note: `game-engine` does not exist.
 - ⚙️ **Unified Build & Test Orchestrator**: Integrated `cargo xtask` runner coordinating dual-target compilation (`wasm32-wasip1` cdylibs and host-native binaries) alongside isolated environment testing via `dotenvx`.
 - 🔐 **Capability-Based Security**: Scoped filesystem access, explicit hostname allowlists, and host-managed external binary provisioning (`ffmpeg`, `gallery-dl`, `yt-dlp`, `git`) declared in `plugin.toml`.
 - 📦 **Automated Attested Releases**: GitHub Actions CI/CD with build provenance attestation, multi-platform binary packaging (Linux, macOS Apple Silicon/Intel, Windows), and central registry indexing.
@@ -64,6 +64,8 @@ Every plugin enforces a strict internal separation between declarative MCP schem
 
 ## Plugin Catalog
 
+### Active Workspace Plugins (14)
+
 | Plugin | Version | Execution Model | External Binaries / Protocols | Tools | Resources & Prompts | Docs |
 |:---|:---:|:---:|:---|:---:|:---|:---:|
 | [`rune-filesystem`](plugins/rune-filesystem/) | `0.3.5` | Pure WASM | None | 13 | — | [Directory](plugins/rune-filesystem/) |
@@ -73,16 +75,26 @@ Every plugin enforces a strict internal separation between declarative MCP schem
 | [`rune-time`](plugins/rune-time/) | `0.2.2` | Pure WASM | None | 2 | — | [README](plugins/rune-time/README.md) |
 | [`rune-audio`](plugins/rune-audio/) | `0.2.3` | Direct Native | `ffmpeg`, `yt-dlp`, `spotdl` | 2 | — | [README](plugins/rune-audio/README.md) |
 | [`rune-browser`](plugins/rune-browser/) | `0.2.4` | Direct Native | `agent-browser`, Chrome DevTools Protocol | 17 | — | [README](plugins/rune-browser/README.md) |
-| [`rune-design`](plugins/rune-design/) | `0.2.1` | Direct Native | WebSocket (`ws://localhost:3055`) | 44 | 3 Resources, 6 Prompts | [Directory](plugins/rune-design/) |
-| [`rune-email`](plugins/rune-email/) | `0.1.5` | Direct Native | IMAP / SMTP | 11 | — | [README](plugins/rune-email/README.md) |
+| [`rune-figma`](plugins/rune-figma/) | `0.2.1` | Direct Native | WebSocket (`ws://localhost:3055`) | 44 | 3 Resources, 6 Prompts | [Directory](plugins/rune-figma/) |
+| [`rune-email`](plugins/rune-email/) | `0.1.5` | Direct Native (Dual) | IMAP / SMTP | 11 | — | [README](plugins/rune-email/README.md) |
 | [`rune-git`](plugins/rune-git/) | `0.2.4` | Direct Native | `git` (host-managed) | 13 | — | [README](plugins/rune-git/README.md) |
 | [`rune-image`](plugins/rune-image/) | `0.2.2` | Direct Native | `gallery-dl` | 5 | — | [README](plugins/rune-image/README.md) |
-| [`rune-slides`](plugins/rune-slides/) | `0.2.0` | Direct Native | None | 5 | — | [README](plugins/rune-slides/README.md) |
+| [`rune-slides`](plugins/rune-slides/) | `0.2.0` | Direct Native (Dual) | None | 5 | — | [README](plugins/rune-slides/README.md) |
 | [`rune-video`](plugins/rune-video/) | `0.2.0` | Direct Native | `ffmpeg`, `yt-dlp`, `streamlink` | 5 | — | [README](plugins/rune-video/README.md) |
-| [`mhb-mconnect`](plugins/mhb-mconnect/) | `0.1.3` | Direct Native | REST API | 3 | — | [README](plugins/mhb-mconnect/README.md) |
-| [`rune-print`](plugins/rune-print/) | `0.2.0` | Direct Native | OS Print Spooler (CUPS / WinSpool) | 4 | — | [README](plugins/rune-print/README.md) |
-| [`rune-scan`](plugins/rune-scan/) | `0.1.0` | Direct Native | eSCL AirScan / mDNS | 2 | — | [README](plugins/rune-scan/README.md) |
-| [`rune-ssh`](plugins/rune-ssh/) | `0.1.0` | Direct Native | SSH / SFTP | 3 | — | [README](plugins/rune-ssh/README.md) |
+| [`mhb-mconnect`](plugins/mhb-mconnect/) | `0.1.3` | Direct Native (Dual) | REST API | 3 | — | [README](plugins/mhb-mconnect/README.md) |
+
+### Draft / Inactive Plugins (3)
+
+| Plugin | Version | Execution Model | External Binaries / Protocols | Tools | Status | Docs |
+|:---|:---:|:---:|:---|:---:|:---|:---:|
+| [`rune-print`](plugins/rune-print/) | `0.2.0` | Direct Native | OS Print Spooler (CUPS / WinSpool) | 4 | Draft (commented out in `Cargo.toml`) | [README](plugins/rune-print/README.md) |
+| [`rune-scan`](plugins/rune-scan/) | `0.1.0` | Direct Native | eSCL AirScan / mDNS | 2 | Draft (commented out in `Cargo.toml`) | [README](plugins/rune-scan/README.md) |
+| [`rune-ssh`](plugins/rune-ssh/) | `0.1.0` | Direct Native | SSH / SFTP | 3 | Draft (commented out in `Cargo.toml`) | [README](plugins/rune-ssh/README.md) |
+
+> [!NOTE]
+> - **Active vs Draft Plugins**: The 14 active plugins are fully tested and built as part of the Cargo workspace. `rune-print`, `rune-scan`, and `rune-ssh` are preserved in the repository in `plugins/` as reference implementations but are commented out in `Cargo.toml` workspace members.
+> - **Non-existent Plugins**: `game-engine` does **not** exist in this repository.
+> - **Naming**: The Figma canvas integration is `rune-figma` (previously referenced in some draft documentation as `rune-design`).
 
 ---
 
@@ -379,7 +391,7 @@ cargo xtask build-all
 
 ### License & Contributors
 
-Published under the [GNU GPLv3](https://github.com/shba007/rune-tools/blob/main/LICENSE) license.
+Published under the [MIT](LICENSE) license.
 
 <br>
 

@@ -1,5 +1,5 @@
 // plugins/rune-ssh/src/definitions.rs
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -29,6 +29,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["command"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::High,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "sftp_upload".to_string(),
@@ -59,6 +64,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["localPath", "remotePath"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
         ToolDefinition {
             name: "sftp_download".to_string(),
@@ -89,6 +99,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["remotePath", "localPath"]
             }),
+            rules: Some(ToolRules::network(
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["*"],
+            )),
         },
     ]
 }

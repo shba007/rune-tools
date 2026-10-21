@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -38,6 +38,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["outputPath", "scannerIp"]
             }),
+            rules: Some(ToolRules::new(
+                false,
+                RiskLevel::Low,
+                vec![ToolEffect::Write, ToolEffect::Network],
+            )),
         },
         ToolDefinition {
             name: "get_scanner_capabilities".to_string(),
@@ -52,6 +57,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["scannerIp"]
             }),
+            rules: Some(ToolRules::read_only_network(["*"])),
         },
     ]
 }

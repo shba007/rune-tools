@@ -1,4 +1,4 @@
-use rune_pdk::ToolDefinition;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
@@ -48,6 +48,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["yt-dlp", "ffmpeg"],
+            )),
         },
         ToolDefinition {
             name: "download_music_track".to_string(),
@@ -71,6 +76,11 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["url"]
             }),
+            rules: Some(ToolRules::exec(
+                RiskLevel::Medium,
+                vec![ToolEffect::Write, ToolEffect::Network],
+                ["spotdl"],
+            )),
         },
     ]
 }

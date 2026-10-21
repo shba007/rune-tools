@@ -1,9 +1,34 @@
-use rune_pdk::{PromptDefinition, ResourceDefinition, ToolDefinition};
+use rune_pdk::{
+    PromptDefinition, ResourceDefinition, RiskLevel, ToolDefinition, ToolEffect, ToolRules,
+};
 use serde_json::json;
 
+fn figma_tool_rule(name: &str) -> ToolRules {
+    if name.starts_with("get_")
+        || name.starts_with("read_")
+        || name.starts_with("scan_")
+        || name.starts_with("export_")
+    {
+        ToolRules::read_only_network(["127.0.0.1", "localhost"])
+    } else if name.starts_with("delete_") {
+        ToolRules::network(
+            RiskLevel::Medium,
+            vec![ToolEffect::Delete, ToolEffect::Network],
+            ["127.0.0.1", "localhost"],
+        )
+    } else {
+        ToolRules::network(
+            RiskLevel::Low,
+            vec![ToolEffect::Write, ToolEffect::Network],
+            ["127.0.0.1", "localhost"],
+        )
+    }
+}
+
 pub fn tool_definitions() -> Vec<ToolDefinition> {
-    vec![
+    let mut tools = vec![
         ToolDefinition {
+            rules: None,
             name: "get_document_info".to_string(),
             description: "Get detailed information about the current Figma document".to_string(),
             input_schema: json!({
@@ -13,6 +38,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_selection".to_string(),
             description: "Get information about the current selection in Figma".to_string(),
             input_schema: json!({
@@ -22,6 +48,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "read_my_design".to_string(),
             description: "Get detailed information about the current selection in Figma, including all node details".to_string(),
             input_schema: json!({
@@ -31,6 +58,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_node_info".to_string(),
             description: "Get detailed information about a specific node in Figma".to_string(),
             input_schema: json!({
@@ -42,6 +70,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_nodes_info".to_string(),
             description: "Get detailed information about multiple nodes in Figma".to_string(),
             input_schema: json!({
@@ -57,6 +86,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "create_rectangle".to_string(),
             description: "Create a new rectangle in Figma".to_string(),
             input_schema: json!({
@@ -73,6 +103,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "create_frame".to_string(),
             description: "Create a new frame in Figma with optional layout and styling configurations".to_string(),
             input_schema: json!({
@@ -123,6 +154,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "create_text".to_string(),
             description: "Create a new text element in Figma".to_string(),
             input_schema: json!({
@@ -151,6 +183,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_fill_color".to_string(),
             description: "Set the fill color of a node in Figma (TextNode or FrameNode)".to_string(),
             input_schema: json!({
@@ -166,6 +199,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_stroke_color".to_string(),
             description: "Set the stroke color and weight of a node in Figma".to_string(),
             input_schema: json!({
@@ -182,6 +216,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "move_node".to_string(),
             description: "Move a node to a new absolute position in Figma".to_string(),
             input_schema: json!({
@@ -195,6 +230,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "clone_node".to_string(),
             description: "Clone an existing node in Figma with optional new placement".to_string(),
             input_schema: json!({
@@ -208,6 +244,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "resize_node".to_string(),
             description: "Resize a node in Figma".to_string(),
             input_schema: json!({
@@ -221,6 +258,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "delete_node".to_string(),
             description: "Delete a single node from Figma".to_string(),
             input_schema: json!({
@@ -232,6 +270,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "delete_multiple_nodes".to_string(),
             description: "Delete multiple nodes from Figma at once".to_string(),
             input_schema: json!({
@@ -243,6 +282,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "export_node_as_image".to_string(),
             description: "Export a node as an image from Figma".to_string(),
             input_schema: json!({
@@ -256,6 +296,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_text_content".to_string(),
             description: "Set the text content of an existing text node in Figma".to_string(),
             input_schema: json!({
@@ -268,16 +309,19 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_styles".to_string(),
             description: "Get all styles from the current Figma document".to_string(),
             input_schema: json!({ "type": "object", "properties": {} }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_local_components".to_string(),
             description: "Get all local components from the Figma document".to_string(),
             input_schema: json!({ "type": "object", "properties": {} }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_annotations".to_string(),
             description: "Get all annotations in the current document or for a specific node".to_string(),
             input_schema: json!({
@@ -289,6 +333,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_annotation".to_string(),
             description: "Create or update an annotation on a Figma node".to_string(),
             input_schema: json!({
@@ -312,6 +357,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_multiple_annotations".to_string(),
             description: "Set multiple annotations in batches within a node".to_string(),
             input_schema: json!({
@@ -346,6 +392,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "create_component_instance".to_string(),
             description: "Create an instance of a local or published Figma component".to_string(),
             input_schema: json!({
@@ -361,6 +408,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_instance_overrides".to_string(),
             description: "Get all override properties from a selected component instance".to_string(),
             input_schema: json!({
@@ -371,6 +419,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_instance_overrides".to_string(),
             description: "Apply previously copied overrides to target component instances".to_string(),
             input_schema: json!({
@@ -383,6 +432,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_corner_radius".to_string(),
             description: "Set the corner radius of a node in Figma".to_string(),
             input_schema: json!({
@@ -402,6 +452,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "scan_text_nodes".to_string(),
             description: "Scan and extract all text nodes within a container node in Figma".to_string(),
             input_schema: json!({
@@ -413,6 +464,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "scan_nodes_by_types".to_string(),
             description: "Scan for child nodes with specific types (e.g. COMPONENT, FRAME, TEXT)".to_string(),
             input_schema: json!({
@@ -425,6 +477,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_multiple_text_contents".to_string(),
             description: "Set multiple text contents parallelly in a batch within a node".to_string(),
             input_schema: json!({
@@ -448,6 +501,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_layout_mode".to_string(),
             description: "Set the auto-layout mode and wrap behavior of a frame in Figma".to_string(),
             input_schema: json!({
@@ -461,6 +515,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_padding".to_string(),
             description: "Set padding values for an auto-layout frame in Figma".to_string(),
             input_schema: json!({
@@ -476,6 +531,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_axis_align".to_string(),
             description: "Set primary and counter axis alignment for an auto-layout frame".to_string(),
             input_schema: json!({
@@ -489,6 +545,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_layout_sizing".to_string(),
             description: "Set horizontal and vertical layout sizing modes (FIXED, HUG, FILL)".to_string(),
             input_schema: json!({
@@ -502,6 +559,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_item_spacing".to_string(),
             description: "Set distance between children in an auto-layout frame".to_string(),
             input_schema: json!({
@@ -515,6 +573,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "get_reactions".to_string(),
             description: "Get Figma prototyping reactions from multiple nodes".to_string(),
             input_schema: json!({
@@ -526,6 +585,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_default_connector".to_string(),
             description: "Set a connector node as the default style connector".to_string(),
             input_schema: json!({
@@ -536,6 +596,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "create_connections".to_string(),
             description: "Create connections between nodes using the default connector style".to_string(),
             input_schema: json!({
@@ -559,6 +620,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_focus".to_string(),
             description: "Focus on a specific node in Figma and pan/zoom viewport to it".to_string(),
             input_schema: json!({
@@ -570,6 +632,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_selections".to_string(),
             description: "Select multiple nodes in Figma and adjust viewport to encompass them".to_string(),
             input_schema: json!({
@@ -581,6 +644,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_image_fill".to_string(),
             description: "Fill a node in Figma with an image from local path, URL, or base64".to_string(),
             input_schema: json!({
@@ -596,6 +660,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "rename_node".to_string(),
             description: "Rename a node in Figma".to_string(),
             input_schema: json!({
@@ -608,6 +673,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "create_section".to_string(),
             description: "Create a section in Figma to group related content on the canvas".to_string(),
             input_schema: json!({
@@ -623,6 +689,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "set_parent".to_string(),
             description: "Move a node into a new parent node (section, frame, or group)".to_string(),
             input_schema: json!({
@@ -638,6 +705,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            rules: None,
             name: "join_channel".to_string(),
             description: "Join a specific WebSocket communication channel to communicate with Figma".to_string(),
             input_schema: json!({
@@ -648,7 +716,12 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 }
             }),
         },
-    ]
+    ];
+    for tool in &mut tools {
+        let rule = figma_tool_rule(&tool.name);
+        tool.set_rules(rule);
+    }
+    tools
 }
 
 pub fn resource_definitions() -> Vec<ResourceDefinition> {
