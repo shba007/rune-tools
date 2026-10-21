@@ -71,14 +71,14 @@ jobs:
       # gh release create is called with `|| true` because multiple wasm/native
       # matrix jobs for the SAME plugin version may race to create the same
       # tag; whichever loses the race just uploads to the release the winner
-      # already created. --clobber makes the upload itself idempotent too.
+      # already created. Existing assets must never be replaced in place.
       - name: ⬆️ Publish release + upload asset
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ matrix.name }}-v${{ matrix.version }}"
           gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
-          gh release upload "$TAG" dist/${{ matrix.name }}-${{ matrix.version }}.wasm --clobber
+          gh release upload "$TAG" dist/${{ matrix.name }}-${{ matrix.version }}.wasm
 
   build-native:
     needs: detect
@@ -128,11 +128,11 @@ jobs:
       - name: ⬆️ Publish release + upload asset
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ matrix.name }}-v${{ matrix.version }}"
           gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
-          gh release upload "$TAG" "dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.${{ matrix.ext }}" --clobber
+          gh release upload "$TAG" "dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.${{ matrix.ext }}"
 
   update-registry:
     needs: [detect, build-wasm, build-native]

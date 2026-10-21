@@ -25,9 +25,21 @@ struct PluginTargets {
 
 fn cargo_metadata() -> Value {
     let output = Command::new("cargo")
-        .args(["metadata", "--no-deps", "--format-version", "1"])
+        .args([
+            "metadata",
+            "--locked",
+            "--offline",
+            "--no-deps",
+            "--format-version",
+            "1",
+        ])
         .output()
         .expect("failed to run `cargo metadata` — is cargo on PATH?");
+    assert!(
+        output.status.success(),
+        "cargo metadata failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     serde_json::from_slice(&output.stdout).expect("failed to parse `cargo metadata` output")
 }
 
@@ -52,18 +64,22 @@ fn discover_plugins(metadata: &Value, filter: Option<&str>) -> Vec<PluginTargets
             }
 
             let targets = pkg["targets"].as_array().cloned().unwrap_or_default();
-            let has_wasm = targets.iter().any(|t| {
-                t["kind"]
-                    .as_array()
-                    .map(|k| k.iter().any(|k| k == "cdylib"))
-                    .unwrap_or(false)
-            });
-            let has_native = targets.iter().any(|t| {
-                t["kind"]
-                    .as_array()
-                    .map(|k| k.iter().any(|k| k == "bin"))
-                    .unwrap_or(false)
-            });
+            let model =
+                registry::execution_model(std::path::Path::new(pkg["manifest_path"].as_str()?));
+            let has_wasm = model == "wasm"
+                && targets.iter().any(|t| {
+                    t["kind"]
+                        .as_array()
+                        .map(|k| k.iter().any(|k| k == "cdylib"))
+                        .unwrap_or(false)
+                });
+            let has_native = model == "native"
+                && targets.iter().any(|t| {
+                    t["kind"]
+                        .as_array()
+                        .map(|k| k.iter().any(|k| k == "bin"))
+                        .unwrap_or(false)
+                });
 
             Some(PluginTargets {
                 name,

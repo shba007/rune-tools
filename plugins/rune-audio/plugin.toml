@@ -1,7 +1,8 @@
 [plugin]
 name = "rune-audio"
+execution_model = "native"
 description = "Audio track extraction using yt-dlp, ffmpeg, and spotdl for podcast and audio content management."
-version = "0.2.4"
+version = "0.3.0"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
 documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-audio/README.md"

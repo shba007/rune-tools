@@ -1,7 +1,7 @@
 [plugin]
 name = "rune-email"
 description = "Email utilities and management tools."
-version = "0.1.6"
+version = "0.2.0"
 execution_model = "native"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"

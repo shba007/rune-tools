@@ -44,6 +44,29 @@ catalog and the resource carrier is agreed. They must not be treated as supporte
 UI contracts. Source versions are not evidence that registry artifacts were
 published; release and registry files remain owned by the normal release process.
 
+## Release packaging and pilot smoke check
+
+`plugin.toml` declares each active plugin's execution model. Build and registry
+planning use that declaration: WASM plugins publish their cdylib; native plugins
+publish only `<plugin>-native`, never the standalone CLI wrapper. Draft plugins
+remain outside the workspace. Registry versions already recorded are skipped;
+a shared PDK change therefore requires new consumer versions when old artifacts
+have already shipped. Release uploads must not replace existing assets.
+
+For the git/time pilots, first build the actual release targets:
+
+```text
+cargo build --locked -p rune-git --release --target x86_64-pc-windows-msvc --bin rune-git-native --features native
+cargo build --locked -p rune-time --release --target wasm32-wasip1 --lib
+python scripts/smoke-kit-plugins.py --rune <rune.exe> --git <rune-git-native.exe> --time <rune_time.wasm>
+```
+
+The smoke script checks initialization, schemas, annotations, normal/restricted
+discovery and harmless calls. After installation, substitute the installed
+plugin names `rune-git` and `rune-time` to verify the installed artifacts.
+The script does not install plugins or change owner configuration. Record the
+exact Kit executable version/hash and Tools build commit with acceptance results.
+
 ## Development checks
 
 ```text
