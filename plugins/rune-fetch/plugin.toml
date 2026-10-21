@@ -1,6 +1,6 @@
 [plugin]
 name = "rune-fetch"
-version = "0.3.3"
+version = "0.4.0"
 execution_model = "wasm"
 description = "Fetches a URL from the internet and extracts contents as Markdown"
 

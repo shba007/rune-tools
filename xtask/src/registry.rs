@@ -14,6 +14,45 @@ use std::{env, fs, io::Write, path::Path};
 
 const REGISTRY_PATH: &str = "registry/index.json";
 
+pub fn execution_model(manifest: &Path) -> String {
+    let path = manifest.parent().unwrap().join("plugin.toml");
+    let raw = fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+    let config: toml::Value = toml::from_str(&raw).expect("valid plugin.toml");
+    let model = config["plugin"]["execution_model"]
+        .as_str()
+        .expect("plugin.execution_model must be declared");
+    assert!(
+        matches!(model, "wasm" | "native"),
+        "unknown execution model: {model}"
+    );
+    model.to_string()
+}
+
+fn select_targets(name: &str, model: &str, targets: &[Value]) -> (Option<String>, Vec<String>) {
+    let has_kind = |t: &Value, kind: &str| {
+        t["kind"]
+            .as_array()
+            .is_some_and(|k| k.iter().any(|v| v == kind))
+    };
+    if model == "wasm" {
+        let wasm = targets
+            .iter()
+            .find(|t| has_kind(t, "cdylib"))
+            .and_then(|t| t["name"].as_str())
+            .expect("WASM plugin must have a cdylib");
+        (Some(wasm.to_string()), vec![])
+    } else {
+        let native_name = format!("{name}-native");
+        assert!(
+            targets
+                .iter()
+                .any(|t| has_kind(t, "bin") && t["name"] == native_name),
+            "native plugin must have {native_name}"
+        );
+        (None, vec![native_name])
+    }
+}
+
 /// Native sidecar build targets — mirrors rune-kit's own deploy.yml matrix.
 const NATIVE_TARGETS: [(&str, &str, &str); 4] = [
     ("ubuntu-latest", "x86_64-unknown-linux-gnu", "tar.gz"),
@@ -43,19 +82,8 @@ fn discover(metadata: &Value) -> Vec<Plugin> {
             }
 
             let targets = pkg["targets"].as_array().cloned().unwrap_or_default();
-            let names_of = |kind: &str| -> Vec<String> {
-                targets
-                    .iter()
-                    .filter(|t| {
-                        t["kind"]
-                            .as_array()
-                            .is_some_and(|k| k.iter().any(|k| k == kind))
-                    })
-                    .filter_map(|t| t["name"].as_str().map(String::from))
-                    .collect()
-            };
-            let cdylib = names_of("cdylib").into_iter().next();
-            let bins = names_of("bin");
+            let (cdylib, bins) =
+                select_targets(pkg["name"].as_str()?, &execution_model(manifest), &targets);
             if cdylib.is_none() && bins.is_empty() {
                 return None; // nothing buildable — e.g. a lib-only helper crate
             }
@@ -203,4 +231,26 @@ pub fn update_registry(metadata: &Value) -> Result<(), String> {
         println!("No new publishable versions — registry unchanged");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn native_release_excludes_cli_wrapper_and_unused_wasm() {
+        let targets = vec![
+            json!({"name":"rune_git","kind":["cdylib","rlib"]}),
+            json!({"name":"rune-git","kind":["bin"]}),
+            json!({"name":"rune-git-native","kind":["bin"]}),
+        ];
+        assert_eq!(
+            select_targets("rune-git", "native", &targets),
+            (None, vec!["rune-git-native".to_string()])
+        );
+        assert_eq!(
+            select_targets("rune-git", "wasm", &targets),
+            (Some("rune_git".to_string()), vec![])
+        );
+    }
 }
