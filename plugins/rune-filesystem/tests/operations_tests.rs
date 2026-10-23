@@ -1,12 +1,21 @@
 use base64::Engine;
 use rune_filesystem::operations::{
-    execute_tool, normalize_path, resolve_path, resolve_path_with_root,
+    execute_tool as execute_other_tool, normalize_path, resolve_path, resolve_path_with_root,
 };
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
+
+fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+    if matches!(request.name.as_str(), "read_text_file" | "list_directory") {
+        let root = std::env::temp_dir();
+        rune_filesystem::pilot_reads::execute(request, root.to_str())
+    } else {
+        execute_other_tool(request)
+    }
+}
 
 #[test]
 fn test_normalize_path() {

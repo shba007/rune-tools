@@ -5,7 +5,7 @@ use glob_match::glob_match;
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Component, Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -37,10 +37,7 @@ pub fn normalize_path(path: &Path) -> PathBuf {
 pub fn get_allowed_root() -> Option<String> {
     #[cfg(target_arch = "wasm32")]
     {
-        extism_pdk::config::get("allowed_dir")
-            .ok()
-            .flatten()
-            .or_else(|| std::env::var("ALLOWED_DIR").ok())
+        crate::host_allowed_root()
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -113,80 +110,10 @@ pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
 }
 
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+    if matches!(request.name.as_str(), "read_text_file" | "list_directory") {
+        return crate::pilot_reads::execute(request, get_allowed_root().as_deref());
+    }
     match request.name.as_str() {
-        "read_text_file" => {
-            let path_val = request
-                .arguments
-                .get("path")
-                .ok_or_else(|| "Missing 'path' parameter".to_string())?;
-            let path_str = path_val
-                .as_str()
-                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
-            let path = resolve_path(path_str)?;
-
-            let head = request
-                .arguments
-                .get("head")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as usize);
-            let tail = request
-                .arguments
-                .get("tail")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as usize);
-            let line_offset = get_param(&request.arguments, "lineOffset", "line_offset")
-                .and_then(|v| v.as_u64())
-                .unwrap_or(0) as usize;
-            let line_limit = get_param(&request.arguments, "lineLimit", "line_limit")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as usize)
-                .unwrap_or(2000);
-
-            if let Some(t) = tail {
-                let raw = fs::read_to_string(&path)
-                    .map_err(|e| format!("Failed to read text file '{}': {}", path.display(), e))?;
-                let lines: Vec<&str> = raw.lines().collect();
-                let skip = lines.len().saturating_sub(t);
-                return Ok(json!({
-                    "content": lines[skip..].join("\n"),
-                    "totalLines": lines.len()
-                }));
-            }
-
-            let file = File::open(&path)
-                .map_err(|e| format!("Failed to open text file '{}': {}", path.display(), e))?;
-            let reader = BufReader::new(file);
-
-            let limit = head.unwrap_or(line_limit);
-            let mut out_lines: Vec<String> = Vec::with_capacity(limit.min(4096));
-            let mut seen = 0usize;
-            let mut yielded = 0usize;
-            let mut has_more = false;
-
-            for line in reader.lines() {
-                let line = line.map_err(|e| format!("Read error: {}", e))?;
-                if seen < line_offset {
-                    seen += 1;
-                    continue;
-                }
-                if yielded >= limit {
-                    has_more = true;
-                    break;
-                }
-                out_lines.push(line);
-                seen += 1;
-                yielded += 1;
-            }
-
-            Ok(json!({
-                "content": out_lines.join("\n"),
-                "lineOffset": line_offset,
-                "linesReturned": yielded,
-                "hasMore": has_more,
-                "nextLineOffset": if has_more { Some(line_offset + yielded) } else { None }
-            }))
-        }
-
         "read_media_file" => {
             let path_val = request
                 .arguments
@@ -396,33 +323,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 .map_err(|e| format!("Failed to create directory '{}': {}", path.display(), e))?;
 
             Ok(json!({ "content": format!("Directory '{}' ready", path_str) }))
-        }
-
-        "list_directory" => {
-            let path_val = request
-                .arguments
-                .get("path")
-                .ok_or_else(|| "Missing 'path' parameter".to_string())?;
-            let path_str = path_val
-                .as_str()
-                .ok_or_else(|| "Parameter 'path' must be a string".to_string())?;
-            let path = resolve_path(path_str)?;
-
-            let entries = fs::read_dir(&path)
-                .map_err(|e| format!("Failed to read directory '{}': {}", path.display(), e))?;
-
-            let mut lines = Vec::new();
-            for entry in entries.flatten() {
-                let name = entry.file_name().to_string_lossy().to_string();
-                let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
-                if is_dir {
-                    lines.push(format!("[DIR]  {}", name));
-                } else {
-                    lines.push(format!("[FILE] {}", name));
-                }
-            }
-            lines.sort();
-            Ok(json!({ "content": lines.join("\n") }))
         }
 
         "list_directory_with_sizes" => {

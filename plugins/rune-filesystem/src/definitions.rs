@@ -1,11 +1,23 @@
 use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 
+pub const MAX_FILE_BYTES: usize = 8 * 1024 * 1024;
+pub const MAX_OUTPUT_BYTES: usize = 64 * 1024;
+pub const MAX_LINES: usize = 2000;
+pub const MAX_ENTRIES: usize = 200;
+
+fn approved_read() -> ToolRules {
+    ToolRules::read_only().with_limits(rune_pdk::ToolLimits {
+        root_param: Some("allowed_dir".into()),
+        ..Default::default()
+    })
+}
+
 pub fn tool_definitions() -> Vec<ToolDefinition> {
     vec![
         ToolDefinition {
             name: "read_text_file".to_string(),
-            description: "Read a text file as line-based pages. Use 'head'/'tail' for quick previews, or 'lineOffset'/'lineLimit' to page through large files.".to_string(),
+            description: "Read a UTF-8 text file inside the host-configured allowed_dir. Requires a root. Files are limited to 8 MiB; each page to 2000 lines and 64 KiB of content. Use head/tail or lineOffset/lineLimit.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -13,14 +25,15 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                         "type": "string",
                         "description": "The file path to read. Can be relative to the allowed directory (e.g. 'notes.txt') or an absolute path within it."
                     },
-                    "head": { "type": "number", "description": "If provided, returns only the first N lines of the file" },
-                    "tail": { "type": "number", "description": "If provided, returns only the last N lines of the file" },
-                    "lineOffset": { "type": "number", "description": "0-based line number to start reading from" },
-                    "lineLimit": { "type": "number", "description": "Max lines to return in this page (default 2000)" }
+                    "head": { "type": "integer", "minimum":0,"maximum":MAX_LINES,"description": "First N lines; cannot be combined with tail" },
+                    "tail": { "type": "integer", "minimum":0,"maximum":MAX_LINES,"description": "Last N lines; cannot be combined with head" },
+                    "lineOffset": { "type": "integer", "minimum":0,"description": "0-based line number to start reading from" },
+                    "lineLimit": { "type": "integer", "minimum":0,"maximum":MAX_LINES,"description": "Max lines to return in this page (default 2000)" }
                 },
+                "x-rune-read-limits":{"maxInputBytes":MAX_FILE_BYTES,"maxContentBytes":MAX_OUTPUT_BYTES,"maxLines":MAX_LINES},
                 "required": ["path"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "read_media_file".to_string(),
@@ -116,18 +129,20 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "list_directory".to_string(),
-            description: "Get a detailed listing of all files and directories in a specified path.".to_string(),
+            description: "List a directory inside the host-configured allowed_dir without following entry links. Requires a root. Returns up to 200 entries and 64 KiB of content with truncation metadata.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "The directory path to inspect (defaults to '.' for the root allowed directory, or a relative/absolute path within it)"
-                    }
+                        "description": "Required directory path: use '.' for the root, or a relative/absolute path within it"
+                    },
+                    "maxEntries":{"type":"integer","minimum":0,"maximum":MAX_ENTRIES,"description":"Maximum entries to return (default and maximum 200)"}
                 },
+                "x-rune-read-limits":{"maxContentBytes":MAX_OUTPUT_BYTES,"maxEntries":MAX_ENTRIES},
                 "required": ["path"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "list_directory_with_sizes".to_string(),
