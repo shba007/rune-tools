@@ -9,8 +9,12 @@
 // error propagation (a failed wasm build stops the run instead of `&&`
 // silently skipping straight to reporting shell success/failure only).
 
+mod config;
 mod hooks;
+mod publication;
 mod registry;
+mod release;
+mod smoke;
 
 use serde_json::Value;
 use std::process::{Command, ExitCode};
@@ -103,35 +107,13 @@ fn run_cargo(args: &[&str]) -> bool {
     run_cmd("cargo", args)
 }
 
-/// Mirrors build_plugin: one command per plugin. Every plugin has its own
-/// .env by convention (even if empty), so this always runs through dotenvx
-/// rather than branching on whether the file happens to exist.
-fn test_plugin(name: &str) -> bool {
-    let env_file = format!("plugins/{}/.env", name);
-    run_cmd(
-        "dotenvx",
-        &[
-            "run",
-            "-f",
-            &env_file,
-            "--",
-            "cargo",
-            "test",
-            "-p",
-            name,
-            "--all-features",
-            "--",
-            "--show-output",
-        ],
-    )
-}
-
 fn build_plugin(plugin: &PluginTargets, wasm: bool, native: bool) -> bool {
     let mut ok = true;
 
     if wasm && plugin.has_wasm {
         ok &= run_cargo(&[
             "build",
+            "--locked",
             "-p",
             &plugin.name,
             "--target",
@@ -145,6 +127,7 @@ fn build_plugin(plugin: &PluginTargets, wasm: bool, native: bool) -> bool {
         let bin_name = format!("{}-native", plugin.name);
         ok &= run_cargo(&[
             "build",
+            "--locked",
             "-p",
             &plugin.name,
             "--release",
@@ -166,7 +149,7 @@ fn print_usage() {
          cargo xtask test <plugin-name>\n  \
          cargo xtask test-all\n  \
          cargo xtask detect-publishable   (CI: emit release matrices)\n  \
-         cargo xtask update-registry      (CI: record new versions in registry/index.json)\n  \
+         cargo xtask prepare [--apply]     (dry-run by default; CI/owner applies)\n  \
          cargo xtask hooks                (install git hooks from .cargo-husky/hooks)"
     );
 }
@@ -193,7 +176,23 @@ fn main() -> ExitCode {
         Some("detect-publishable") => {
             return report(registry::detect_publishable(&cargo_metadata()));
         }
-        Some("update-registry") => return report(registry::update_registry(&cargo_metadata())),
+        Some("prepare" | "example" | "notes" | "validate") => {
+            return report(release::command(&args).map_err(|e| e.to_string()));
+        }
+        Some("publish" | "registry") => {
+            return report(publication::command(&args).map_err(|e| e.to_string()));
+        }
+        Some("smoke-kit" | "smoke-filesystem") => {
+            return report(smoke::command(&args).map_err(|e| e.to_string()));
+        }
+        Some("verify-promotion") => {
+            return report(
+                release::verify_promotion(std::path::Path::new(".")).map_err(|e| e.to_string()),
+            );
+        }
+        Some("env-requirements") => {
+            return report(config::requirements().map_err(|e| e.to_string()));
+        }
         Some("hooks") => return report(hooks::install()),
         _ => {}
     }
@@ -237,7 +236,7 @@ fn main() -> ExitCode {
         all_ok &= if is_build {
             build_plugin(plugin, build_wasm, build_native)
         } else {
-            test_plugin(&plugin.name)
+            config::test_plugin(&plugin.name)
         };
     }
 

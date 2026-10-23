@@ -3,9 +3,9 @@ ignore_merge_commits = true
 tag_prefix = "v"
 
 # Each plugin is versioned independently (`<plugin>-v<version>`).
-# CI does not run cog bump or regenerate notes from history. The owner prepares
-# versions and matching CHANGELOG sections before committing; agents never run
-# Git-mutating release commands. Retained cog settings support owner tooling.
+# Rust xtask prepares versions/changelogs in CI from reviewed conventional commits.
+# Publication extracts the exact prepared plugin CHANGELOG section. Agents leave
+# local work unstaged/uncommitted. Retained cog settings support owner hooks.
 monorepo_version_separator = "-"
 generate_mono_repository_global_tag = false
 

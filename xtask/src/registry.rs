@@ -54,7 +54,7 @@ fn select_targets(name: &str, model: &str, targets: &[Value]) -> (Option<String>
 }
 
 /// Native sidecar build targets — mirrors rune-kit's own deploy.yml matrix.
-const NATIVE_TARGETS: [(&str, &str, &str); 4] = [
+pub(crate) const NATIVE_TARGETS: [(&str, &str, &str); 4] = [
     ("ubuntu-latest", "x86_64-unknown-linux-gnu", "tar.gz"),
     ("macos-latest", "aarch64-apple-darwin", "tar.gz"),
     ("macos-latest", "x86_64-apple-darwin", "tar.gz"),
@@ -64,7 +64,6 @@ const NATIVE_TARGETS: [(&str, &str, &str); 4] = [
 struct Plugin {
     name: String,
     version: String,
-    description: String,
     cdylib: Option<String>,
     bins: Vec<String>,
 }
@@ -91,7 +90,6 @@ fn discover(metadata: &Value) -> Vec<Plugin> {
             Some(Plugin {
                 name: pkg["name"].as_str()?.to_string(),
                 version: pkg["version"].as_str()?.to_string(),
-                description: pkg["description"].as_str().unwrap_or_default().to_string(),
                 cdylib,
                 bins,
             })
@@ -106,10 +104,6 @@ fn load_registry() -> Result<Value, String> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(json!({})),
         Err(e) => Err(format!("cannot read {REGISTRY_PATH}: {e}")),
     }
-}
-
-fn asset_url(repo: &str, tag: &str, file: &str) -> String {
-    format!("https://github.com/{repo}/releases/download/{tag}/{file}")
 }
 
 /// Diffs each plugin's Cargo.toml version against registry/index.json and emits
@@ -168,67 +162,6 @@ pub fn detect_publishable(metadata: &Value) -> Result<(), String> {
                 println!("{key}={value}");
             }
         }
-    }
-    Ok(())
-}
-
-/// Merges every unrecorded plugin version into registry/index.json, leaving
-/// all previously published versions untouched. Run after build-wasm /
-/// build-native have uploaded their release assets.
-pub fn update_registry(metadata: &Value) -> Result<(), String> {
-    let repo = env::var("GITHUB_REPOSITORY")
-        .map_err(|_| "GITHUB_REPOSITORY is not set (e.g. shba007/rune-tools)".to_string())?;
-    let mut registry = load_registry()?;
-    let mut changed = false;
-
-    for p in discover(metadata) {
-        if registry[&p.name]["versions"].get(&p.version).is_some() {
-            continue; // this run didn't publish a new version for this plugin
-        }
-
-        let tag = format!("{}-v{}", p.name, p.version);
-        let mut version_entry = json!({});
-
-        if p.cdylib.is_some() {
-            version_entry["url"] = json!(asset_url(
-                &repo,
-                &tag,
-                &format!("{}-{}.wasm", p.name, p.version)
-            ));
-        }
-        if !p.bins.is_empty() {
-            let mut native = json!({});
-            for bin_name in &p.bins {
-                for (_, target, ext) in NATIVE_TARGETS {
-                    native[target] = json!(asset_url(
-                        &repo,
-                        &tag,
-                        &format!("{bin_name}-{}-{target}.{ext}", p.version)
-                    ));
-                }
-            }
-            version_entry["native"] = native;
-        }
-
-        let entry = &mut registry[&p.name];
-        if !entry.is_object() {
-            *entry = json!({ "versions": {} });
-        }
-        entry["versions"][&p.version] = version_entry;
-        entry["latest"] = json!(p.version);
-        entry["description"] = json!(p.description);
-        changed = true;
-    }
-
-    if changed {
-        if let Some(dir) = Path::new(REGISTRY_PATH).parent() {
-            fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-        }
-        let pretty = serde_json::to_string_pretty(&registry).map_err(|e| e.to_string())?;
-        fs::write(REGISTRY_PATH, pretty + "\n").map_err(|e| e.to_string())?;
-        println!("{REGISTRY_PATH} updated");
-    } else {
-        println!("No new publishable versions — registry unchanged");
     }
     Ok(())
 }

@@ -1,77 +1,106 @@
 name: Rune Tools CI
-
 permissions:
   contents: read
-
 on:
   push:
-    branches:
-      - develop
+    branches: [develop, release/update-version]
   pull_request:
-    branches:
-      - develop
-      - main
-
+    branches: [develop, main]
 env:
   CARGO_TERM_COLOR: always
-
+  CARGO_HUSKY_DONT_INSTALL_HOOKS: 'true'
 jobs:
   build:
-    if: >
-      !(
-        contains(github.event.head_commit.message, 'ci(release):') ||
-        contains(github.event.head_commit.message, '[skip ci]') ||
-        startsWith(github.event.head_commit.message, 'Merge pull request') ||
-        startsWith(github.event.head_commit.message, 'Merge branch')
-      )
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout Repo
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      # Setup Rust with clippy, rustfmt, the wasm target and automatic dependency caching
-      - name: 🛠️ Setup Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v2
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           target: wasm32-wasip1
           components: rustfmt, clippy
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-
-      - name: Test local release validation and public MCP clients
-        run: python -m unittest discover -s scripts/tests -v
-
-      - name: Validate pending plugin release notes without publishing
-        run: python scripts/plugin-release.py validate --output release-notes
-
-      # Verify Cargo.lock is synced with Cargo.toml (equivalent to --frozen-lockfile)
-      - name: 📦 Verify Dependencies
-        run: cargo fetch --locked
-
-      # Same code path a contributor runs locally (`cargo xtask build <plugin>`).
-      # This only proves the native side compiles on Linux — publish.yml's
-      # matrix is what produces the macOS/Windows release binaries.
-      - name: ⚙️ Build All Plugins (wasm + native)
-        run: cargo xtask build-all
-
-      - name: 🛠️ Setup Node (for dotenvx)
-        uses: actions/setup-node@v7
+      - run: cargo fetch --locked
+      - run: cargo test --locked -p xtask
+      - run: cargo xtask validate --output release-notes
+      - run: cargo xtask build-all
+      - name: Detect configuration requiring dotenvx
+        id: config
+        run: cargo xtask env-requirements
+      - uses: actions/setup-node@v7
+        if: steps.config.outputs.dotenvx == 'true'
         with:
           node-version: 'lts/*'
-
-      - name: 🛠️ Install dotenvx
+      - if: steps.config.outputs.dotenvx == 'true'
         run: npm install -g @dotenvx/dotenvx
-
-      - name: ✅ Test All Plugins
-        run: cargo xtask test-all
-
-      - name: 🧹 Lint Code
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-
-      - name: 🧼 Format Code
-        run: cargo fmt --all --check
+      - run: cargo xtask test-all
+      - run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+      - run: cargo fmt --all --check
+  prepare:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: plugin-release-preparation
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          components: rustfmt, clippy
+      - name: Reject stale preparation run
+        id: current
+        shell: bash
+        run: |
+          git fetch origin develop
+          if [ "$(git rev-parse origin/develop)" = "$GITHUB_SHA" ]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Prepare affected versions and substantive changelogs
+        if: steps.current.outputs.current == 'true'
+        id: prepare
+        run: cargo xtask prepare --apply --summary release-summary.md
+      - name: Validate generated release files
+        if: steps.prepare.outputs.prepared == 'true'
+        run: |
+          cargo test --locked -p xtask
+          cargo xtask validate --output release-notes
+          cargo check --locked --workspace --all-targets --all-features
+          cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          cargo fmt --all --check
+      - name: Require event-capable branch authentication
+        if: steps.prepare.outputs.prepared == 'true'
+        env:
+          RELEASE_BRANCH_TOKEN: ${{ secrets.GH_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$RELEASE_BRANCH_TOKEN" ]; then
+            echo 'GH_TOKEN with Contents write is required to push the preparation branch and start its CI.' >&2
+            exit 1
+          fi
+      - name: Open or update the single preparation PR
+        if: steps.prepare.outputs.prepared == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ github.token }}
+          branch-token: ${{ secrets.GH_TOKEN }}
+          branch: release/update-version
+          base: develop
+          title: 'ci(release): update version'
+          commit-message: 'ci(release): update version'
+          body-path: release-summary.md
+          add-paths: |
+            plugins/*/Cargo.toml
+            plugins/*/plugin.toml
+            plugins/*/CHANGELOG.md
+            Cargo.lock
+            .release/prepared.json

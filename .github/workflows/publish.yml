@@ -3,6 +3,13 @@ name: Rune Tools Publish
 permissions:
   contents: read
 
+concurrency:
+  group: plugin-publication-main
+  cancel-in-progress: false
+
+env:
+  CARGO_HUSKY_DONT_INSTALL_HOOKS: 'true'
+
 on:
   push:
     branches:
@@ -29,17 +36,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-
       - name: 🛠️ Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v2
 
       - name: 🔎 Detect publishable plugin versions
         id: detect
         run: |
-          python scripts/plugin-release.py validate --output release-notes --github-output "$GITHUB_OUTPUT"
+          cargo xtask verify-promotion
+          cargo xtask validate --output release-notes
           cargo xtask detect-publishable
 
       - name: Save validated release-note previews
@@ -172,9 +176,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
       - uses: actions/download-artifact@v4
         with:
           pattern: plugin-payload-${{ matrix.name }}-*
@@ -184,34 +186,50 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
-          python scripts/plugin-release.py publish '${{ matrix.name }}' '${{ matrix.version }}'
+          cargo xtask publish '${{ matrix.name }}' '${{ matrix.version }}'
           --assets-dir dist --repo '${{ github.repository }}' --target '${{ github.sha }}'
 
-  registry-handoff:
+  registry:
     needs: [detect, publish]
     if: >-
       always() && needs.detect.outputs.has_releases == 'true' &&
       needs.publish.result == 'success'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-
-      - name: Verify published payloads and prepare owner registry patch
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+      - name: Verify every published payload and checksum sidecar
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
-          python scripts/plugin-release.py registry --repo '${{ github.repository }}'
-          --target '${{ github.sha }}' --output registry-handoff
-      - name: Save registry handoff for owner review and source commit
-        uses: actions/upload-artifact@v4
+          cargo xtask registry --repo '${{ github.repository }}'
+          --target '${{ github.sha }}' --output registry-evidence
+      - uses: actions/upload-artifact@v4
         with:
-          name: registry-handoff
-          path: registry-handoff/
+          name: registry-evidence
+          path: registry-evidence/
           if-no-files-found: error
+      - name: Commit verified generated registry metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          # An already-recorded successful registry update is an idempotent retry.
+          if git show origin/main:registry/index.json | cmp -s - registry-evidence/index.json; then exit 0; fi
+          # Do not overwrite a concurrent promotion or registry edit.
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          cp registry-evidence/index.json registry/index.json
+          if git diff --quiet -- registry/index.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/index.json
+          git commit -m 'chore(registry): publish verified plugin metadata'
+          gh auth setup-git
+          git push origin HEAD:main

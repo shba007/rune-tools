@@ -25,7 +25,7 @@ Every plugin enforces a strict internal separation between declarative MCP schem
 - 🛡️ **Dual Execution Architecture**: Pure WASM sandboxing via Extism/Wasmtime for zero-host-side-effect compute, paired with Direct Native processes for persistent sockets and hardware workloads.
 - 🔌 **Public MCP through Kit**: Kit 0.5.0+ adapts the private native/WASM plugin API to MCP 2026-07-28. Plugin binaries and exports are not standalone public MCP servers.
 - 🗂️ **Comprehensive Domain Catalog**: 17 modular plugins (14 active workspace members, 3 draft/inactive) covering sandboxed filesystem manipulation, media transcoding (`ffmpeg`, `yt-dlp`), browser automation, Git inspection, IMAP/SMTP email, knowledge graphs, time conversions, and Figma canvas design. Note: `game-engine` does not exist.
-- ⚙️ **Unified Build & Test Orchestrator**: Integrated `cargo xtask` runner coordinating dual-target compilation (`wasm32-wasip1` cdylibs and host-native binaries) alongside isolated environment testing via `dotenvx`.
+- ⚙️ **Unified Build & Test Orchestrator**: Integrated `cargo xtask` runner coordinating dual-target compilation (`wasm32-wasip1` cdylibs and host-native binaries) alongside isolated environment testing via Rust dotenv loading (dotenvx for encrypted or advanced files).
 - 🔐 **Capability-Based Security**: Scoped filesystem access, explicit hostname allowlists, and host-managed external binary provisioning (`ffmpeg`, `gallery-dl`, `yt-dlp`, `git`) declared in `plugin.toml`.
 - 📦 **Automated Attested Releases**: GitHub Actions CI/CD with build provenance attestation, multi-platform binary packaging (Linux, macOS Apple Silicon/Intel, Windows), and central registry indexing.
 
@@ -117,7 +117,7 @@ cargo xtask build <plugin-name> --native-only
 # Build all discovered plugins in the workspace
 cargo xtask build-all
 
-# Run contract and unit tests for a single plugin (loads plugins/<name>/.env via dotenvx)
+# Run contract and unit tests for a single plugin (loads plugins/<name>/.env via Rust dotenv loading; encrypted or advanced files use dotenvx)
 cargo xtask test <plugin-name>
 
 # Run contract and unit tests across all workspace plugins
@@ -322,8 +322,8 @@ See [plugin contracts and integration limits](docs/PLUGIN-CONTRACT.md) for tool 
   ```bash
   rustup target add wasm32-wasip1
   ```
-- **Node.js**: LTS release (required for `@dotenvx/dotenvx` during tests).
-- **Dotenvx**: Install globally for environment variable injection:
+- **Node.js / dotenvx**: Optional, for encrypted or advanced test `.env` files. Plain files load through Rust; inherited environment values take precedence.
+- **Encrypted configuration**: Install dotenvx when decryption or advanced expansion requires it:
   ```bash
   npm install -g @dotenvx/dotenvx
   ```

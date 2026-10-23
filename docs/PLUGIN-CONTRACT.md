@@ -156,7 +156,7 @@ Public normalization of private operation errors into `isError:true` remains a
 Kit-owned follow-up; it does not require rewriting the plugin ABI or weakening
 filesystem refusal checks.
 
-Acceptance on Windows uses `scripts/smoke-filesystem.py` with a disposable
+Acceptance on Windows uses `cargo xtask smoke-filesystem` with a disposable
 root, sibling folder and a real junction, including concurrent junction/name
 replacement while reading. Run with `--require-link` to prevent silent fixture
 omission. The script retains fixtures and changes no installation. Non-Windows
@@ -192,7 +192,7 @@ For the git/time pilots, first build the actual release targets:
 ```text
 cargo build --locked -p rune-git --release --target x86_64-pc-windows-msvc --bin rune-git-native --features native
 cargo build --locked -p rune-time --release --target wasm32-wasip1 --lib
-python scripts/smoke-kit-plugins.py --rune <rune.exe> --git <rune-git-native.exe> --time <rune_time.wasm>
+cargo xtask smoke-kit --rune <rune-kit.exe> --git <rune-git-native.exe> --time <rune_time.wasm> --report <report.json>
 ```
 
 The smoke script checks stateless discovery, schemas, annotations, normal/restricted
@@ -207,13 +207,23 @@ when testing those releases. Current-protocol checks require the 0.5.0 gateway;
 its publication status is owned by Kit's release process. Filesystem 0.4.1's
 payload and private API need no version bump to work through that gateway.
 
-Release notes, checksum generation, registry handoff, Git ownership, shared
-installation paths and exact owner actions are documented in
-[PUBLISHING.md](PUBLISHING.md). The former formatting/version-PR automation and
-registry source commit/push automation have been removed from the prepared
-workflows. The owner must publish the reviewed registry patch after artifacts
-exist; until then, existing package discovery remains available.
+Release preparation, exact changelog publication, verified CI registry updates,
+Git ownership, shared installation paths and owner promotion steps are documented
+in [PUBLISHING.md](PUBLISHING.md). CI writes preparation/registry source commits;
+agents leave all local work unstaged/uncommitted. No plugin ABI change or plugin
+version bump is required for release tooling changes.
 
+Filesystem acceptance uses a disposable fixture. Create a real outside symlink
+or Windows junction at <fixture>/root/escape targeting <fixture>/root-other, then:
+
+```text
+cargo xtask smoke-filesystem --rune <rune-kit.exe> --plugin <filesystem.wasm> --fixture <disposable-fixture> --require-link --report <report.json>
+```
+
+This Rust client checks all 13 normal definitions, the two read-only definitions,
+bounded read/list results, missing/invalid roots, traversal, real link replacement
+and forced write refusal. It retains fixtures and changes no installation. Use
+--legacy-protocol only for the explicit released Kit <=0.4.0 fixture.
 ## Development checks
 
 ```text
