@@ -252,7 +252,7 @@
   },
   "rune-filesystem": {
     "description": "Sandboxed filesystem manipulation: line-based reading, multimodal media reads, atomic writes, line edits with dry-run diffs, tree views, glob search, and safe moves within an enforced boundary",
-    "latest": "0.4.0",
+    "latest": "0.4.1",
     "versions": {
       "0.3.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.3.0/rune-filesystem-0.3.0.wasm"
@@ -271,6 +271,9 @@
       },
       "0.4.0": {
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.4.0/rune-filesystem-0.4.0.wasm"
+      },
+      "0.4.1": {
+        "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.4.1/rune-filesystem-0.4.1.wasm"
       }
     }
   },
