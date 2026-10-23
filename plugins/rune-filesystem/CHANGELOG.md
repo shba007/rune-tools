@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## rune-filesystem-v0.4.1 - 2026-10-23
+#### 🐛 Bug Fixes
+- (**filesystem**) confine and bound two read-only tools - (0d4624b) - Shirsendu Bairagi
+
+- - -
+
 ## rune-filesystem-v0.4.0 - 2026-10-21
 #### 🚀 Features
 - enhance tool rules validation and annotations - (482c069) - Shirsendu Bairagi
