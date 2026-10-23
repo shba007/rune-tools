@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "search_messages"
+description: "Searches messages in a mailbox matching criteria such as sender, recipient, subject, body keyword, or date.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-email/src/definitions.rs (0.2.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"from\": {\n      \"description\": \"Filter by sender address/name\",\n      \"type\": \"string\"\n    },\n    \"limit\": {\n      \"default\": 20,\n      \"description\": \"Maximum results to return\",\n      \"type\": \"integer\"\n    },\n    \"mailbox\": {\n      \"default\": \"INBOX\",\n      \"description\": \"Target mailbox folder\",\n      \"type\": \"string\"\n    },\n    \"query\": {\n      \"description\": \"Keyword to search across subject and body\",\n      \"type\": \"string\"\n    },\n    \"sinceDate\": {\n      \"description\": \"Date filter in YYYY-MM-DD or DD-MMM-YYYY format\",\n      \"type\": \"string\"\n    },\n    \"subject\": {\n      \"description\": \"Filter by subject keyword\",\n      \"type\": \"string\"\n    },\n    \"to\": {\n      \"description\": \"Filter by recipient address\",\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_email_selector}}" {{read_only_flag}} --timeout 10 {{rune_email_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-email/search_messages","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{},"name":"{{rune_email_namespace}}__search_messages"}}

@@ -11,6 +11,7 @@
 
 mod config;
 mod hooks;
+mod postman;
 mod publication;
 mod registry;
 mod release;
@@ -173,6 +174,7 @@ fn main() -> ExitCode {
 
     let command = args.first().map(String::as_str);
     match command {
+        Some("postman") => return report(postman::command(args.iter().any(|a| a == "--check"))),
         Some("detect-publishable") => {
             return report(registry::detect_publishable(&cargo_metadata()));
         }

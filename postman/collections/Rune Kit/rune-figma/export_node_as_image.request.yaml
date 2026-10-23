@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "export_node_as_image"
+description: "Export a node as an image from Figma\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-figma/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"format\": {\n      \"default\": \"PNG\",\n      \"description\": \"Export image format (PNG, JPG, SVG, PDF)\",\n      \"enum\": [\n        \"PNG\",\n        \"JPG\",\n        \"SVG\",\n        \"PDF\"\n      ],\n      \"type\": \"string\"\n    },\n    \"nodeId\": {\n      \"description\": \"The ID of the node to export\",\n      \"type\": \"string\"\n    },\n    \"scale\": {\n      \"default\": 1.0,\n      \"description\": \"Export scale factor (e.g., 1.0, 2.0)\",\n      \"maximum\": 4.0,\n      \"minimum\": 0.1,\n      \"type\": \"number\"\n    }\n  },\n  \"required\": [\n    \"nodeId\"\n  ],\n  \"type\": \"object\",\n  \"x-rune-rules\": {\n    \"effects\": [\n      \"read\",\n      \"network\"\n    ],\n    \"limits\": {\n      \"network_hosts\": [\n        \"127.0.0.1\",\n        \"localhost\"\n      ]\n    },\n    \"read_only\": false,\n    \"risk\": \"low\"\n  }\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"127.0.0.1\",\n      \"localhost\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_figma_selector}}" {{read_only_flag}} --timeout 10 {{rune_figma_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-figma/export_node_as_image","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"nodeId":"<set this value>"},"name":"{{rune_figma_namespace}}__export_node_as_image"}}

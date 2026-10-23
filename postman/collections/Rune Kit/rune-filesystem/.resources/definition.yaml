@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-filesystem"
+description: "Source version: 0.4.1. Configure rune_filesystem_selector, rune_filesystem_namespace and rune_filesystem_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

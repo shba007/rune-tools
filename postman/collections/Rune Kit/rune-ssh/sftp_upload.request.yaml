@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "sftp_upload"
+description: "Uploads a local file to a remote server via SFTP. Uses configured environment credentials by default.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-ssh/src/definitions.rs (not specified in plugin.toml). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"host\": {\n      \"description\": \"Optional hostname or IP (defaults to SSH_HOST)\",\n      \"type\": \"string\"\n    },\n    \"localPath\": {\n      \"description\": \"Source path of the file on the local machine to upload\",\n      \"type\": \"string\"\n    },\n    \"privateKeyPath\": {\n      \"description\": \"Optional private key path (defaults to SSH_KEY_PATH)\",\n      \"type\": \"string\"\n    },\n    \"remotePath\": {\n      \"description\": \"Destination file path on the remote server\",\n      \"type\": \"string\"\n    },\n    \"username\": {\n      \"description\": \"Optional SSH user (defaults to SSH_USER)\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"localPath\",\n    \"remotePath\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"medium\",\n  \"effects\": [\n    \"write\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_ssh_selector}}" {{read_only_flag}} --timeout 10 {{rune_ssh_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-ssh/sftp_upload","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"localPath":"<set this value>","remotePath":"<set this value>"},"name":"{{rune_ssh_namespace}}__sftp_upload"}}

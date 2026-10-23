@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "browser_execute_script"
+description: "Evaluates arbitrary JavaScript in the context of the active page.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-browser/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"script\": {\n      \"description\": \"JavaScript expression or function body to execute\",\n      \"type\": \"string\"\n    },\n    \"sessionId\": {\n      \"description\": \"Session ID to use\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"script\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"high\",\n  \"effects\": [\n    \"write\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_browser_selector}}" {{read_only_flag}} --timeout 10 {{rune_browser_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-browser/browser_execute_script","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"script":"<set this value>"},"name":"{{rune_browser_namespace}}__browser_execute_script"}}

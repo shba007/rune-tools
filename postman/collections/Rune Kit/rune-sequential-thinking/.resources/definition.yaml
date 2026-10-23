@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-sequential-thinking"
+description: "Source version: 0.3.0. Configure rune_sequential_thinking_selector, rune_sequential_thinking_namespace and rune_sequential_thinking_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

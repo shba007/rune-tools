@@ -1,0 +1,3 @@
+$kind: collection
+name: "mhb-mconnect"
+description: "Source version: 0.2.0. Configure mhb_mconnect_selector, mhb_mconnect_namespace and mhb_mconnect_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "fetch"
+description: "Fetches a URL from the internet and extracts its contents as markdown (or raw text).\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-fetch/src/definitions.rs (0.4.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"maxLength\": {\n      \"description\": \"Maximum number of characters to return (default: 50000)\",\n      \"minimum\": 1,\n      \"type\": \"integer\"\n    },\n    \"paginate\": {\n      \"description\": \"Enable cursor pagination with next_start_index (default: false)\",\n      \"type\": \"boolean\"\n    },\n    \"raw\": {\n      \"description\": \"Return raw HTML/content instead of converting to Markdown (default: false)\",\n      \"type\": \"boolean\"\n    },\n    \"startIndex\": {\n      \"description\": \"Start character index for pagination (default: 0)\",\n      \"minimum\": 0,\n      \"type\": \"integer\"\n    },\n    \"url\": {\n      \"description\": \"The full HTTP/HTTPS URL to fetch (e.g. 'https://example.com')\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"url\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_fetch_selector}}" {{read_only_flag}} --timeout 10 {{rune_fetch_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-fetch/fetch","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"url":"<set this value>"},"name":"{{rune_fetch_namespace}}__fetch"}}

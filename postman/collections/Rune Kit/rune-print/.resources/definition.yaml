@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-print"
+description: "Source version: not specified in plugin.toml. Configure rune_print_selector, rune_print_namespace and rune_print_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

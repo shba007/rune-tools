@@ -390,4 +390,6 @@ Published under the [MIT](LICENSE) license.
   <img src="https://contrib.rocks/image?repo=shba007/rune-tools" alt="Contributors">
 </a>
 
+Use the [Postman Native Git collection](postman/README.md) to inspect every plugin tool through Kit MCP stdio, grouped by plugin, with argument templates and protocol checks.
+
 See [owner-controlled publication](docs/PUBLISHING.md) for changelog previews, artifact checksums, retries and registry handoff. Agents leave implementation changes uncommitted.

@@ -1,0 +1,244 @@
+[
+  {
+    "plugin": "mhb-mconnect",
+    "tools": [
+      "mhb_list_templates",
+      "mhb_get_template",
+      "mhb_render_template_preview"
+    ],
+    "version": "0.2.0"
+  },
+  {
+    "plugin": "rune-audio",
+    "tools": [
+      "extract_audio_track",
+      "download_music_track"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-browser",
+    "tools": [
+      "browser_session_start",
+      "browser_session_stop",
+      "browser_session_list",
+      "browser_navigate",
+      "browser_type",
+      "browser_click",
+      "browser_fill",
+      "browser_select_option",
+      "browser_hover",
+      "browser_execute_script",
+      "browser_screenshot",
+      "browser_pdf",
+      "browser_console_messages",
+      "browser_network_requests",
+      "browser_cdp_connect",
+      "browser_cdp_request",
+      "browser_cdp_disconnect"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-email",
+    "tools": [
+      "verify_email_connection",
+      "list_mailboxes",
+      "list_messages",
+      "search_messages",
+      "read_message",
+      "download_attachment",
+      "send_email",
+      "reply_email",
+      "draft_email",
+      "manage_message_flags",
+      "move_message"
+    ],
+    "version": "0.2.0"
+  },
+  {
+    "plugin": "rune-fetch",
+    "tools": [
+      "fetch"
+    ],
+    "version": "0.4.0"
+  },
+  {
+    "plugin": "rune-figma",
+    "tools": [
+      "get_document_info",
+      "get_selection",
+      "read_my_design",
+      "get_node_info",
+      "get_nodes_info",
+      "create_rectangle",
+      "create_frame",
+      "create_text",
+      "set_fill_color",
+      "set_stroke_color",
+      "move_node",
+      "clone_node",
+      "resize_node",
+      "delete_node",
+      "delete_multiple_nodes",
+      "export_node_as_image",
+      "set_text_content",
+      "get_styles",
+      "get_local_components",
+      "get_annotations",
+      "set_annotation",
+      "set_multiple_annotations",
+      "create_component_instance",
+      "get_instance_overrides",
+      "set_instance_overrides",
+      "set_corner_radius",
+      "scan_text_nodes",
+      "scan_nodes_by_types",
+      "set_multiple_text_contents",
+      "set_layout_mode",
+      "set_padding",
+      "set_axis_align",
+      "set_layout_sizing",
+      "set_item_spacing",
+      "get_reactions",
+      "set_default_connector",
+      "create_connections",
+      "set_focus",
+      "set_selections",
+      "set_image_fill",
+      "rename_node",
+      "create_section",
+      "set_parent",
+      "join_channel"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-filesystem",
+    "tools": [
+      "read_text_file",
+      "read_media_file",
+      "read_multiple_files",
+      "write_file",
+      "edit_file",
+      "create_directory",
+      "list_directory",
+      "list_directory_with_sizes",
+      "directory_tree",
+      "move_file",
+      "search_files",
+      "get_file_info",
+      "list_allowed_directories"
+    ],
+    "version": "0.4.1"
+  },
+  {
+    "plugin": "rune-git",
+    "tools": [
+      "git_status",
+      "git_diff_unstaged",
+      "git_diff_staged",
+      "git_diff",
+      "git_commit",
+      "git_add",
+      "git_reset",
+      "git_log",
+      "git_create_branch",
+      "git_checkout",
+      "git_show",
+      "git_init",
+      "validate_commit_message"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-image",
+    "tools": [
+      "inspect_image_gallery",
+      "download_image_collection",
+      "compare_images",
+      "get_image_metadata",
+      "convert_image_format"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-memory",
+    "tools": [
+      "create_entities",
+      "create_relations",
+      "add_observations",
+      "delete_entities",
+      "delete_observations",
+      "delete_relations",
+      "read_graph",
+      "search_nodes",
+      "open_nodes"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-print",
+    "tools": [
+      "printer_list_printers",
+      "printer_print_document",
+      "printer_scan_document",
+      "printer_get_scanner_capabilities"
+    ],
+    "version": "not specified in plugin.toml"
+  },
+  {
+    "plugin": "rune-scan",
+    "tools": [
+      "scan_document",
+      "get_scanner_capabilities"
+    ],
+    "version": "not specified in plugin.toml"
+  },
+  {
+    "plugin": "rune-sequential-thinking",
+    "tools": [
+      "sequential_thinking"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-slides",
+    "tools": [
+      "slide_init",
+      "slide_update_theme",
+      "slide_add_page",
+      "slide_delete_page",
+      "slide_export"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-ssh",
+    "tools": [
+      "ssh_run_command",
+      "sftp_upload",
+      "sftp_download"
+    ],
+    "version": "not specified in plugin.toml"
+  },
+  {
+    "plugin": "rune-time",
+    "tools": [
+      "get_current_time",
+      "convert_time"
+    ],
+    "version": "0.3.0"
+  },
+  {
+    "plugin": "rune-video",
+    "tools": [
+      "inspect_video_metadata",
+      "download_video_stream",
+      "download_video_playlist",
+      "record_live_stream",
+      "trim_media_clip"
+    ],
+    "version": "0.3.0"
+  }
+]

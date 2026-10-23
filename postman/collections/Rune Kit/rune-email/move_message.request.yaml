@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "move_message"
+description: "Moves a message from one mailbox to another (e.g. archiving or moving to Trash).\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-email/src/definitions.rs (0.2.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"destinationMailbox\": {\n      \"description\": \"Destination mailbox (e.g. Trash, Archive)\",\n      \"type\": \"string\"\n    },\n    \"sourceMailbox\": {\n      \"default\": \"INBOX\",\n      \"description\": \"Source mailbox\",\n      \"type\": \"string\"\n    },\n    \"uid\": {\n      \"description\": \"Target message UID\",\n      \"type\": \"integer\"\n    }\n  },\n  \"required\": [\n    \"uid\",\n    \"destinationMailbox\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"medium\",\n  \"effects\": [\n    \"write\",\n    \"delete\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_email_selector}}" {{read_only_flag}} --timeout 10 {{rune_email_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-email/move_message","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"destinationMailbox":"<set this value>","uid":1},"name":"{{rune_email_namespace}}__move_message"}}

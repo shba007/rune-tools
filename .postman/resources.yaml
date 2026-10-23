@@ -1,0 +1,4 @@
+# Local-only Native Git collection. No cloud workspace is bound.
+localResources:
+  collections:
+    - ../postman/collections/Rune Kit

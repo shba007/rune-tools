@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-git"
+description: "Source version: 0.3.0. Configure rune_git_selector, rune_git_namespace and rune_git_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-browser"
+description: "Source version: 0.3.0. Configure rune_browser_selector, rune_browser_namespace and rune_browser_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

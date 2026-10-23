@@ -1,0 +1,3 @@
+$kind: collection
+name: Gateway
+description: Public discovery, resource and protocol refusal examples.

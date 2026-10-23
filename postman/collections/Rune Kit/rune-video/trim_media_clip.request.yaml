@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "trim_media_clip"
+description: "Crops or trims video/audio files between timestamps with lossless stream-copying via ffmpeg.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-video/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"endTime\": {\n      \"description\": \"End timestamp (HH:MM:SS or SS)\",\n      \"type\": \"string\"\n    },\n    \"inputFile\": {\n      \"description\": \"Source audio/video file path\",\n      \"type\": \"string\"\n    },\n    \"lossless\": {\n      \"default\": true,\n      \"description\": \"Whether to perform lossless stream copying without re-encoding\",\n      \"type\": \"boolean\"\n    },\n    \"outputFile\": {\n      \"description\": \"Destination file path\",\n      \"type\": \"string\"\n    },\n    \"startTime\": {\n      \"description\": \"Start timestamp (HH:MM:SS or SS)\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"inputFile\",\n    \"startTime\",\n    \"endTime\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"write\",\n    \"exec\"\n  ],\n  \"limits\": {\n    \"allowed_binaries\": [\n      \"ffmpeg\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_video_selector}}" {{read_only_flag}} --timeout 10 {{rune_video_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-video/trim_media_clip","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"endTime":"<set this value>","inputFile":"<set this value>","startTime":"<set this value>"},"name":"{{rune_video_namespace}}__trim_media_clip"}}

@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-email"
+description: "Source version: 0.2.0. Configure rune_email_selector, rune_email_namespace and rune_email_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

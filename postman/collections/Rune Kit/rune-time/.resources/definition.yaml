@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-time"
+description: "Source version: 0.3.0. Configure rune_time_selector, rune_time_namespace and rune_time_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

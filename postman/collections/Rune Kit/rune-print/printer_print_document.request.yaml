@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "printer_print_document"
+description: "Dispatches TXT, PDF, or image files to an OS printer. The host OS spooler automatically handles driver conversions.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-print/src/definitions.rs (not specified in plugin.toml). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"copies\": {\n      \"default\": 1,\n      \"description\": \"Number of document copies to print\",\n      \"type\": \"integer\"\n    },\n    \"filePath\": {\n      \"description\": \"Path to document on disk\",\n      \"type\": \"string\"\n    },\n    \"printerName\": {\n      \"description\": \"Exact OS printer name. Omit to use the system default.\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"filePath\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"high\",\n  \"effects\": [\n    \"send\"\n  ]\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_print_selector}}" {{read_only_flag}} --timeout 10 {{rune_print_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-print/printer_print_document","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"filePath":"<set this value>"},"name":"{{rune_print_namespace}}__printer_print_document"}}

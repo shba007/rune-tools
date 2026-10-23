@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-image"
+description: "Source version: 0.3.0. Configure rune_image_selector, rune_image_namespace and rune_image_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

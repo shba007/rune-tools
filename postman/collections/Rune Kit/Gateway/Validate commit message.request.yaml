@@ -1,0 +1,11 @@
+$kind: mcp-request
+name: 'Validate commit message'
+description: 'Git plugin returns valid true without changing the repository. Requires Git plugin; copy exact tool name from tools/list.'
+transport: stdio
+command: '"{{kit_executable}}" run --all --read-only --timeout 10'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"Validate commit message","method":"tools/call","jsonrpc":"2.0","params":{"name":"{{git_validator}}","arguments":{"message":"fix: preserve read-only tool discovery"},"_meta":{"io.modelcontextprotocol/clientInfo":{"version":"1.0.0","name":"postman-rune-kit"},"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}
+

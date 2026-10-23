@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "get_current_time"
+description: "Retrieves the current date and time in UTC and a target IANA timezone with offset details.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-time/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"timezone\": {\n      \"description\": \"Target IANA timezone name (e.g. 'America/New_York', 'Asia/Kolkata', 'UTC'). Defaults to UTC.\",\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": true,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\"\n  ]\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_time_selector}}" {{read_only_flag}} --timeout 10 {{rune_time_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-time/get_current_time","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{},"name":"{{rune_time_namespace}}__get_current_time"}}

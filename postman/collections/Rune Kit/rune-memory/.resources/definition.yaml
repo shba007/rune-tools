@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-memory"
+description: "Source version: 0.3.0. Configure rune_memory_selector, rune_memory_namespace and rune_memory_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

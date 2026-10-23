@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "delete_relations"
+description: "Delete multiple relations from the knowledge graph\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-memory/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"relations\": {\n      \"description\": \"List of relations to remove from the knowledge graph\",\n      \"items\": {\n        \"properties\": {\n          \"from\": {\n            \"description\": \"The source entity name\",\n            \"type\": \"string\"\n          },\n          \"relationType\": {\n            \"description\": \"The type of relation\",\n            \"type\": \"string\"\n          },\n          \"to\": {\n            \"description\": \"The target entity name\",\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"from\",\n          \"to\",\n          \"relationType\"\n        ],\n        \"type\": \"object\"\n      },\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"relations\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"medium\",\n  \"effects\": [\n    \"delete\"\n  ],\n  \"limits\": {\n    \"root_param\": \"allowed_dir\"\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_memory_selector}}" {{read_only_flag}} --timeout 10 {{rune_memory_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-memory/delete_relations","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"relations":[{"from":"<set this value>","relationType":"<set this value>","to":"<set this value>"}]},"name":"{{rune_memory_namespace}}__delete_relations"}}

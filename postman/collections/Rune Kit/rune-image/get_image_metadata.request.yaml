@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "get_image_metadata"
+description: "Extracts detailed metadata from an image file including format, dimensions, color space, compression, and other technical details.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-image/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"imagePath\": {\n      \"description\": \"Path to the image file\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"imagePath\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\"\n  ],\n  \"limits\": {\n    \"root_param\": \"output_dir\"\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_image_selector}}" {{read_only_flag}} --timeout 10 {{rune_image_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-image/get_image_metadata","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"imagePath":"<set this value>"},"name":"{{rune_image_namespace}}__get_image_metadata"}}

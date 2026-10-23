@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "join_channel"
+description: "Join a specific WebSocket communication channel to communicate with Figma\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-figma/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"channel\": {\n      \"description\": \"The name of the WebSocket channel to join\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"channel\"\n  ],\n  \"type\": \"object\",\n  \"x-rune-rules\": {\n    \"effects\": [\n      \"write\",\n      \"network\"\n    ],\n    \"limits\": {\n      \"network_hosts\": [\n        \"127.0.0.1\",\n        \"localhost\"\n      ]\n    },\n    \"read_only\": false,\n    \"risk\": \"low\"\n  }\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"write\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"127.0.0.1\",\n      \"localhost\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_figma_selector}}" {{read_only_flag}} --timeout 10 {{rune_figma_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-figma/join_channel","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"channel":"<set this value>"},"name":"{{rune_figma_namespace}}__join_channel"}}

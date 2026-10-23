@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-scan"
+description: "Source version: not specified in plugin.toml. Configure rune_scan_selector, rune_scan_namespace and rune_scan_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

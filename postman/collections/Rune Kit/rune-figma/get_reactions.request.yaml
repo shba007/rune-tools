@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "get_reactions"
+description: "Get Figma prototyping reactions from multiple nodes\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-figma/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"nodeIds\": {\n      \"description\": \"Array of node IDs to extract prototyping reactions from\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"nodeIds\"\n  ],\n  \"type\": \"object\",\n  \"x-rune-rules\": {\n    \"effects\": [\n      \"read\",\n      \"network\"\n    ],\n    \"limits\": {\n      \"network_hosts\": [\n        \"127.0.0.1\",\n        \"localhost\"\n      ]\n    },\n    \"read_only\": false,\n    \"risk\": \"low\"\n  }\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"127.0.0.1\",\n      \"localhost\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_figma_selector}}" {{read_only_flag}} --timeout 10 {{rune_figma_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-figma/get_reactions","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"nodeIds":["<set this value>"]},"name":"{{rune_figma_namespace}}__get_reactions"}}

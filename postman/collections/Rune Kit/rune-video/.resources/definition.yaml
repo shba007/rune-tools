@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-video"
+description: "Source version: 0.3.0. Configure rune_video_selector, rune_video_namespace and rune_video_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

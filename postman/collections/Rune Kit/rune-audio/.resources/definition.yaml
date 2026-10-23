@@ -1,0 +1,3 @@
+$kind: collection
+name: "rune-audio"
+description: "Source version: 0.3.0. Configure rune_audio_selector, rune_audio_namespace and rune_audio_parameters in collection variables. Review plugin README and argument placeholders. Read-only mode is enabled by default."

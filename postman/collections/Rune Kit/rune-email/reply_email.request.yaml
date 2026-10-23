@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "reply_email"
+description: "Sends a threaded reply to an existing email, preserving Message-ID, In-Reply-To, and References headers for UI grouping.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-email/src/definitions.rs (0.2.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"mailbox\": {\n      \"default\": \"INBOX\",\n      \"description\": \"Mailbox containing the original message\",\n      \"type\": \"string\"\n    },\n    \"originalUid\": {\n      \"description\": \"UID of the original message to reply to\",\n      \"type\": \"integer\"\n    },\n    \"replyAll\": {\n      \"default\": false,\n      \"description\": \"Whether to reply to all original recipients\",\n      \"type\": \"boolean\"\n    },\n    \"replyBody\": {\n      \"description\": \"Body text of the reply\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"originalUid\",\n    \"replyBody\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"high\",\n  \"effects\": [\n    \"send\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_email_selector}}" {{read_only_flag}} --timeout 10 {{rune_email_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-email/reply_email","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"originalUid":1,"replyBody":"<set this value>"},"name":"{{rune_email_namespace}}__reply_email"}}

@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "git_status"
+description: "Shows the working tree status using host git.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-git/src/definitions.rs (0.3.0). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"repoPath\": {\n      \"description\": \"Path to the repository (default: current directory or REPO_PATH)\",\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"low\",\n  \"effects\": [\n    \"read\",\n    \"exec\"\n  ],\n  \"limits\": {\n    \"allowed_binaries\": [\n      \"git\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_git_selector}}" {{read_only_flag}} --timeout 10 {{rune_git_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-git/git_status","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{},"name":"{{rune_git_namespace}}__git_status"}}

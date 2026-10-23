@@ -1,0 +1,10 @@
+$kind: mcp-request
+name: "ssh_run_command"
+description: "Executes a shell command on a remote server via SSH. Uses SSH_HOST, SSH_USER, and SSH_KEY_PATH from environment if not explicitly provided.\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/rune-ssh/src/definitions.rs (not specified in plugin.toml). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{\n  \"properties\": {\n    \"command\": {\n      \"description\": \"The shell command string to execute on the remote machine\",\n      \"type\": \"string\"\n    },\n    \"host\": {\n      \"description\": \"Optional hostname or IP (defaults to SSH_HOST from environment)\",\n      \"type\": \"string\"\n    },\n    \"privateKeyPath\": {\n      \"description\": \"Optional path to private key (defaults to SSH_KEY_PATH from environment)\",\n      \"type\": \"string\"\n    },\n    \"username\": {\n      \"description\": \"Optional SSH user (defaults to SSH_USER from environment)\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"command\"\n  ],\n  \"type\": \"object\"\n}\n\nPlugin rules:\n{\n  \"read_only\": false,\n  \"risk\": \"high\",\n  \"effects\": [\n    \"write\",\n    \"network\"\n  ],\n  \"limits\": {\n    \"network_hosts\": [\n      \"*\"\n    ]\n  }\n}"
+transport: stdio
+command: '"{{kit_executable}}" run "{{rune_ssh_selector}}" {{read_only_flag}} --timeout 10 {{rune_ssh_parameters}}'
+settings:
+  version: '2026-07-28'
+  requestTimeout: 15000
+message: |-
+  {"id":"rune-ssh/ssh_run_command","jsonrpc":"2.0","method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"},"io.modelcontextprotocol/protocolVersion":"2026-07-28"},"arguments":{"command":"<set this value>"},"name":"{{rune_ssh_namespace}}__ssh_run_command"}}

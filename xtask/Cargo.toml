@@ -5,6 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
+rune-pdk.workspace = true
 serde_json.workspace = true
 toml = "1.1"
 toml_edit = "0.25"
