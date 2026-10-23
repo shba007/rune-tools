@@ -12,9 +12,10 @@ import threading
 
 
 class Gateway:
-    def __init__(self, rune, plugin, restricted):
+    def __init__(self, rune, plugin, restricted, params=()):
         self.process = subprocess.Popen(
-            [rune, "run", plugin, *(["--read-only"] if restricted else [])],
+            [rune, "run", plugin, *(["--read-only"] if restricted else []),
+             *[arg for param in params for arg in ("-p", param)]],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, encoding="utf-8",
         )
@@ -25,10 +26,13 @@ class Gateway:
         threading.Thread(target=lambda: self.stderr.extend(self.process.stderr), daemon=True).start()
 
     def _read(self):
-        for line in self.process.stdout:
-            self.responses.put(json.loads(line))
+        try:
+            for line in self.process.stdout:
+                self.responses.put(json.loads(line))
+        finally:
+            self.responses.put({"_closed": True})
 
-    def send(self, method, params, notification=False):
+    def send(self, method, params, notification=False, allow_error=False):
         request = {"jsonrpc": "2.0", "method": method, "params": params}
         if not notification:
             self.counter += 1
@@ -39,7 +43,12 @@ class Gateway:
             return None
         while True:
             response = self.responses.get(timeout=60)
+            if response.get("_closed"):
+                self.process.wait(timeout=10)
+                raise RuntimeError("Gateway exited: " + "".join(self.stderr))
             if response.get("id") == self.counter:
+                if allow_error:
+                    return response
                 assert "error" not in response, response
                 return response["result"]
 

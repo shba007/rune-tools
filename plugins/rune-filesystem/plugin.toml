@@ -2,7 +2,7 @@
 name = "rune-filesystem"
 execution_model = "wasm"
 description = "Filesystem operations including directory walking, file paging, and path manipulation."
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
 capabilities = { network_hosts = [

@@ -1,6 +1,14 @@
 pub mod definitions;
 pub mod operations;
+pub mod pilot_reads;
 pub mod types;
+
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn host_allowed_root() -> Option<String> {
+    // Kit must configure both this value and the matching WASI preopen.
+    // An environment fallback could disagree with that capability.
+    extism_pdk::config::get("allowed_dir").ok().flatten()
+}
 
 #[cfg(target_arch = "wasm32")]
 use rune_pdk::ToolCallRequest;
