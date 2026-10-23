@@ -12,7 +12,8 @@ import threading
 
 
 class Gateway:
-    def __init__(self, rune, plugin, restricted, params=()):
+    def __init__(self, rune, plugin, restricted, params=(), legacy=False):
+        self.legacy = legacy
         self.process = subprocess.Popen(
             [rune, "run", plugin, *(["--read-only"] if restricted else []),
              *[arg for param in params for arg in ("-p", param)]],
@@ -32,7 +33,15 @@ class Gateway:
         finally:
             self.responses.put({"_closed": True})
 
-    def send(self, method, params, notification=False, allow_error=False):
+    def send(self, method, params, notification=False, allow_error=False, metadata=True):
+        params = dict(params)
+        if not self.legacy and not notification and metadata:
+            params["_meta"] = {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientCapabilities": {},
+                "io.modelcontextprotocol/clientInfo": {"name": "rune-tools-acceptance", "version": "1"},
+                **params.get("_meta", {}),
+            }
         request = {"jsonrpc": "2.0", "method": method, "params": params}
         if not notification:
             self.counter += 1
@@ -47,10 +56,32 @@ class Gateway:
                 self.process.wait(timeout=10)
                 raise RuntimeError("Gateway exited: " + "".join(self.stderr))
             if response.get("id") == self.counter:
+                assert response.get("jsonrpc") == "2.0", response
                 if allow_error:
                     return response
                 assert "error" not in response, response
+                if not self.legacy:
+                    assert response["result"]["resultType"] == "complete", response
+                    assert response["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"], response
                 return response["result"]
+
+    def discover(self):
+        if self.legacy:
+            # Explicit compatibility fixture for released Kit <= 0.4.0 only.
+            result = self.send("initialize", {
+                "protocolVersion": "2025-03-26", "capabilities": {},
+                "clientInfo": {"name": "rune-tools-legacy-acceptance", "version": "1"}})
+            self.send("notifications/initialized", {}, notification=True)
+            return result
+        result = self.send("server/discover", {})
+        assert "2026-07-28" in result["supportedVersions"], result
+        assert result["ttlMs"] == 0 and result["cacheScope"] == "private", result
+        assert "tools" in result["capabilities"], result
+        assert self.send("tools/list", {}, allow_error=True, metadata=False)["error"]["code"] == -32602
+        assert self.send("server/discover", {"_meta": {
+            "io.modelcontextprotocol/protocolVersion": "unsupported"}}, allow_error=True)["error"]["code"] == -32022
+        assert self.send("initialize", {}, allow_error=True)["error"]["code"] == -32601
+        return result
 
     def close(self):
         self.process.stdin.close()
@@ -61,14 +92,10 @@ class Gateway:
             self.process.wait(timeout=10)
 
 
-def check(rune, plugin, kind, restricted):
-    gateway = Gateway(rune, plugin, restricted)
+def check(rune, plugin, kind, restricted, legacy=False):
+    gateway = Gateway(rune, plugin, restricted, legacy=legacy)
     try:
-        initialized = gateway.send("initialize", {
-            "protocolVersion": "2025-03-26", "capabilities": {},
-            "clientInfo": {"name": "rune-tools-cycle1", "version": "1"},
-        })
-        gateway.send("notifications/initialized", {}, notification=True)
+        discovery = gateway.discover()
         tools = gateway.send("tools/list", {})["tools"]
         by_name = {tool["name"].split("__")[-1]: tool for tool in tools}
         expected = {"validate_commit_message"} if kind == "git" else {"get_current_time", "convert_time"}
@@ -107,8 +134,8 @@ def check(rune, plugin, kind, restricted):
             else:
                 assert value["target"]["datetime"] == "2026-10-21T17:30:00+05:30", value
             calls[name] = result
-        return {"plugin": plugin, "read_only": restricted, "initialize": initialized,
-                "tool_names": sorted(by_name), "calls": calls}
+        return {"plugin": plugin, "read_only": restricted, "discovery": discovery,
+                "tool_names": sorted(by_name), "tools": tools, "calls": calls}
     finally:
         gateway.close()
 
@@ -119,9 +146,11 @@ def main():
     parser.add_argument("--git", required=True)
     parser.add_argument("--time", required=True)
     parser.add_argument("--report")
+    parser.add_argument("--legacy-protocol", action="store_true", help="Explicit Kit <=0.4.0 compatibility fixture; never the current default")
     args = parser.parse_args()
     report = {"rune_version": subprocess.check_output([args.rune, "--version"], text=True).strip(),
-              "exchanges": [check(args.rune, plugin, kind, restricted)
+              "protocol": "legacy-2025-03-26" if args.legacy_protocol else "2026-07-28",
+              "exchanges": [check(args.rune, plugin, kind, restricted, args.legacy_protocol)
                             for kind, plugin in [("git", args.git), ("time", args.time)]
                             for restricted in [False, True]]}
     encoded = json.dumps(report, indent=2)

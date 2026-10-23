@@ -17,7 +17,7 @@ kit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(kit)
 
 
-def check(rune, plugin, fixture, require_link=False):
+def check(rune, plugin, fixture, require_link=False, legacy=False):
     fixture = Path(fixture).resolve()
     root = fixture / "root"
     outside = fixture / "root-other"
@@ -33,11 +33,9 @@ def check(rune, plugin, fixture, require_link=False):
     many.mkdir(exist_ok=True)
     for i in range(220):
         (many / f"entry-{i:03}").touch()
-    normal = kit.Gateway(rune, plugin, False, ["allowed_dir=" + root.as_posix()])
+    normal = kit.Gateway(rune, plugin, False, ["allowed_dir=" + root.as_posix()], legacy=legacy)
     try:
-        normal.send("initialize", {"protocolVersion": "2025-03-26", "capabilities": {},
-                    "clientInfo": {"name": "filesystem-discovery", "version": "2"}})
-        normal.send("notifications/initialized", {}, notification=True)
+        normal.discover()
         discovered = normal.send("tools/list", {})["tools"]
         approved = set()
         for tool in discovered:
@@ -52,13 +50,11 @@ def check(rune, plugin, fixture, require_link=False):
         assert approved == {"read_text_file", "list_directory"}
     finally:
         normal.close()
-    gateway = kit.Gateway(rune, plugin, True, ["allowed_dir=" + root.as_posix()])
-    report = {"root": root.as_posix(), "plugin": plugin, "normal_discovery_count": len(discovered), "refusals": []}
+    gateway = kit.Gateway(rune, plugin, True, ["allowed_dir=" + root.as_posix()], legacy=legacy)
+    report = {"root": root.as_posix(), "plugin": plugin, "normal_discovery_count": len(discovered),
+              "normal_tools": discovered, "refusals": []}
     try:
-        report["initialize"] = gateway.send("initialize", {
-            "protocolVersion": "2025-03-26", "capabilities": {},
-            "clientInfo": {"name": "filesystem-boundary-smoke", "version": "2"}})
-        gateway.send("notifications/initialized", {}, notification=True)
+        report["discovery"] = gateway.discover()
         tools = gateway.send("tools/list", {})["tools"]
         names = {t["name"].split("__")[-1]: t for t in tools}
         assert set(names) == {"read_text_file", "list_directory"}, names
@@ -72,10 +68,16 @@ def check(rune, plugin, fixture, require_link=False):
 
         def call(name, args, refuse=False):
             result = gateway.send("tools/call", {"name": names[name]["name"], "arguments": args})
-            value = json.loads(result["content"][0]["text"])
+            text = result["content"][0]["text"]
+            try:
+                value = json.loads(text)
+            except json.JSONDecodeError:
+                assert result.get("isError"), result
+                value = {"status": "error", "error": text}
             if refuse:
                 assert value.get("status") == "error" or result.get("isError"), value
-                report["refusals"].append({"tool": name, "arguments": args, "response": value})
+                report["refusals"].append({"tool": name, "arguments": args,
+                                           "mcp_is_error": result.get("isError", False), "response": value})
                 return value
             assert value.get("status") == "success" and not result.get("isError"), value
             return value["result"]
@@ -170,10 +172,10 @@ def check(rune, plugin, fixture, require_link=False):
     finally:
         gateway.close()
     for params in [[], ["allowed_dir=" + (fixture / "missing").as_posix()]]:
-        missing = kit.Gateway(rune, plugin, True, params)
+        missing = kit.Gateway(rune, plugin, True, params, legacy=legacy)
         try:
-            # Kit versions may reject an invalid preopen before initialize.
-            missing.send("initialize", {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "missing-root", "version": "1"}})
+            # Kit versions may reject an invalid preopen before discovery.
+            missing.discover()
             tool = missing.send("tools/list", {})["tools"][0]
             response = missing.send("tools/call", {"name": tool["name"], "arguments": {"path": "."}})
             assert json.loads(response["content"][0]["text"])["status"] == "error", response
@@ -194,11 +196,13 @@ def main():
     parser.add_argument("--fixture", required=True)
     parser.add_argument("--require-link", action="store_true")
     parser.add_argument("--report", required=True)
+    parser.add_argument("--legacy-protocol", action="store_true", help="Explicit Kit <=0.4.0 compatibility fixture")
     args = parser.parse_args()
-    report = check(args.rune, args.plugin, args.fixture, args.require_link)
+    report = check(args.rune, args.plugin, args.fixture, args.require_link, args.legacy_protocol)
+    report["protocol"] = "legacy-2025-03-26" if args.legacy_protocol else "2026-07-28"
     report["kit_version"] = subprocess.check_output([args.rune, "--version"], text=True).strip()
     Path(args.report).write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(json.dumps({k:v for k,v in report.items() if k not in {"tools", "refusals"}}, indent=2))
+    print(json.dumps({k:v for k,v in report.items() if k not in {"tools", "normal_tools", "refusals"}}, indent=2))
 
 
 if __name__ == "__main__":

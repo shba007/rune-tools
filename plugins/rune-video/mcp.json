@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rune-video": {
-      "command": "rune",
+      "command": "rune-kit",
       "args": ["run", "rune-video"],
       "env": {
         "COOKIES_DIR": "./test-dir/cookies",

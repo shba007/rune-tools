@@ -1,5 +1,53 @@
 # Plugin contracts and integration limits
 
+## Public protocol and private API inventory
+
+Current public target: [MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28).
+Minimum gateway version for this contract: Kit 0.5.0. The Kit repository owns
+the public server implementation; this repository supplies its plugins and
+public-client acceptance scripts. Local 0.5.0 verification is distinct from
+the older released Kit compatibility checks below.
+
+| Boundary | Implementation | Contract |
+| --- | --- | --- |
+| External client → `rune-kit run` stdio | Kit gateway, outside this repository | Public MCP 2026-07-28 |
+| Kit → `rune-<plugin>-native` / legacy standalone plugin CLI | `rune-sidecar::run_stdio`, handlers in plugin main/native_sidecar files | Private newline JSON request/response API, including old method aliases |
+| Kit → WASM `mcp_info`, `mcp_list_tools`, `mcp_call_tool` and optional resource/prompt exports | Plugin lib.rs files and Extism | Private FFI ABI, serialized definitions/calls and success/error envelopes |
+| Native plugin → Figma WebSocket / external service / CLI | Plugin operations | Service-specific APIs, not public MCP endpoints |
+| In-process Rust operations and PDK definitions | Plugin operations.rs and rune-pdk | Internal library API, not a transport |
+
+No Tools binary currently implements a standalone public MCP transport. The
+private API's `tools/list` aliases do not make it a public MCP server: it lacks
+public discovery/negotiation and returns private shapes. Those formats are
+preserved without new protocol fields or packaged-runtime changes. The mcp.json
+templates launch Kit, rather than exposing a sidecar directly. Do not advertise
+unimplemented optional capabilities or change a private API just to resemble MCP.
+
+The public stdio binding uses single UTF-8 newline-delimited JSON-RPC messages,
+no batches and no initialize handshake. Every request carries its own metadata:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"rune-tools-acceptance","version":"1"}}}}
+```
+
+Send the version and clientCapabilities on **every** tools/list, tools/call,
+resource or prompt request; capabilities are not remembered from discovery.
+Use exact discovered names and schemas. Successful results include
+`resultType: "complete"` and `_meta.io.modelcontextprotocol/serverInfo`.
+Cacheable results include `ttlMs: 0` and `cacheScope: "private"`. An empty
+capabilities object opts into no optional client features. Missing metadata is
+`-32602`; unsupported versions are `-32022`. Initialize is not a current method.
+Stdio cancellation is a notification and has no notification reply; do not
+infer a public server capability from private plugin operations. Tools implements
+no public HTTP binding. Kit's full schema/transport validation remains Kit-owned.
+
+Authoritative references: [normative schema](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts),
+[transport binding](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio),
+and the Kit repository's docs/MCP-CONTRACT.md. Acceptance clients enforce current
+metadata, discovery and complete-result envelopes, and probe missing metadata,
+unsupported versions and obsolete initialize. Only `--legacy-protocol` enables
+the explicit older-released-Kit compatibility fixture.
+
 ## Tool rules and annotations
 
 `rune-pdk::annotations_from_rules` derives annotations during serialization.
@@ -37,15 +85,14 @@ The published filesystem plugin is WASM, with no native subprocess. Configure
 one trusted root at gateway startup, never from model arguments:
 
 ```powershell
-rune run rune-filesystem --read-only -p allowed_dir=D:/Disposable/Pilot
-# Kit 0.4.0+ uses the command name rune-kit instead of rune.
+rune-kit run rune-filesystem --read-only -p allowed_dir=D:/Disposable/Pilot
 ```
 
-Released Kit 0.3.1 is the tested fallback. Its Extism/WASI manifest maps the
+The Extism/WASI manifest maps the
 absolute host root to the same guest path and passes `allowed_dir` unchanged.
 Use forward slashes for the Windows root and prefer relative tool paths.
-The Kit Cycle 2 contract retains this mapping in 0.4.0, validates roots and
-removes the legacy working-directory preopen. Tools 0.4.1 refuses missing,
+Kit 0.5.0 retains the mapping used by released 0.4.0, validates roots and
+provides no implicit working-directory preopen. Tools 0.4.1 refuses missing,
 relative, blank or inaccessible roots even on 0.3.1. Changing roots requires
 a new gateway. Neither `allowedDir` nor `allowed_dir` is accepted in a call.
 
@@ -97,13 +144,17 @@ destructive/openWorld spellings false, and idempotence is omitted.
 
 Example call arguments: `{"path":"note.txt","lineLimit":1}` returns
 `{"content":"inside marker","lineOffset":0,"linesReturned":1,"hasMore":true,"nextLineOffset":1,...}`.
-`{"path":"../root-other/secret.txt"}` is refused. On Kit 0.3.1 the MCP result
-can have `isError:false` while its text contains the plugin's
+`{"path":"../root-other/secret.txt"}` is refused. On released legacy Kit and
+the tested local 0.5.0 gateway, the MCP result can have `isError:false` while
+its text contains the plugin's
 `{"status":"error","error":"Access denied: ..."}` envelope. Inspect both
 the MCP error and this envelope. Success text is
 `{"status":"success","result":{...}}`. Discovered names include the host
 namespace; use those exact names for calls. Write tools are hidden and forced
 write calls are rejected in `--read-only` mode.
+Public normalization of private operation errors into `isError:true` remains a
+Kit-owned follow-up; it does not require rewriting the plugin ABI or weakening
+filesystem refusal checks.
 
 Acceptance on Windows uses `scripts/smoke-filesystem.py` with a disposable
 root, sibling folder and a real junction, including concurrent junction/name
@@ -144,11 +195,24 @@ cargo build --locked -p rune-time --release --target wasm32-wasip1 --lib
 python scripts/smoke-kit-plugins.py --rune <rune.exe> --git <rune-git-native.exe> --time <rune_time.wasm>
 ```
 
-The smoke script checks initialization, schemas, annotations, normal/restricted
+The smoke script checks stateless discovery, schemas, annotations, normal/restricted
 discovery and harmless calls. After installation, substitute the installed
 plugin names `rune-git` and `rune-time` to verify the installed artifacts.
 The script does not install plugins or change owner configuration. Record the
 exact Kit executable version/hash and Tools build commit with acceptance results.
+
+Released Kit 0.3.1 (`rune`) and 0.4.0 (`rune-kit`) are historical compatibility
+targets, not the current protocol recommendation. Use `--legacy-protocol` only
+when testing those releases. Current-protocol checks require the 0.5.0 gateway;
+its publication status is owned by Kit's release process. Filesystem 0.4.1's
+payload and private API need no version bump to work through that gateway.
+
+Release notes, checksum generation, registry handoff, Git ownership, shared
+installation paths and exact owner actions are documented in
+[PUBLISHING.md](PUBLISHING.md). The former formatting/version-PR automation and
+registry source commit/push automation have been removed from the prepared
+workflows. The owner must publish the reviewed registry patch after artifacts
+exist; until then, existing package discovery remains available.
 
 ## Development checks
 

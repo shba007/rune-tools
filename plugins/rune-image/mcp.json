@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rune-image": {
-      "command": "rune",
+      "command": "rune-kit",
       "args": ["run", "rune-image"],
       "env": {
         "COOKIES_DIR": "./test-dir/cookies",

@@ -1,11 +1,15 @@
 {
-	"mcpServers": {
-		"rune-filesystem": {
-			"command": "rune",
-			"args": ["run", "rune-filesystem"],
-			"env": {
-				"ALLOWED_DIR": "<CODE DIR>"
-			}
-		}
-	}
+  "mcpServers": {
+    "rune-filesystem": {
+      "command": "rune-kit",
+      "args": [
+        "run",
+        "rune-filesystem",
+        "--read-only",
+        "-p",
+        "allowed_dir=<ABSOLUTE_SELECTED_FOLDER>"
+      ],
+      "env": {}
+    }
+  }
 }

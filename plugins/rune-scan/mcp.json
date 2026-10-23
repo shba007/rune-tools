@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rune-scan": {
-      "command": "rune",
+      "command": "rune-kit",
       "args": ["run", "rune-scan"],
       "env": {
         "SCANNER_IP": "192.168.1.2",

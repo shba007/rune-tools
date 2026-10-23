@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rune-figma": {
-      "command": "rune",
+      "command": "rune-kit",
       "args": ["run", "rune-figma"],
       "env": {
         "FIGMA_WS_URL": "ws://127.0.0.1:3055"

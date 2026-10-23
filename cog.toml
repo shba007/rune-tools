@@ -2,9 +2,10 @@ from_latest_tag = true
 ignore_merge_commits = true
 tag_prefix = "v"
 
-# Each plugin is versioned and tagged independently (`<plugin>-v<version>`),
-# matching the release tags publish.yml creates. `cog bump --auto` only bumps
-# packages whose directory has releasable commits since their last tag.
+# Each plugin is versioned independently (`<plugin>-v<version>`).
+# CI does not run cog bump or regenerate notes from history. The owner prepares
+# versions and matching CHANGELOG sections before committing; agents never run
+# Git-mutating release commands. Retained cog settings support owner tooling.
 monorepo_version_separator = "-"
 generate_mono_repository_global_tag = false
 

@@ -7,7 +7,7 @@
 [![CI](https://github.com/shba007/rune-tools/actions/workflows/integrate.yml/badge.svg)](https://github.com/shba007/rune-tools/actions/workflows/integrate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust: 2024 Edition](https://img.shields.io/badge/Rust-2024%20Edition-DEA584.svg?logo=rust)](Cargo.toml)
-[![MCP Protocol: 2024-11-05](https://img.shields.io/badge/MCP%20Protocol-2024--11--05-8A2BE2.svg)](https://modelcontextprotocol.io)
+[![MCP Protocol: 2026-07-28](https://img.shields.io/badge/MCP%20Protocol-2026--07--28-8A2BE2.svg)](https://modelcontextprotocol.io/specification/2026-07-28)
 [![WASM Target: wasm32-wasip1](https://img.shields.io/badge/WASM%20Target-wasm32--wasip1-654FF0.svg?logo=webassembly)](Cargo.toml)
 
 </div>
@@ -23,7 +23,7 @@ Every plugin enforces a strict internal separation between declarative MCP schem
 ### Features
 
 - 🛡️ **Dual Execution Architecture**: Pure WASM sandboxing via Extism/Wasmtime for zero-host-side-effect compute, paired with Direct Native processes for persistent sockets and hardware workloads.
-- 🔌 **Strict MCP Protocol Compliance**: Implements the Model Context Protocol (2024-11-05 specification) across `tools`, `resources`, and `prompts` with automated contract and schema validation.
+- 🔌 **Public MCP through Kit**: Kit 0.5.0+ adapts the private native/WASM plugin API to MCP 2026-07-28. Plugin binaries and exports are not standalone public MCP servers.
 - 🗂️ **Comprehensive Domain Catalog**: 17 modular plugins (14 active workspace members, 3 draft/inactive) covering sandboxed filesystem manipulation, media transcoding (`ffmpeg`, `yt-dlp`), browser automation, Git inspection, IMAP/SMTP email, knowledge graphs, time conversions, and Figma canvas design. Note: `game-engine` does not exist.
 - ⚙️ **Unified Build & Test Orchestrator**: Integrated `cargo xtask` runner coordinating dual-target compilation (`wasm32-wasip1` cdylibs and host-native binaries) alongside isolated environment testing via `dotenvx`.
 - 🔐 **Capability-Based Security**: Scoped filesystem access, explicit hostname allowlists, and host-managed external binary provisioning (`ffmpeg`, `gallery-dl`, `yt-dlp`, `git`) declared in `plugin.toml`.
@@ -41,7 +41,7 @@ Every plugin enforces a strict internal separation between declarative MCP schem
                                │  (Dispatches MCP requests, provisions external CLI binaries)│
                                └──────────────┬──────────────────────────────┬───────────────┘
                                               │                              │
-                     MCP Protocol / WASM FFI  │                              │  MCP Protocol / Stdio JSON-RPC
+                     Private plugin / WASM FFI  │                              │  Private plugin / Stdio JSON-RPC
                                               ▼                              ▼
                  ┌────────────────────────────────────────┐     ┌────────────────────────────────────────┐
                  │          plugin.wasm (WASM)            │     │       rune-<name>-native (Native)      │
@@ -68,20 +68,20 @@ Every plugin enforces a strict internal separation between declarative MCP schem
 
 | Plugin | Version | Execution Model | External Binaries / Protocols | Tools | Resources & Prompts | Docs |
 |:---|:---:|:---:|:---|:---:|:---|:---:|
-| [`rune-filesystem`](plugins/rune-filesystem/) | `0.3.5` | Pure WASM | None | 13 | — | [Directory](plugins/rune-filesystem/) |
-| [`rune-fetch`](plugins/rune-fetch/) | `0.3.2` | Pure WASM | None (host HTTP FFI) | 1 | 1 Resource (`rune://fetch/help`), 2 Prompts | [Directory](plugins/rune-fetch/) |
-| [`rune-memory`](plugins/rune-memory/) | `0.2.2` | Pure WASM | None | 9 | — | [README](plugins/rune-memory/README.md) |
-| [`rune-sequential-thinking`](plugins/rune-sequential-thinking/) | `0.2.0` | Pure WASM | None | 1 | — | [README](plugins/rune-sequential-thinking/README.md) |
-| [`rune-time`](plugins/rune-time/) | `0.2.2` | Pure WASM | None | 2 | — | [README](plugins/rune-time/README.md) |
-| [`rune-audio`](plugins/rune-audio/) | `0.2.3` | Direct Native | `ffmpeg`, `yt-dlp`, `spotdl` | 2 | — | [README](plugins/rune-audio/README.md) |
-| [`rune-browser`](plugins/rune-browser/) | `0.2.4` | Direct Native | `agent-browser`, Chrome DevTools Protocol | 17 | — | [README](plugins/rune-browser/README.md) |
-| [`rune-figma`](plugins/rune-figma/) | `0.2.1` | Direct Native | WebSocket (`ws://localhost:3055`) | 44 | 3 Resources, 6 Prompts | [Directory](plugins/rune-figma/) |
-| [`rune-email`](plugins/rune-email/) | `0.1.5` | Direct Native (Dual) | IMAP / SMTP | 11 | — | [README](plugins/rune-email/README.md) |
-| [`rune-git`](plugins/rune-git/) | `0.2.4` | Direct Native | `git` (host-managed) | 13 | — | [README](plugins/rune-git/README.md) |
-| [`rune-image`](plugins/rune-image/) | `0.2.2` | Direct Native | `gallery-dl` | 5 | — | [README](plugins/rune-image/README.md) |
-| [`rune-slides`](plugins/rune-slides/) | `0.2.0` | Direct Native (Dual) | None | 5 | — | [README](plugins/rune-slides/README.md) |
-| [`rune-video`](plugins/rune-video/) | `0.2.0` | Direct Native | `ffmpeg`, `yt-dlp`, `streamlink` | 5 | — | [README](plugins/rune-video/README.md) |
-| [`mhb-mconnect`](plugins/mhb-mconnect/) | `0.1.3` | Direct Native (Dual) | REST API | 3 | — | [README](plugins/mhb-mconnect/README.md) |
+| [`rune-filesystem`](plugins/rune-filesystem/) | `0.4.1` | Pure WASM | None | 13 | — | [Directory](plugins/rune-filesystem/) |
+| [`rune-fetch`](plugins/rune-fetch/) | `0.4.0` | Pure WASM | None (host HTTP FFI) | 1 | 1 Resource (`rune://fetch/help`), 2 Prompts | [Directory](plugins/rune-fetch/) |
+| [`rune-memory`](plugins/rune-memory/) | `0.3.0` | Pure WASM | None | 9 | — | [README](plugins/rune-memory/README.md) |
+| [`rune-sequential-thinking`](plugins/rune-sequential-thinking/) | `0.3.0` | Pure WASM | None | 1 | — | [README](plugins/rune-sequential-thinking/README.md) |
+| [`rune-time`](plugins/rune-time/) | `0.3.0` | Pure WASM | None | 2 | — | [README](plugins/rune-time/README.md) |
+| [`rune-audio`](plugins/rune-audio/) | `0.3.0` | Direct Native | `ffmpeg`, `yt-dlp`, `spotdl` | 2 | — | [README](plugins/rune-audio/README.md) |
+| [`rune-browser`](plugins/rune-browser/) | `0.3.0` | Direct Native | `agent-browser`, Chrome DevTools Protocol | 17 | — | [README](plugins/rune-browser/README.md) |
+| [`rune-figma`](plugins/rune-figma/) | `0.3.0` | Direct Native | WebSocket (`ws://localhost:3055`) | 44 | 3 Resources, 6 Prompts | [Directory](plugins/rune-figma/) |
+| [`rune-email`](plugins/rune-email/) | `0.2.0` | Direct Native (Dual) | IMAP / SMTP | 11 | — | [README](plugins/rune-email/README.md) |
+| [`rune-git`](plugins/rune-git/) | `0.3.0` | Direct Native | `git` (host-managed) | 13 | — | [README](plugins/rune-git/README.md) |
+| [`rune-image`](plugins/rune-image/) | `0.3.0` | Direct Native | `gallery-dl` | 5 | — | [README](plugins/rune-image/README.md) |
+| [`rune-slides`](plugins/rune-slides/) | `0.3.0` | Direct Native (Dual) | None | 5 | — | [README](plugins/rune-slides/README.md) |
+| [`rune-video`](plugins/rune-video/) | `0.3.0` | Direct Native | `ffmpeg`, `yt-dlp`, `streamlink` | 5 | — | [README](plugins/rune-video/README.md) |
+| [`mhb-mconnect`](plugins/mhb-mconnect/) | `0.2.0` | Direct Native (Dual) | REST API | 3 | — | [README](plugins/mhb-mconnect/README.md) |
 
 ### Draft / Inactive Plugins (3)
 
@@ -136,54 +136,39 @@ cargo xtask test-all
 
 ## Programmatic Usage & Integration
 
-### 1. Running Native Sidecars via MCP Stdio (Client Configuration)
+### 1. Public MCP through Rune Kit
 
-Direct Native plugins can be registered directly with any standard MCP host (such as `rune-kit`, Claude Desktop, or Cursor) as stdio servers:
-
-```json
-{
-  "mcpServers": {
-    "rune-git": {
-      "command": "/absolute/path/to/target/release/rune-git-native",
-      "args": [],
-      "env": {
-        "REPO_PATH": "/path/to/git/repository"
-      }
-    },
-    "rune-audio": {
-      "command": "/absolute/path/to/target/release/rune-audio-native",
-      "args": [],
-      "env": {
-        "FFMPEG_PATH": "/usr/local/bin/ffmpeg",
-        "YT_DLP_PATH": "/usr/local/bin/yt-dlp",
-        "ALLOWED_DIR": "/path/to/output/media"
-      }
-    }
-  }
-}
-```
-
-#### Stdio JSON-RPC 2.0 Protocol Flow
-
-Native sidecars listen on `stdin` for newline-delimited JSON-RPC 2.0 requests and write responses to `stdout`:
+Use a client supporting MCP 2026-07-28 and Kit 0.5.0+; older released Kits use
+an explicit legacy compatibility contract. Native sidecars are private plugin
+processes, so external MCP clients launch the gateway:
 
 ```json
-// 1. Client sends initialize
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05"}}
-
-// 2. Client lists available tools
-{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
-
-// 3. Client calls an MCP tool
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"git_status","arguments":{"repoPath":"."}}}
-
-// 4. Plugin responds with structured output
-{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"{\"clean\":true,\"branch\":\"main\",\"staged\":[],\"unstaged\":[]}"}]}}
+{"mcpServers":{"rune-git":{"command":"rune-kit","args":["run","rune-git","--read-only"]}}}
 ```
+
+The shared installation root is `<user-home>/rune`, with rune-kit[.exe] and
+rune-infer[.exe] directly under it. Kit storage is `rune/tools`, plugin payloads
+are `rune/tools/plugins`, and Infer uses `rune/infer` and `rune/infer/config`.
+Kit/Infer installers own migration and PATH changes; Tools does not relocate
+owner data. Resolve the actual home, preserve explicit overrides, never fall
+back to the working directory, and preserve originals/conflicts during migration.
+
+There is no current initialize handshake. Every public request carries the
+protocol version and client capabilities, including discovery and each call:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"example-client","version":"1"}}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}
+```
+
+Call `tools/call` with the exact name/schema from discovery and the same metadata
+on that request. Successful results have `resultType: complete` and serverInfo
+metadata; discovery/list results also supply cache metadata. See
+[the boundary inventory and wire contract](docs/PLUGIN-CONTRACT.md).
 
 ### 2. Loading Pure WASM Plugins via Extism (Rust Host)
 
-Pure WASM plugins run within an Extism/Wasmtime sandbox and expose standard FFI exports:
+Pure WASM plugins expose a private Extism ABI, not a public MCP transport:
 
 ```rust
 use extism::{Manifest, Plugin, Wasm};
@@ -193,10 +178,14 @@ use std::path::PathBuf;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wasm_path = PathBuf::from("target/wasm32-wasip1/release/rune_filesystem.wasm");
     
-    // Configure sandbox memory and directory access permissions
+    // Require an explicit owner-selected root; map the same host/guest name.
+    let root = std::env::args().nth(1).ok_or("Pass an absolute selected folder")?;
+    if !std::path::Path::new(&root).is_absolute() || !std::path::Path::new(&root).is_dir() {
+        return Err("Selected root must be an existing absolute directory".into());
+    }
     let manifest = Manifest::new([Wasm::file(wasm_path)])
-        .with_config([("allowed_dir".to_string(), ".".to_string())])
-        .with_allowed_path(".", "/");
+        .with_config([("allowed_dir".to_string(), root.clone())])
+        .with_allowed_path(root.clone(), root);
 
     let mut plugin = Plugin::new(&manifest, [], true)?;
 
@@ -400,3 +389,5 @@ Published under the [MIT](LICENSE) license.
 <a href="https://github.com/shba007/rune-tools/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shba007/rune-tools" alt="Contributors">
 </a>
+
+See [owner-controlled publication](docs/PUBLISHING.md) for changelog previews, artifact checksums, retries and registry handoff. Agents leave implementation changes uncommitted.

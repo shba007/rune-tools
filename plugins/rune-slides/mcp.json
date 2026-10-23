@@ -1,7 +1,7 @@
 {
 	"mcpServers": {
 		"rune-slides": {
-			"command": "rune",
+			"command": "rune-kit",
 			"args": ["run", "rune-slides"],
 			"env": {
 				"ALLOWED_DIR": "./presentations"

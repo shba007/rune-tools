@@ -1,9 +1,7 @@
 name: Rune Tools Publish
 
 permissions:
-  contents: write
-  attestations: write
-  id-token: write
+  contents: read
 
 on:
   push:
@@ -22,20 +20,41 @@ jobs:
       native_matrix: ${{ steps.detect.outputs.native_matrix }}
       has_wasm: ${{ steps.detect.outputs.has_wasm }}
       has_native: ${{ steps.detect.outputs.has_native }}
+      release_matrix: ${{ steps.detect.outputs.release_matrix }}
+      has_releases: ${{ steps.detect.outputs.has_releases }}
     steps:
       - name: 📥 Checkout Repo
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
 
       - name: 🛠️ Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v2
 
       - name: 🔎 Detect publishable plugin versions
         id: detect
-        run: cargo xtask detect-publishable
+        run: |
+          python scripts/plugin-release.py validate --output release-notes --github-output "$GITHUB_OUTPUT"
+          cargo xtask detect-publishable
+
+      - name: Save validated release-note previews
+        if: steps.detect.outputs.has_releases == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-note-previews
+          path: release-notes/
+          if-no-files-found: error
 
   build-wasm:
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     needs: detect
     if: needs.detect.outputs.has_wasm == 'true'
     runs-on: ubuntu-latest
@@ -45,6 +64,8 @@ jobs:
     steps:
       - name: 📥 Checkout Repo
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: 🛠️ Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -55,7 +76,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: ⚙️ Build
-        run: cargo build -p ${{ matrix.name }} --release --target wasm32-wasip1 --lib
+        run: cargo build --locked -p ${{ matrix.name }} --release --target wasm32-wasip1 --lib
 
       - name: 📦 Package
         run: |
@@ -68,19 +89,18 @@ jobs:
         with:
           subject-path: dist/${{ matrix.name }}-${{ matrix.version }}.wasm
 
-      # gh release create is called with `|| true` because multiple wasm/native
-      # matrix jobs for the SAME plugin version may race to create the same
-      # tag; whichever loses the race just uploads to the release the winner
-      # already created. Existing assets must never be replaced in place.
-      - name: ⬆️ Publish release + upload asset
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ matrix.name }}-v${{ matrix.version }}"
-          gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
-          gh release upload "$TAG" dist/${{ matrix.name }}-${{ matrix.version }}.wasm
+      - name: Save immutable built payload for publication retries
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-payload-${{ matrix.name }}-wasm
+          path: dist/*
+          if-no-files-found: error
 
   build-native:
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     needs: detect
     if: needs.detect.outputs.has_native == 'true'
     strategy:
@@ -90,6 +110,8 @@ jobs:
     steps:
       - name: 📥 Checkout Repo
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: 🛠️ Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -102,7 +124,7 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: ⚙️ Build
-        run: cargo build -p ${{ matrix.name }} --release --target ${{ matrix.target }} --bin ${{ matrix.bin_name }} --features native
+        run: cargo build --locked -p ${{ matrix.name }} --release --target ${{ matrix.target }} --bin ${{ matrix.bin_name }} --features native
 
       - name: 📦 Package (Unix)
         if: matrix.ext == 'tar.gz'
@@ -125,48 +147,71 @@ jobs:
         with:
           subject-path: dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.${{ matrix.ext }}
 
-      - name: ⬆️ Publish release + upload asset
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ matrix.name }}-v${{ matrix.version }}"
-          gh release create "$TAG" --title "$TAG" --notes "${{ matrix.name }} v${{ matrix.version }}" || true
-          gh release upload "$TAG" "dist/${{ matrix.bin_name }}-${{ matrix.version }}-${{ matrix.target }}.${{ matrix.ext }}"
+      - name: Save immutable built payload for publication retries
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-payload-${{ matrix.name }}-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
 
-  update-registry:
+  publish:
     needs: [detect, build-wasm, build-native]
     if: |
       always() &&
       needs.detect.result == 'success' &&
+      needs.detect.outputs.has_releases == 'true' &&
       (needs.build-wasm.result == 'success' || needs.build-wasm.result == 'skipped') &&
       (needs.build-native.result == 'success' || needs.build-native.result == 'skipped')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.release_matrix) }}
     steps:
-      - name: 📥 Checkout Repo
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
-
-      - name: 🛠️ Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v2
-
-      - name: 🏷️ Update registry/index.json
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-payload-${{ matrix.name }}-*
+          path: dist
+          merge-multiple: true
+      - name: Publish exact changelog notes, payloads and SHA-256 sidecars
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: cargo xtask update-registry
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python scripts/plugin-release.py publish '${{ matrix.name }}' '${{ matrix.version }}'
+          --assets-dir dist --repo '${{ github.repository }}' --target '${{ github.sha }}'
 
-      # [skip ci] on this commit relies on GitHub's built-in skip-ci detection
-      # for push events, so pushing the registry update doesn't re-trigger
-      # this same workflow.
-      - name: 🔀 Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add registry/index.json
-          if git diff --cached --quiet; then
-            echo "No registry changes to commit"
-          else
-            git commit -m "chore(registry): publish new plugin versions [skip ci]"
-            git push
-          fi
+  registry-handoff:
+    needs: [detect, publish]
+    if: >-
+      always() && needs.detect.outputs.has_releases == 'true' &&
+      needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify published payloads and prepare owner registry patch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python scripts/plugin-release.py registry --repo '${{ github.repository }}'
+          --target '${{ github.sha }}' --output registry-handoff
+      - name: Save registry handoff for owner review and source commit
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-handoff
+          path: registry-handoff/
+          if-no-files-found: error

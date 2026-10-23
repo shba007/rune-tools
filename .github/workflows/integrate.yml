@@ -1,8 +1,7 @@
 name: Rune Tools CI
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 on:
   push:
@@ -31,6 +30,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       # Setup Rust with clippy, rustfmt, the wasm target and automatic dependency caching
       - name: 🛠️ Setup Rust Toolchain
@@ -39,11 +39,15 @@ jobs:
           target: wasm32-wasip1
           components: rustfmt, clippy
 
-      # Prebuilt binaries, zero compile time
-      - name: 📦 Install Release Tooling
-        uses: taiki-e/install-action@v2.87.28
+      - uses: actions/setup-python@v6
         with:
-          tool: cocogitto,cargo-edit
+          python-version: '3.13'
+
+      - name: Test local release validation and public MCP clients
+        run: python -m unittest discover -s scripts/tests -v
+
+      - name: Validate pending plugin release notes without publishing
+        run: python scripts/plugin-release.py validate --output release-notes
 
       # Verify Cargo.lock is synced with Cargo.toml (equivalent to --frozen-lockfile)
       - name: 📦 Verify Dependencies
@@ -70,50 +74,4 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
       - name: 🧼 Format Code
-        run: cargo fmt --all
-
-      # Only stage source and configuration, NEVER binary/output artifacts
-      - name: 🤖 AutoFix Code
-        if: github.event_name == 'push'
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          commit_message: 'chore: apply code fixes [skip ci]'
-          file_pattern: '**/*.rs **/*.toml **/Cargo.lock'
-
-      # Per-plugin SemVer bump via Conventional Commits: only plugins whose
-      # directory has releasable commits since their last `<plugin>-v<ver>`
-      # tag are bumped (see cog.toml [packages]).
-      - name: 🏷️ Bump Plugin Versions
-        if: github.event_name == 'push'
-        id: bump_version
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          BASE=$(git rev-parse HEAD)
-          if cog bump --auto; then
-            # Refresh Cargo.lock for the new plugin versions (no compilation)
-            cargo metadata --format-version 1 > /dev/null
-
-            DELIMITER="EOF_$(openssl rand -hex 8)"
-            {
-              echo "CHANGELOG_CONTENT<<$DELIMITER"
-              git log --format='- %s' "$BASE..HEAD"
-              echo "$DELIMITER"
-            } >> "$GITHUB_ENV"
-            echo "bumped=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No plugin has releasable commits; skipping release PR"
-            echo "bumped=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: 🔀 Create or Update Pull Request
-        if: github.event_name == 'push' && steps.bump_version.outputs.bumped == 'true'
-        uses: peter-evans/create-pull-request@v8
-        with:
-          commit-message: 'ci(release): update version'
-          title: 'ci(release): update version'
-          body: ${{ env.CHANGELOG_CONTENT }}
-          branch: 'release/update-version'
-          base: 'develop'
-          delete-branch: true
+        run: cargo fmt --all --check

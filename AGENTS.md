@@ -1,5 +1,30 @@
 # Rune Tool - Agent Documentation
 
+## Working agreement
+
+Implement and test locally, then leave all changes uncommitted and unpushed.
+Agents must not stage, commit, push, merge, create tags, publish releases, or
+dispatch publishing workflows. The owner performs source-control and release
+actions. This agreement overrides older handoffs and examples in this repository.
+Do not rewrite historical changelogs, commits, tags, or published releases.
+For agent-run Cargo tests set `CARGO_HUSKY_DONT_INSTALL_HOOKS=true`; do not install
+or invoke Git hooks. Owner commit hooks remain owner-controlled tooling.
+
+Prepare the affected plugin's version in Cargo.toml and plugin.toml, and its
+matching CHANGELOG section, before the owner commits. New notes and suggested
+commit subjects describe user-visible behavior, compatibility and migration;
+omit internal planning identifiers and version-bump-only descriptions. Preview
+notes locally with scripts/plugin-release.py; never generate release bodies from
+Git history. Documentation, client fixtures and workflow changes alone do not
+require plugin version bumps. Version packaged consumers explicitly if shared
+runtime behavior changes.
+
+The public MCP boundary is Kit 0.5.0+'s gateway (2026-07-28). Native sidecar
+messages and WASM exports are a private Kit/plugin ABI. Preserve their formats;
+do not add MCP negotiation metadata to them. See docs/PLUGIN-CONTRACT.md.
+See docs/PUBLISHING.md for validation, immutable payload retries and the second
+owner action needed to publish generated registry source changes.
+
 ## Overview
 
 The Rune Ecosystem is a Rust-based MCP (Model Context Protocol) plugin architecture that separates capability code from the host application (`rune-kit`). 
@@ -39,7 +64,7 @@ In earlier revisions, every plugin was forced to expose a `plugin.wasm` gateway 
                                │  (Host process: loads plugins, provisions external tools)   │
                                └──────────────┬──────────────────────────────┬───────────────┘
                                               │                              │
-                     MCP Protocol / WASM FFI  │                              │  MCP Protocol / Stdio JSON-RPC
+                     Private plugin / WASM FFI  │                              │  Private plugin / Stdio JSON-RPC
                                               ▼                              ▼
                  ┌────────────────────────────────────────┐     ┌────────────────────────────────────────┐
                  │          plugin.wasm (WASM)            │     │       rune-<name>-native (Native)      │
@@ -59,7 +84,7 @@ In earlier revisions, every plugin was forced to expose a `plugin.wasm` gateway 
 
 #### Direct Native Plugins
 - **Target**: Native platform executable (`x86_64-pc-windows-msvc`, `aarch64-apple-darwin`, `x86_64-unknown-linux-gnu`)
-- **Runtime**: Dedicated OS child process communicating directly with `rune-kit` via MCP Stdio JSON-RPC
+- **Runtime**: Dedicated OS child process communicating directly with `rune-kit` via the private Kit/plugin JSON-RPC API
 - **Use Case**: Native socket connections (WebSockets, raw TCP, SSH), native OS libraries, or driving host-provisioned binaries
 - **Benefit**: Zero WASM network/WASI bottlenecks, direct hardware/socket access, single-step compilation
 - **Examples**: `rune-figma`, `rune-audio`, `rune-video`, `rune-image`, `rune-print`, `rune-ssh`, `rune-browser`
@@ -135,7 +160,7 @@ plugins/rune-<name>/
 ├── src/
 │   ├── lib.rs                  # Re-exports modules (definitions, operations, types)
 │   ├── bin/
-│   │   └── native_sidecar.rs   # Native entry point (runs MCP Stdio JSON-RPC loop)
+│   │   └── native_sidecar.rs   # Native entry point (runs the private Kit/plugin JSON-RPC loop)
 │   ├── definitions.rs          # pure tool/resource/prompt schemas
 │   ├── operations.rs           # pure domain logic & parameter validation
 │   └── types.rs                # request/response deserialization structs
@@ -170,7 +195,9 @@ plugins/rune-<name>/
 ### 2.4 Testing Framework
 
 #### Contract Tests
-Contract tests ensure schemas strictly comply with MCP protocol rules (every parameter must define a `description`, required arguments must fail if omitted, and tool names must route properly):
+Repository contract tests check schema conventions (parameter descriptions),
+required arguments, routing and ToolRules. These are private plugin contract
+checks, not full public MCP conformance; the Kit gateway owns public wire tests:
 
 ```rust
 use rune_<name>::{definitions::tool_definitions, operations::execute_tool};
@@ -294,11 +321,15 @@ pub fn prompt_definitions() -> Vec<PromptDefinition> {
 
 ### 6.1 Development CI (`integrate.yml`)
 - Runs on pushes to `develop` and PRs to `develop`/`main`: `cargo xtask build-all`, `cargo xtask test-all`, `cargo clippy -D warnings`, `cargo fmt --all`.
-- On `develop` pushes: auto-commits formatting fixes, then runs `cog bump --auto` (per-plugin SemVer via Conventional Commits, `cog.toml`) and opens a `ci(release): update version` PR.
+- CI has read-only source permissions. It checks formatting and validates/tests release tooling; it does not auto-fix, commit, bump versions, push branches or open release PRs.
+- Python 3.11+ is required for release tooling; CI pins Python 3.13. Versions and substantive changelogs are prepared locally before the owner commits.
 - Local hooks (`.cargo-husky/hooks`, install with `cargo xtask hooks`): gitleaks, rustfmt, clippy auto-fix + `-D warnings`, `cog verify` on commit messages.
 
 ### 6.2 Release Pipeline (`publish.yml`)
-- `cargo xtask detect-publishable` emits build matrices for plugin versions missing from `registry/index.json`; `cargo xtask update-registry` records them afterwards (no Python).
+- `python scripts/plugin-release.py validate --output release-notes` validates all pending version sections before builds; `cargo xtask detect-publishable` supplies build matrices.
+- Build jobs save attested payloads as CI artifacts. One publish job per plugin uses the exact version's CHANGELOG section and verifies immutable uploads and SHA-256 sidecars.
+- Registry generation verifies actual published payloads and produces a `registry-handoff` artifact. The owner reviews/applies its patch and commits/pushes registry/index.json. No workflow creates source commits or pushes branches.
+- `cargo xtask update-registry` is a legacy URL planner without artifact verification; it is not the publication path. Use the verified handoff command documented in docs/PUBLISHING.md.
 - Compiles `wasm32-wasip1` modules for Pure WASM plugins.
 - Cross-compiles native companion binaries (`rune-<name>-native`) across host architectures (`x86_64-unknown-linux-gnu`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`).
 - Release packages **never bundle third-party tools** (`ffmpeg`, `yt-dlp`); `rune-kit` provisions these dynamically at runtime (§13).
@@ -397,84 +428,14 @@ futures-util = { version = "0.3", optional = true }
 serde_json.workspace = true
 ```
 
-#### `src/bin/native_sidecar.rs` (Native Stdio MCP Entry Point)
-```rust
-#[cfg(feature = "native")]
-use futures_util::StreamExt;
-#[cfg(feature = "native")]
-use serde_json::{json, Value};
-#[cfg(feature = "native")]
-use tokio::io::{AsyncBufReadExt, BufReader};
+#### Native entry point (private Kit/plugin API)
 
-#[cfg(feature = "native")]
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let stdin = BufReader::new(tokio::io::stdin());
-    let mut lines = stdin.lines();
-
-    while let Ok(Some(line)) = lines.next_line().await {
-        if line.trim().is_empty() { continue; }
-
-        let req: Value = match serde_json::from_str(&line) {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-
-        let method = req.get("method").and_then(|v| v.as_str()).unwrap_or("");
-        let id = req.get("id");
-
-        match method {
-            "initialize" => {
-                println!("{}", json!({
-                    "jsonrpc": "2.0",
-                    "id": id,
-                    "result": {
-                        "protocolVersion": "2024-11-05",
-                        "capabilities": { "tools": {} },
-                        "serverInfo": { "name": env!("CARGO_PKG_NAME"), "version": env!("CARGO_PKG_VERSION") }
-                    }
-                }));
-            }
-            "notifications/initialized" => {}
-            "tools/list" => {
-                let tools = rune_<name>::definitions::tool_definitions();
-                println!("{}", json!({
-                    "jsonrpc": "2.0",
-                    "id": id,
-                    "result": { "tools": tools }
-                }));
-            }
-            "tools/call" => {
-                let params = req.get("params").cloned().unwrap_or(json!({}));
-                let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
-                let args = params.get("arguments").cloned().unwrap_or(json!({}));
-
-                let result = rune_<name>::operations::execute_native_tool(name, args).await;
-                match result {
-                    Ok(val) => println!("{}", json!({
-                        "jsonrpc": "2.0",
-                        "id": id,
-                        "result": { "content": [{ "type": "text", "text": serde_json::to_string(&val)? }] }
-                    })),
-                    Err(err) => println!("{}", json!({
-                        "jsonrpc": "2.0",
-                        "id": id,
-                        "isError": true,
-                        "result": { "content": [{ "type": "text", "text": err }] }
-                    })),
-                }
-            }
-            _ => {}
-        }
-    }
-    Ok(())
-}
-
-#[cfg(not(feature = "native"))]
-fn main() {
-    eprintln!("Compile with --features native to build native binary");
-}
-```
+Implement `rune_sidecar::SidecarHandler` and invoke `rune_sidecar::run_stdio`.
+See plugins/rune-git/src/bin/native_sidecar.rs for a working example.
+The handler returns tool definitions directly and uses the existing private
+request/result shapes. It does not implement public `server/discover`, an
+initialize handshake, or public MCP request metadata. External clients launch
+`rune-kit run <plugin>`; Kit adapts the private API to MCP 2026-07-28.
 
 ---
 
@@ -615,7 +576,7 @@ For Direct Native Plugins executing provisioned binaries:
 | Term | Definition |
 |---|---|
 | **Pure WASM plugin** | WebAssembly module (`plugin.wasm`) compiled to `wasm32-wasip1` running inside an Extism/Wasmtime sandbox for pure in-process compute. |
-| **Direct Native plugin** | Native binary (`rune-<name>-native`) executing as an unprivileged child process communicating directly with `rune-kit` over MCP Stdio JSON-RPC. |
+| **Direct Native plugin** | Native binary (`rune-<name>-native`) executing as an unprivileged child process using Kit's private stdio plugin API. |
 | **Host-Managed Binary** | Third-party executable (`ffmpeg`, `yt-dlp`) downloaded and cryptographically verified by `rune-kit`. |
 | **McpRouter** | Host dispatch component in `rune-kit-core` routing tools, resources, and prompts across WASM and native plugins. |
 | **Tool** | Autonomous action/function with typed arguments and return value invoked by the model. |

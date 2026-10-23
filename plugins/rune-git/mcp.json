@@ -1,7 +1,7 @@
 {
 	"mcpServers": {
 		"rune-git": {
-			"command": "rune",
+			"command": "rune-kit",
 			"args": ["run", "rune-git"],
 			"env": {
 				"ALLOWED_DIR": "<CODE DIR>"

@@ -1,7 +1,7 @@
 {
 	"mcpServers": {
 		"rune-memory": {
-			"command": "rune",
+			"command": "rune-kit",
 			"args": ["run", "rune-memory"],
 			"env": {
 				"ALLOWED_DIR": "<CODE DIR>",
