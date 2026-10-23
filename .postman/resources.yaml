@@ -2,3 +2,5 @@
 localResources:
   collections:
     - ../postman/collections/Rune Kit
+workspace:
+  id: f25850ac-a554-4ab0-8857-ae9e77d8c497

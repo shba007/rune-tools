@@ -1,3 +1,5 @@
+Current transport and release trigger amendment: [Kit HTTP](KIT-HTTP.md). This supersedes historical stdio/PR-trigger examples below.
+
 # Plugin contracts and integration limits
 
 ## Public protocol and private API inventory

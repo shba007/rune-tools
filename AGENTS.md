@@ -1,3 +1,4 @@
+<!-- Current transport/release amendment: docs/KIT-HTTP.md supersedes older stdio and trigger examples. -->
 # Rune Tool - Agent Documentation
 
 ## Working agreement
@@ -31,7 +32,7 @@ reviewed ancestry. Merging into develop alone does not publish. CI commits and
 pushes generated registry metadata after verifying actual releases/checksums.
 See docs/PUBLISHING.md for tokens, branch rules, retry behavior and owner steps.
 
-Public MCP is Kit 0.5.0+ / 2026-07-28. Native sidecars and WASM exports are the
+Public MCP is HTTP / 2026-07-28 on an HTTP-capable Kit build (planned 0.6.0). Native sidecars and WASM exports are the
 private Kit/plugin ABI: preserve their formats without fake MCP metadata.
 Tools owns no installer; Kit/Infer own the actual-home rune root and migration.
 Preserve overrides, never fall back to CWD, never overwrite conflicts or move

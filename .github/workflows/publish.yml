@@ -21,6 +21,7 @@ jobs:
   # If nothing changed, has_wasm/has_native are both "false" and the build
   # jobs below are skipped entirely.
   detect:
+    if: startsWith(github.event.head_commit.message, 'ci(release): publish plugins')
     runs-on: ubuntu-latest
     outputs:
       wasm_matrix: ${{ steps.detect.outputs.wasm_matrix }}

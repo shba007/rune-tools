@@ -1,3 +1,5 @@
+Current transport and release trigger amendment: [Kit HTTP](KIT-HTTP.md). This supersedes historical stdio/PR-trigger examples below.
+
 # Plugin release preparation and publication
 
 Agents implement and test locally and leave changes unstaged and uncommitted.

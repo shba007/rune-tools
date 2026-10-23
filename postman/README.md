@@ -1,3 +1,5 @@
+Current transport and release trigger amendment: [Kit HTTP](../docs/KIT-HTTP.md). This supersedes historical stdio/PR-trigger examples below.
+
 # Rune Tools MCP collection
 
 Open this repository in Postman v12 Local View and select **Rune Kit** under

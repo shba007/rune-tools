@@ -4726,6 +4726,7 @@ dependencies = [
  "cargo-husky",
  "dotenvy",
  "git-conventional",
+ "reqwest",
  "rune-pdk",
  "semver",
  "serde",

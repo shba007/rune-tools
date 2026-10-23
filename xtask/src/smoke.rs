@@ -4,9 +4,9 @@ use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
     fs,
-    io::{BufRead, BufReader, Write},
+    io::{BufRead, BufReader},
     path::Path,
-    process::{Child, ChildStdin, Command, Stdio},
+    process::{Child, Command, Stdio},
     sync::{Arc, Mutex, mpsc},
     thread,
     time::Duration,
@@ -25,8 +25,8 @@ fn request(id: u64, method: &str, mut params: Value, metadata: bool) -> Value {
 }
 struct Gateway {
     child: Child,
-    input: ChildStdin,
-    responses: mpsc::Receiver<std::result::Result<Value, String>>,
+    endpoint: String,
+    client: reqwest::blocking::Client,
     stderr: Arc<Mutex<String>>,
     id: u64,
     legacy: bool,
@@ -40,7 +40,7 @@ impl Drop for Gateway {
 impl Gateway {
     fn new(rune: &str, plugin: &str, restricted: bool, params: &[String]) -> Result<Self> {
         let mut c = Command::new(rune);
-        c.args(["run", plugin]);
+        c.args(["serve", plugin, "--headless", "--port", "0"]);
         if restricted {
             c.arg("--read-only");
         }
@@ -48,68 +48,93 @@ impl Gateway {
             c.args(["-p", p]);
         }
         let mut child = c
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
             .stderr(Stdio::piped())
             .spawn()?;
-        let input = child.stdin.take().ok_or("no child stdin")?;
-        let stdout = child.stdout.take().ok_or("no child stdout")?;
-        let stderr = child.stderr.take().ok_or("no child stderr")?;
-        let (tx, rx) = mpsc::channel();
-        thread::spawn(move || {
-            for line in BufReader::new(stdout).lines() {
-                let result = line
-                    .map_err(|e| e.to_string())
-                    .and_then(|l| serde_json::from_str(&l).map_err(|e| e.to_string()));
-                if tx.send(result).is_err() {
-                    break;
-                }
-            }
-        });
+        let stderr = child.stderr.take().ok_or("missing server stderr")?;
         let errors = Arc::new(Mutex::new(String::new()));
         let copy = Arc::clone(&errors);
+        let (tx, rx) = mpsc::channel();
         thread::spawn(move || {
             for line in BufReader::new(stderr)
                 .lines()
                 .map_while(std::result::Result::ok)
             {
                 copy.lock().unwrap().push_str(&line);
+                if let Some(start) = line.find("http://") {
+                    let url = line[start..]
+                        .split_whitespace()
+                        .next()
+                        .unwrap()
+                        .trim_end_matches(['"', ',', ';']);
+                    let _ = tx.send(url.to_string());
+                }
             }
         });
+        let endpoint = match rx.recv_timeout(Duration::from_secs(30)) {
+            Ok(url) => url,
+            Err(e) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(
+                    format!("Kit HTTP startup failed: {e}; {}", errors.lock().unwrap()).into(),
+                );
+            }
+        };
         Ok(Self {
             child,
-            input,
-            responses: rx,
+            endpoint,
+            client: reqwest::blocking::Client::builder()
+                .no_proxy()
+                .timeout(Duration::from_secs(60))
+                .build()?,
             stderr: errors,
             id: 0,
-            legacy: LEGACY.load(std::sync::atomic::Ordering::Relaxed),
+            legacy: false,
         })
     }
     fn raw(&mut self, method: &str, params: Value, metadata: bool) -> Result<Value> {
         self.id += 1;
-        writeln!(
-            self.input,
-            "{}",
-            request(self.id, method, params, metadata && !self.legacy)
-        )?;
-        self.input.flush()?;
-        loop {
-            let response = self
-                .responses
-                .recv_timeout(Duration::from_secs(60))
-                .map_err(|e| {
-                    format!(
-                        "Gateway stopped/timed out: {e}; {}",
-                        self.stderr.lock().unwrap()
-                    )
-                })??;
-            if response["id"] == self.id {
-                if response["jsonrpc"] != "2.0" {
-                    return Err("invalid JSON-RPC envelope".into());
-                }
-                return Ok(response);
-            }
+        let body = request(self.id, method, params, metadata);
+        let mut call = self
+            .client
+            .post(&self.endpoint)
+            .header("Accept", "application/json, text/event-stream")
+            .header(
+                "MCP-Protocol-Version",
+                body["params"]["_meta"]["io.modelcontextprotocol/protocolVersion"]
+                    .as_str()
+                    .unwrap_or(VERSION),
+            )
+            .header("Mcp-Method", method);
+        if let Some(name) = body["params"]
+            .get("name")
+            .or_else(|| body["params"].get("uri"))
+            .and_then(Value::as_str)
+        {
+            call = call.header("Mcp-Name", name);
         }
+        let response = call
+            .json(&body)
+            .send()
+            .map_err(|e| format!("Kit HTTP request to {} failed: {e:?}", self.endpoint))?;
+        let status = response.status();
+        let text = response.text()?;
+        let json = if let Some(line) = text.lines().find_map(|l| l.strip_prefix("data:")) {
+            line.trim()
+        } else {
+            text.trim()
+        };
+        let value: Value = serde_json::from_str(json)
+            .map_err(|e| format!("HTTP {status}: invalid MCP response: {e}; {text}"))?;
+        if value["id"] != self.id || value["jsonrpc"] != "2.0" {
+            return Err(format!("HTTP {status}: mismatched response {value}").into());
+        }
+        if !status.is_success() && value.get("error").is_none() {
+            return Err(format!("HTTP {status}: failure without MCP error: {value}").into());
+        }
+        Ok(value)
     }
     fn send(&mut self, method: &str, params: Value) -> Result<Value> {
         let r = self.raw(method, params, true)?;
@@ -128,16 +153,6 @@ impl Gateway {
         Ok(v)
     }
     fn discover(&mut self) -> Result<Value> {
-        if self.legacy {
-            let r=self.send("initialize",json!({"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"rune-tools-legacy-acceptance","version":"1"}}))?;
-            writeln!(
-                self.input,
-                "{}",
-                json!({"jsonrpc":"2.0","method":"notifications/initialized","params":{}})
-            )?;
-            self.input.flush()?;
-            return Ok(r);
-        }
         let r = self.send("server/discover", json!({}))?;
         assert!(
             r["supportedVersions"]
@@ -150,7 +165,7 @@ impl Gateway {
         assert!(r["capabilities"].get("tools").is_some());
         assert_eq!(
             self.raw("tools/list", json!({}), false)?["error"]["code"],
-            -32602
+            -32020
         );
         assert_eq!(
             self.raw(
@@ -472,7 +487,15 @@ fn filesystem(rune: &str, plugin: &str, fixture: &Path, require_link: bool) -> R
         vec![],
         vec![format!("allowed_dir={}", fixture.join("missing").display())],
     ] {
-        let mut missing = Gateway::new(rune, plugin, true, &params)?;
+        let mut missing = match Gateway::new(rune, plugin, true, &params) {
+            Ok(g) => g,
+            Err(e)
+                if !params.is_empty() && e.to_string().contains("existing absolute directory") =>
+            {
+                continue;
+            }
+            Err(e) => return Err(e),
+        };
         match missing.discover() {
             Ok(_) => {
                 let ts = missing.tools()?;
@@ -497,6 +520,9 @@ fn filesystem(rune: &str, plugin: &str, fixture: &Path, require_link: bool) -> R
     )
 }
 pub fn command(args: &[String]) -> Result<()> {
+    if args.iter().any(|s| s == "--legacy-protocol") {
+        return Err("Use the historical stdio harness from Git history; current acceptance requires Kit HTTP".into());
+    }
     LEGACY.store(
         args.iter().any(|s| s == "--legacy-protocol"),
         std::sync::atomic::Ordering::Relaxed,

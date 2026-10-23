@@ -14,6 +14,7 @@ semver = "1"
 serde = { workspace = true }
 sha2 = "0.11"
 dotenvy = "0.15"
+reqwest.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
