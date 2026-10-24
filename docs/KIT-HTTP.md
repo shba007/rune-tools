@@ -19,14 +19,14 @@ checks belong to Git history, not the active contract.
 
 Only develop pushes start integration/preparation. Generated files are validated
 in that original run, rather than through duplicate PR/release-branch events.
-Owner merges preparation into develop, then promotes with a MERGE COMMIT titled
-`ci(release): publish plugins`. Main publication uses the prepared independent
-plugin set, exact changelog sections, assets/checksums and verified registry
-update. Registry-only bot commits lack that publication marker and cannot recurse.
-GITHUB_TOKEN handles PR API operations; GH_TOKEN handles preparation branch pushes.
-Existing publication permissions and registry branch-rule allowances still apply.
+Owner merges preparation into develop and promotes with a merge commit preserving
+source ancestry. Every main push validates the prepared plugin set; no special
+merge title is required. Empty pending sets are successful no-ops. Registry-only
+updates cannot recursively create plugin releases. GITHUB_TOKEN handles PR API
+operations; GH_TOKEN handles release-branch pushes. See PUBLISHING.md for details.
 No plugin package version changes are needed for harness/workflow documentation.
 
 This migration does not change installation paths, storage, overrides or user
-data. Kit owns installation migration and the HTTP server/TUI. Screen Insight
+data. Kit owns installation migration and the HTTP server/TUI. Its canonical managed
+root is ~/.rune/tools; tests use <fixture>/.rune/tools via RUNE_KIT_DATA_DIR. Screen Insight
 capture remains Studio-owned. See Kit docs/MCP-CONTRACT.md for the wire contract.

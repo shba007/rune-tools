@@ -1,0 +1,64 @@
+# git-cliff-core =2.14.2 consumes this configuration in xtask.
+[changelog]
+header = ""
+body = """
+## {{ version }}
+{% if previous.version %}
+[Compare changes]({{ extra.repository }}/compare/{{ previous.version }}...{{ version }})
+{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message }}{% if commit.id %} ([{{ commit.id | truncate(length=7, end="") }}]({{ extra.repository }}/commit/{{ commit.id }})){% endif %}{% for link in commit.links %} [{{ link.text }}]({{ link.href }}){% endfor %}{% if commit.breaking %} **BREAKING CHANGE**{% if commit.breaking_description %}: {{ commit.breaking_description }}{% endif %}{% endif %}
+{% endfor %}
+{% endfor %}
+{% set contributors = commits | filter(attribute="author.name") | map(attribute="author.name") | unique %}
+{% if contributors | length > 0 %}
+### Contributors
+{% for contributor in contributors %}
+- {{ contributor }}
+{% endfor %}
+{% endif %}
+"""
+footer = ""
+trim = true
+render_always = false
+postprocessors = [{ pattern = '\n{3,}', replace = "\n\n" }]
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = false
+filter_commits = false
+sort_commits = "oldest"
+commit_parsers = [
+  { message = '^ci\(release\)!?:', skip = true },
+  { message = '^chore\((version|registry)\)!?:', skip = true },
+  { message = '(?i)^[^:]+:\s*(bump packages|bump versions|update version|bump version to .*)$', skip = true },
+  { message = '(?i)\b(apply code fixes|todo|tbd|placeholder|cycle|milestone|coming soon)\b', skip = true },
+  { message = '(?i)\b(m|k|l|r|inf|kf|wp)[ -]?[0-9]+\b', skip = true },
+  { message = '^feat', group = 'Enhancements' },
+  { message = '^fix', group = 'Fixes' },
+  { message = '^perf', group = 'Performance' },
+  { message = '^docs', group = 'Documentation' },
+  { message = '^refactor', group = 'Refactors' },
+  { message = '^style', group = 'Style' },
+  { message = '^test', group = 'Tests' },
+  { message = '^build', group = 'Build' },
+  { message = '^ci', group = 'CI' },
+  { message = '^chore', group = 'Chore' },
+  { message = '^revert', group = 'Reverts' },
+  { message = '.*', group = 'Maintenance' },
+]
+link_parsers = [
+  { pattern = '#([0-9]+)', href = 'https://github.com/shba007/rune-tools/pull/$1' },
+]
+
+[remote]
+offline = true
+
+[bump]
+features_always_bump_minor = true
+breaking_always_bump_major = false
+initial_tag = '0.1.0'

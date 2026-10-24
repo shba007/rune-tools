@@ -10,12 +10,14 @@ GitHub Actions IS authorized to calculate versions, update manifests/lockfiles/
 changelogs, commit/push release/update-version, open/update its release PR,
 publish tags/releases/assets after owner promotion and commit/push verified
 registry metadata. This supersedes older restrictions on CI source writes.
-Do not rewrite historical changelogs, commits, tags or published releases.
+Agents must not author or edit plugin CHANGELOG entries; test generated previews
+in temporary fixtures only. Preserve historical content, commits, tags and releases.
 For agent-run tests set CARGO_HUSKY_DONT_INSTALL_HOOKS=true; do not install hooks.
 Do not modify sibling repositories.
 
-Use the existing Rust xtask for deterministic release work (git-conventional,
-semver, toml_edit); no AI service in release generation. `cargo xtask prepare`
+Use pinned git-cliff-core 2.14.2 and cliff.toml for commit interpretation,
+version calculation, grouping and rendering through Rust xtask. Do not retain a
+custom bump algorithm/renderer or use an AI service. `cargo xtask prepare`
 is a read-only preview; --apply writes release files only and is reserved for
 CI or the owner on the working repository. `cargo xtask example`, `notes PLUGIN
 VERSION`, `validate --output DIR` and `cargo test --locked -p xtask` are local
@@ -30,11 +32,12 @@ Owner merges preparation into develop (merge or squash; retain the automation
 subject for squash), then promotes develop to main with a MERGE COMMIT, preserving
 reviewed ancestry. Merging into develop alone does not publish. CI commits and
 pushes generated registry metadata after verifying actual releases/checksums.
+Every main push validates the prepared set without merge-title eligibility.
 See docs/PUBLISHING.md for tokens, branch rules, retry behavior and owner steps.
 
 Public MCP is HTTP / 2026-07-28 on an HTTP-capable Kit build (planned 0.6.0). Native sidecars and WASM exports are the
 private Kit/plugin ABI: preserve their formats without fake MCP metadata.
-Tools owns no installer; Kit/Infer own the actual-home rune root and migration.
+Tools owns no installer; Kit/Infer own actual-home .rune storage and migration.
 Preserve overrides, never fall back to CWD, never overwrite conflicts or move
 unrelated projects/models. See docs/PLUGIN-CONTRACT.md.
 ## Overview
@@ -331,8 +334,9 @@ pub fn prompt_definitions() -> Vec<PromptDefinition> {
 
 ## 6. CI/CD Pipeline
 
-`integrate.yml` validates develop, release/update-version and PRs normally,
-including merge/release commits. After successful trusted develop validation,
+`integrate.yml` validates only develop pushes, including merge/release commits.
+Generated release files are checked in that same run; PR/release-branch pushes
+do not duplicate the pipeline. Workflow syntax is checked with pinned actionlint. After successful trusted develop validation,
 Rust xtask prepares only affected plugins in one release/update-version PR.
 Title and automation commit: `ci(release): update version`. Generated files are
 validated in preparation and through the normal branch/PR checks.

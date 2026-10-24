@@ -146,9 +146,9 @@ processes, so external MCP clients launch the gateway:
 {"mcpServers":{"rune-git":{"command":"rune-kit","args":["run","rune-git","--read-only"]}}}
 ```
 
-The shared installation root is `<user-home>/rune`, with rune-kit[.exe] and
-rune-infer[.exe] directly under it. Kit storage is `rune/tools`, plugin payloads
-are `rune/tools/plugins`, and Infer uses `rune/infer` and `rune/infer/config`.
+The shared installation root is `<user-home>/.rune`, with rune-kit[.exe] and
+rune-infer[.exe] directly under it. Kit storage is `.rune/tools`, plugin payloads
+are `.rune/tools/plugins`, and Infer uses `.rune/infer` and `.rune/infer/config`.
 Kit/Infer installers own migration and PATH changes; Tools does not relocate
 owner data. Resolve the actual home, preserve explicit overrides, never fall
 back to the working directory, and preserve originals/conflicts during migration.

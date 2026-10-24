@@ -1,5 +1,7 @@
 //! Deterministic per-plugin preparation. Git access is read-only; --apply only writes files.
 use semver::Version;
+#[path = "cliff.rs"]
+mod cliff;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::{collections::BTreeSet, fs, path::Path, process::Command};
@@ -116,11 +118,25 @@ pub fn notes(text: &str, name: &str, version: &str) -> Result<String> {
         .trim_end_matches("- - -")
         .trim_end_matches("---")
         .trim_end();
+    let mut contributors = false;
     let body: Vec<_> = section
         .lines()
         .skip(1)
-        .map(str::trim)
-        .filter(|l| !l.is_empty() && !l.starts_with('#') && !matches!(*l, "---" | "- - -"))
+        .filter_map(|line| {
+            let line = line.trim();
+            if line.starts_with('#') {
+                contributors = line.to_ascii_lowercase().contains("contributors");
+                return None;
+            }
+            if contributors
+                || line.is_empty()
+                || matches!(line, "---" | "- - -")
+                || line.to_ascii_lowercase().starts_with("[compare ")
+            {
+                return None;
+            }
+            Some(line)
+        })
         .collect();
     let substantive = body.iter().any(|line| {
         let line = line
@@ -136,9 +152,10 @@ pub fn notes(text: &str, name: &str, version: &str) -> Result<String> {
             format!("release v{version}"),
             format!("version {version}"),
         ];
-        let bump = (line.contains("bump")
-            && (line.contains("version") || line.contains("package")))
-            || line.contains("version-bump")
+        let bump = matches!(
+            line.as_str(),
+            "version bump" | "version-bump" | "bump packages" | "bump versions"
+        ) || line.starts_with("bump version to ")
             || line.contains("chore(version)");
         !line.is_empty() && !bare.contains(&line) && !bump
     });
@@ -163,11 +180,27 @@ pub fn registry(root: &Path) -> Result<Value> {
     )?)?)
 }
 pub fn pending(root: &Path) -> Result<Vec<Plugin>> {
-    let r = registry(root)?;
-    Ok(plugins(root)?
-        .into_iter()
-        .filter(|p| r[&p.name]["versions"].get(&p.version).is_none())
-        .collect())
+    let registry = registry(root)?;
+    let mut result = vec![];
+    for p in plugins(root)? {
+        let version = Version::parse(&p.version)
+            .map_err(|e| format!("{}: malformed manifest version {}: {e}", p.name, p.version))?;
+        if let Some(all) = registry[&p.name]["versions"].as_object() {
+            let latest = all
+                .keys()
+                .map(|v| Version::parse(v))
+                .collect::<std::result::Result<Vec<_>, _>>()?
+                .into_iter()
+                .max();
+            if latest.is_some_and(|v| version < v) {
+                return Err(format!("{}: manifest version {} decreases a published version; restore it or run release preparation",p.name,p.version).into());
+            }
+        }
+        if registry[&p.name]["versions"].get(&p.version).is_none() {
+            result.push(p)
+        }
+    }
+    Ok(result)
 }
 pub fn output(key: &str, value: impl std::fmt::Display) -> Result<()> {
     use std::io::Write;
@@ -186,6 +219,8 @@ pub fn output(key: &str, value: impl std::fmt::Display) -> Result<()> {
 
 #[derive(Clone, Debug)]
 pub struct Change {
+    pub id: String,
+    pub author: Option<String>,
     pub message: String,
     pub paths: Vec<String>,
 }
@@ -277,111 +312,37 @@ pub fn affected(root: &Path, p: &Plugin, paths: &[String]) -> Result<bool> {
         .all(|p| p.starts_with("xtask/") || matches!(p.as_str(), "Cargo.lock"));
     Ok(root_changed && !xtask_only)
 }
+fn baseline(registry: &Value, p: &Plugin) -> Result<String> {
+    if registry.get(&p.name).is_none() {
+        return Ok(String::new());
+    }
+    let versions = registry[&p.name]["versions"]
+        .as_object()
+        .ok_or_else(|| format!("{}: registry versions must be an object", p.name))?;
+    Ok(versions
+        .keys()
+        .map(|v| Version::parse(v))
+        .collect::<std::result::Result<Vec<_>, _>>()?
+        .into_iter()
+        .max()
+        .map(|v| v.to_string())
+        .unwrap_or_default())
+}
 pub fn plan(root: &Path, changes: &[Change], source_head: String) -> Result<State> {
     let registry = published_registry(root)?;
     let mut releases = vec![];
     for p in plugins(root)? {
-        let mut entries = BTreeSet::new();
-        let mut level = 0;
-        for change in changes {
-            if !affected(root, &p, &change.paths)? {
-                continue;
-            }
-            let Ok(commit) = git_conventional::Commit::parse(&change.message) else {
-                continue;
-            };
-            let kind = commit.type_().to_string();
-            let scope = commit.scope().map(|s| s.to_string());
-            let description = commit.description().to_ascii_lowercase();
-            if (kind == "ci" && scope.as_deref() == Some("release"))
-                || matches!(
-                    description.as_str(),
-                    "bump packages" | "bump versions" | "update version"
-                )
-                || description.starts_with("bump version to ")
-                || scope.as_deref() == Some("registry")
-                || scope.as_deref() == Some("version")
-                || commit
-                    .description()
-                    .to_ascii_lowercase()
-                    .contains("apply code fixes")
-            {
-                continue;
-            }
-            if private_text(commit.description()) {
-                return Err(format!(
-                    "{}: reviewed commit needs a public behavior description",
-                    p.name
-                )
-                .into());
-            }
-            level = level.max(if commit.breaking() {
-                3
-            } else if kind == "feat" {
-                2
-            } else {
-                1
-            });
-            let group = if commit.breaking() {
-                "Compatibility"
-            } else {
-                match kind.as_str() {
-                    "feat" => "Features",
-                    "fix" => "Fixes",
-                    "perf" => "Performance",
-                    _ => "Maintenance",
-                }
-            };
-            entries.insert(format!("- {group}: {}", commit.description()));
-            if let Some(migration) = commit.breaking_description() {
-                if private_text(migration) {
-                    return Err("Breaking change migration must use public wording".into());
-                }
-                entries.insert(format!(
-                    "- Migration: {}",
-                    migration.split_whitespace().collect::<Vec<_>>().join(" ")
-                ));
-            }
+        let selected = changes
+            .iter()
+            .filter_map(|c| match affected(root, &p, &c.paths) {
+                Ok(true) => Some(Ok(c.clone())),
+                Ok(false) => None,
+                Err(e) => Some(Err(e)),
+            })
+            .collect::<Result<Vec<_>>>()?;
+        if let Some(release) = cliff::generate(&p, &baseline(&registry, &p)?, &selected)? {
+            releases.push(release);
         }
-        if level == 0 {
-            continue;
-        }
-        let mut v = Version::parse(&p.version)?;
-        if level == 3 && v.major > 0 {
-            v.major += 1;
-            v.minor = 0;
-            v.patch = 0;
-        } else if level >= 2 {
-            v.minor += 1;
-            v.patch = 0;
-        } else {
-            v.patch += 1;
-        }
-        v.pre = semver::Prerelease::EMPTY;
-        v.build = semver::BuildMetadata::EMPTY;
-        // Preserve substantive prepared-but-unpublished functionality when another batch arrives.
-        if registry[&p.name]["versions"].get(&p.version).is_none() {
-            for l in plugin_notes(root, &p)?
-                .lines()
-                .skip(1)
-                .filter(|l| l.starts_with("- "))
-            {
-                entries.insert(l.into());
-            }
-        }
-        let version = v.to_string();
-        let body = format!(
-            "## {}-v{}\n\n{}\n",
-            p.name,
-            version,
-            entries.into_iter().collect::<Vec<_>>().join("\n")
-        );
-        notes(&body, &p.name, &version)?;
-        releases.push(Prepared {
-            name: p.name,
-            version,
-            notes: body,
-        });
     }
     Ok(State {
         source_head,
@@ -390,39 +351,39 @@ pub fn plan(root: &Path, changes: &[Change], source_head: String) -> Result<Stat
 }
 pub fn repository_plan(root: &Path) -> Result<State> {
     let head = git(root, &["rev-parse", "HEAD"])?;
-    let state = root.join(".release/prepared.json");
-    let base = if state.exists() {
-        let s: State = serde_json::from_str(&fs::read_to_string(state)?)?;
+    let marker = root.join(".release/prepared.json");
+    let consumed = if marker.exists() {
+        let state: State = serde_json::from_str(&fs::read_to_string(marker)?)?;
         git(
             root,
-            &["merge-base", "--is-ancestor", &s.source_head, "HEAD"],
+            &["merge-base", "--is-ancestor", &state.source_head, "HEAD"],
         )?;
-        s.source_head
+        state.source_head
     } else {
         git(root, &["merge-base", "origin/main", "HEAD"])?
     };
-    let hashes = git(
-        root,
-        &[
-            "rev-list",
-            "--reverse",
-            "--no-merges",
-            &format!("{base}..HEAD"),
-        ],
-    )?;
-    let mut changes = vec![];
-    for hash in hashes.lines() {
-        let message = git(root, &["show", "-s", "--format=%B", hash])?;
-        let paths = git(
-            root,
-            &["diff-tree", "--no-commit-id", "--name-only", "-r", hash],
-        )?
-        .lines()
-        .map(str::to_owned)
-        .collect();
-        changes.push(Change { message, paths });
+    let registry = published_registry(root)?;
+    let mut releases = vec![];
+    for p in plugins(root)? {
+        let new = cliff::history(root, &p, &format!("{consumed}..HEAD"))?;
+        let previous = baseline(&registry, &p)?;
+        if cliff::generate(&p, &previous, &new)?.is_none() {
+            continue;
+        }
+        let all = if previous.is_empty() {
+            new
+        } else {
+            let tag = cliff::published_tag(root, &p, &previous)?;
+            cliff::history(root, &p, &format!("{tag}..HEAD"))?
+        };
+        if let Some(release) = cliff::generate(&p, &previous, &all)? {
+            releases.push(release);
+        }
     }
-    plan(root, &changes, head)
+    Ok(State {
+        source_head: head,
+        releases,
+    })
 }
 pub fn apply(root: &Path, state: &State) -> Result<()> {
     // Caller authorizes file writes. Never stages, commits, pushes or installs hooks.
@@ -432,25 +393,35 @@ pub fn apply(root: &Path, state: &State) -> Result<()> {
             .iter()
             .find(|p| p.name == release.name)
             .ok_or("unknown prepared plugin")?;
-        if p.version == release.version {
-            if plugin_notes(root, p)? != release.notes {
-                return Err("prepared version already exists with different notes".into());
-            }
-            continue;
-        }
         let changelog = root.join(&p.folder).join("CHANGELOG.md");
-        let old = fs::read_to_string(&changelog)?;
+        let old = match fs::read_to_string(&changelog) {
+            Ok(s) => s,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+            Err(e) => return Err(e.into()),
+        };
         for (file, table) in [("Cargo.toml", "package"), ("plugin.toml", "plugin")] {
             let path = root.join(&p.folder).join(file);
             let mut doc = fs::read_to_string(&path)?.parse::<DocumentMut>()?;
             doc[table]["version"] = value(&release.version);
             fs::write(path, doc.to_string())?;
         }
-        let offset = old.find("\n## ").map(|i| i + 1).unwrap_or(old.len());
-        fs::write(
-            changelog,
-            format!("{}{}\n{}", &old[..offset], release.notes, &old[offset..]),
-        )?;
+        let rendered = if p.version == release.version {
+            if published_registry(root)?[&p.name]["versions"]
+                .get(&p.version)
+                .is_some()
+            {
+                return Err(format!(
+                    "{} {} is already published; refusing to replace notes",
+                    p.name, p.version
+                )
+                .into());
+            }
+            replace_unpublished_section(&old, &p.name, &p.version, &release.notes)?
+        } else {
+            let offset = old.find("\n## ").map(|i| i + 1).unwrap_or(old.len());
+            format!("{}{}\n{}", &old[..offset], release.notes, &old[offset..])
+        };
+        fs::write(changelog, rendered)?;
     }
     fs::create_dir_all(root.join(".release"))?;
     let mut recorded = state.clone();
@@ -508,9 +479,9 @@ pub fn command(args: &[String]) -> Result<()> {
             let shared=args.get(1).is_some_and(|a|a=="--shared");
             if args.len()>1 && (!shared || args.len()!=2){return Err("example [--shared]".into())}
             let change=if shared {
-                Change{message:"fix: preserve serialized tool annotation compatibility".into(),paths:vec!["crates/rune-pdk/src/lib.rs".into()]}
+                Change{id:String::new(),author:None,message:"fix: preserve serialized tool annotation compatibility".into(),paths:vec!["crates/rune-pdk/src/lib.rs".into()]}
             }else{
-                Change{message:"fix(filesystem): report confined file read errors clearly".into(),paths:vec!["plugins/rune-filesystem/src/operations.rs".into()]}
+                Change{id:String::new(),author:None,message:"fix(filesystem): report confined file read errors clearly".into(),paths:vec!["plugins/rune-filesystem/src/operations.rs".into()]}
             };
             for p in plan(root,&[change],"example-only".into())?.releases {println!("{}",p.notes);}
         }
@@ -536,10 +507,19 @@ pub fn command(args: &[String]) -> Result<()> {
 pub fn verify_promotion(root: &Path) -> Result<()> {
     let pending = pending(root)?;
     if pending.is_empty() {
+        println!("No pending plugin versions; publication is a successful no-op.");
         return Ok(());
     }
+    let path = root.join(".release/prepared.json");
+    let raw = fs::read_to_string(&path).map_err(|e| {
+        format!(
+            "Unpublished plugin versions require {} from the reviewed preparation PR: {e}",
+            path.display()
+        )
+    })?;
     let state: State =
-        serde_json::from_str(&fs::read_to_string(root.join(".release/prepared.json"))?)?;
+        serde_json::from_str(&raw).map_err(|e| format!("Invalid prepared release state: {e}"))?;
+    validate_prepared(root, &state, &pending)?;
     git(
         root,
         &["merge-base", "--is-ancestor", &state.source_head, "HEAD"],
@@ -548,6 +528,21 @@ pub fn verify_promotion(root: &Path) -> Result<()> {
         return Err(
             "unprepared packaged changes remain; merge preparation before promoting".into(),
         );
+    }
+    // Source ancestry above is required; ordinary main pushes need no title/parent-count marker.
+    Ok(())
+}
+fn validate_prepared(root: &Path, state: &State, pending: &[Plugin]) -> Result<()> {
+    if state.source_head.len() != 40 || !state.source_head.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err("prepared source_head must be a full Git commit SHA".into());
+    }
+    let mut seen = BTreeSet::new();
+    for r in &state.releases {
+        Version::parse(&r.version)
+            .map_err(|e| format!("{}: malformed prepared version: {e}", r.name))?;
+        if !seen.insert(&r.name) {
+            return Err(format!("duplicate prepared plugin: {}", r.name).into());
+        }
     }
     for p in pending {
         let r = state
@@ -560,12 +555,10 @@ pub fn verify_promotion(root: &Path) -> Result<()> {
                     p.name, p.version
                 )
             })?;
-        if plugin_notes(root, &p)? != r.notes {
+        if plugin_notes(root, p)? != r.notes {
             return Err("prepared changelog differs from reviewed release state".into());
         }
     }
-    // Promotion must retain reviewed develop ancestry; squash/rebase promotions are rejected.
-    git(root, &["rev-parse", "--verify", "HEAD^2"])?;
     Ok(())
 }
 /// main owns artifact-backed registry updates; develop need not receive a bookkeeping merge first.
@@ -586,10 +579,47 @@ fn published_registry(root: &Path) -> Result<Value> {
     Ok(current)
 }
 
+/// Replace only an unpublished generated version section; preserve other bytes.
+fn replace_unpublished_section(old: &str, name: &str, version: &str, new: &str) -> Result<String> {
+    let mut offset = 0;
+    let mut matches = vec![];
+    let mut headings = vec![];
+    for line in old.split_inclusive('\n') {
+        if let Some(title) = line.strip_prefix("## ") {
+            headings.push(offset);
+            let token = title
+                .split_whitespace()
+                .next()
+                .unwrap_or_default()
+                .trim_matches(['[', ']']);
+            if token == version
+                || token == format!("v{version}")
+                || token == format!("{name}-v{version}")
+            {
+                matches.push(offset)
+            }
+        }
+        offset += line.len();
+    }
+    if matches.is_empty() {
+        let at = headings.first().copied().unwrap_or(old.len());
+        return Ok(format!("{}{}\n{}", &old[..at], new, &old[at..]));
+    }
+    if matches.len() != 1 {
+        return Err(format!("{name} {version}: expected one unpublished section to update").into());
+    }
+    let start = matches[0];
+    let end = headings
+        .into_iter()
+        .find(|i| *i > start)
+        .unwrap_or(old.len());
+    Ok(format!("{}{}\n{}", &old[..start], new, &old[end..]))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn fixture() -> tempfile::TempDir {
+    pub(super) fn fixture() -> tempfile::TempDir {
         let t = tempfile::tempdir().unwrap();
         let r = t.path();
         fs::create_dir_all(r.join("registry")).unwrap();
@@ -630,6 +660,8 @@ mod tests {
     }
     fn change(msg: &str, paths: &[&str]) -> Change {
         Change {
+            id: String::new(),
+            author: None,
             message: msg.into(),
             paths: paths.iter().map(|s| s.to_string()).collect(),
         }
@@ -758,14 +790,19 @@ mod tests {
         assert!(plan(r, &[], "next".into()).unwrap().releases.is_empty());
         let next = plan(
             r,
-            &[change(
-                "fix: improve directory errors",
-                &["plugins/a/src/lib.rs"],
-            )],
+            &[
+                change("fix: preserve read bounds", &["plugins/a/src/lib.rs"]),
+                change("fix: improve directory errors", &["plugins/a/src/lib.rs"]),
+            ],
             "next".into(),
         )
         .unwrap();
-        assert_eq!(next.releases[0].version, "1.0.2");
+        assert_eq!(next.releases[0].version, "1.0.1");
+        apply(r, &next).unwrap();
+        assert_eq!(
+            plugin_notes(r, &plugins(r).unwrap()[0]).unwrap(),
+            next.releases[0].notes
+        );
         assert!(next.releases[0].notes.contains("preserve read bounds"));
     }
     #[test]
@@ -813,7 +850,7 @@ mod tests {
         assert!(
             state.releases[0]
                 .notes
-                .contains("Migration: Set allowed_dir before discovery.")
+                .contains("BREAKING CHANGE**: Set allowed_dir before discovery.")
         );
     }
     #[test]
@@ -867,9 +904,202 @@ mod tests {
             .into_iter()
             .find(|p| p.name == "rune-filesystem")
             .unwrap();
-        let n = plugin_notes(root, &p).unwrap();
+        let text = fs::read_to_string(root.join(&p.folder).join("CHANGELOG.md")).unwrap();
+        let n = notes(&text, &p.name, "0.4.1").unwrap();
         assert!(n.starts_with("## rune-filesystem-v0.4.1"));
         assert!(n.contains("confine and bound two read-only tools"));
         assert!(!n.contains("## rune-filesystem-v0.4.0"));
+    }
+}
+
+#[cfg(test)]
+mod package_tests {
+    use super::*;
+    #[test]
+    fn package_reads_real_prefixed_tags_and_path_scoped_history() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let p = plugins(root)
+            .unwrap()
+            .into_iter()
+            .find(|p| p.name == "rune-filesystem")
+            .unwrap();
+        assert_eq!(
+            cliff::published_tag(root, &p, "0.4.1").unwrap(),
+            "rune-filesystem-v0.4.1"
+        );
+        assert!(cliff::published_tag(root, &p, "999.0.0").is_err());
+        let history =
+            cliff::history(root, &p, "rune-filesystem-v0.4.0..rune-filesystem-v0.4.1").unwrap();
+        assert!(
+            history
+                .iter()
+                .any(|c| c.message.contains("confine and bound"))
+        );
+        assert!(
+            history
+                .iter()
+                .all(|c| affected(root, &p, &c.paths).unwrap())
+        );
+    }
+    #[test]
+    fn valid_prepared_set_and_exact_notes_control_publication() {
+        let temp = tests::fixture();
+        let root = temp.path();
+        let changes = [Change {
+            id: String::new(),
+            author: None,
+            message: "fix: preserve bounded results".into(),
+            paths: vec!["plugins/a/src/lib.rs".into()],
+        }];
+        let state = plan(root, &changes, "a".repeat(40)).unwrap();
+        apply(root, &state).unwrap();
+        let pending = pending(root).unwrap();
+        validate_prepared(root, &state, &pending).unwrap();
+        let mut invalid = state.clone();
+        invalid.releases[0].notes.push_str("Different notes");
+        assert!(
+            validate_prepared(root, &invalid, &pending)
+                .unwrap_err()
+                .to_string()
+                .contains("differs")
+        );
+        let mut invalid = state.clone();
+        invalid.releases.push(state.releases[0].clone());
+        assert!(
+            validate_prepared(root, &invalid, &pending)
+                .unwrap_err()
+                .to_string()
+                .contains("duplicate")
+        );
+        let mut invalid = state;
+        invalid.releases.clear();
+        assert!(
+            validate_prepared(root, &invalid, &pending)
+                .unwrap_err()
+                .to_string()
+                .contains("missing")
+        );
+    }
+    #[test]
+    fn package_version_policy_and_greatest_bump() {
+        let temp = tests::fixture();
+        let mut plugin = plugins(temp.path()).unwrap().remove(0);
+        let cases = [
+            ("0.4.1", vec!["feat: add metadata"], "0.5.0"),
+            ("0.4.1", vec!["fix!: require explicit roots"], "0.5.0"),
+            ("1.2.3", vec!["perf: reduce allocation"], "1.2.4"),
+            ("1.2.3", vec!["feat: add metadata"], "1.3.0"),
+            (
+                "1.2.3",
+                vec!["feat: add metadata", "fix!: require explicit roots"],
+                "2.0.0",
+            ),
+        ];
+        for (base, messages, expected) in cases {
+            plugin.version = base.into();
+            let changes = messages
+                .into_iter()
+                .map(|m| Change {
+                    id: String::new(),
+                    author: None,
+                    message: m.into(),
+                    paths: vec![],
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                cliff::generate(&plugin, base, &changes)
+                    .unwrap()
+                    .unwrap()
+                    .version,
+                expected
+            );
+        }
+    }
+    #[test]
+    fn generator_provides_compare_links_groups_commits_prs_and_contributors() {
+        let temp = tests::fixture();
+        let p = plugins(temp.path()).unwrap().remove(0);
+        let c = Change {
+            id: "a".repeat(40),
+            author: Some("Example Maintainer".into()),
+            message: "fix(read): preserve boundaries (#17)".into(),
+            paths: vec![],
+        };
+        let release = cliff::generate(&p, "1.0.0", &[c]).unwrap().unwrap();
+        for text in [
+            "## a-v1.0.1",
+            "compare/a-v1.0.0...a-v1.0.1",
+            "### Fixes",
+            "commit/aaaaaaaa",
+            "pull/17",
+            "### Contributors",
+            "Example Maintainer",
+        ] {
+            assert!(
+                release.notes.contains(text),
+                "missing {text}: {}",
+                release.notes
+            );
+        }
+    }
+    #[test]
+    fn package_initial_tag_has_no_invented_compare() {
+        let temp = tests::fixture();
+        let p = plugins(temp.path()).unwrap().remove(0);
+        let c = Change {
+            id: String::new(),
+            author: None,
+            message: "feat: expose bounded reads".into(),
+            paths: vec![],
+        };
+        let release = cliff::generate(&p, "", &[c]).unwrap().unwrap();
+        assert_eq!(release.version, p.version);
+        assert!(!release.notes.contains("/compare/"));
+    }
+    #[test]
+    fn metadata_links_and_contributors_alone_are_not_release_notes() {
+        for text in [
+            "## a-v1.0.1\n\n[Compare changes](https://example.test)\n",
+            "## a-v1.0.1\n\n### Contributors\n\n- Someone\n",
+        ] {
+            assert!(notes(text, "a", "1.0.1").is_err());
+        }
+    }
+    #[test]
+    fn pending_versions_fail_actionably_and_registry_only_is_noop() {
+        let temp = tests::fixture();
+        let root = temp.path();
+        verify_promotion(root).unwrap();
+        for version in ["invalid", "0.9.0", "1.0.1"] {
+            for (file, table) in [("Cargo.toml", "package"), ("plugin.toml", "plugin")] {
+                let path = root.join("plugins/a").join(file);
+                let mut doc = fs::read_to_string(&path)
+                    .unwrap()
+                    .parse::<DocumentMut>()
+                    .unwrap();
+                doc[table]["version"] = value(version);
+                fs::write(path, doc.to_string()).unwrap();
+            }
+            let error = verify_promotion(root).unwrap_err().to_string();
+            assert!(
+                error.contains(if version == "invalid" {
+                    "malformed"
+                } else if version == "0.9.0" {
+                    "decreases"
+                } else {
+                    "preparation PR"
+                }),
+                "{error}"
+            );
+        }
+    }
+    #[test]
+    fn published_sections_survive_unpublished_note_updates() {
+        let old = "# Changelog\n\n## a-v1.0.1\n\n- Pending description.\n\n## a-v1.0.0\n\n- Published historical content.\n\n---\n";
+        let historical = &old[old.find("## a-v1.0.0").unwrap()..];
+        let fresh = "## a-v1.0.1\n\n### Fixes\n\n- Generated description.\n";
+        let updated = replace_unpublished_section(old, "a", "1.0.1", fresh).unwrap();
+        assert!(updated.ends_with(historical));
+        assert_eq!(updated.matches("## a-v1.0.1").count(), 1);
     }
 }
