@@ -88,6 +88,7 @@ pub fn history(root: &Path, p: &Plugin, range: &str) -> Result<Vec<Change>> {
         .lines()
         .map(str::to_owned)
         .collect::<Vec<_>>();
+        let paths = super::paths::runtime_paths(root, p, &id, paths)?;
         if super::affected(root, p, &paths)? {
             changes.push(Change {
                 id,

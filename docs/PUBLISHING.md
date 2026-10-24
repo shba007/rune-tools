@@ -26,8 +26,10 @@ toml_edit synchronizes manifests. Generation runs offline without remote API cal
   Local dependency traversal adds shared crate paths: PDK selects all 14 active
   consumers; sidecar selects the nine native consumers. Draft plugins are excluded.
 - Markdown, examples, tests, mcp.json client configuration and .env changes alone
-  do not change payloads and produce no plugin release. Root manifest/lock changes
-  conservatively select consumers, excluding lock changes belonging only to xtask.
+  do not change payloads and produce no plugin release. Root manifest changes
+  compare each plugin's inherited workspace dependencies; lock changes compare
+  its resolved dependency graph. Unused workspace entries, host-only tooling and
+  changes in another plugin's dependency graph do not select unrelated plugins.
 - Registry versions and matching `<plugin>-v<version>` tags define each published
   baseline. Fetch tags and origin/main before a local preview. A newly introduced
   plugin uses its reviewed manifest version as the initial version,
@@ -40,6 +42,10 @@ are regenerated from that same history and replace only an unpublished section;
 published sections remain unchanged. `.release/prepared.json` records consumed
 source history and exact notes. A merged preparation with no new changes produces
 no new PR; changes arriving before merge update the same fixed branch/PR.
+
+After writing versions, preparation resolves full offline Cargo metadata to
+refresh Cargo.lock before locked validation. `--no-deps` is insufficient here:
+it can leave the lockfile stale after workspace package versions change.
 
 New sections use the shared Cocogitto template: dated version headings,
 comparison links between actual previous/new tags, emoji groups and linked commits

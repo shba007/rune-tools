@@ -2,6 +2,8 @@
 use semver::Version;
 #[path = "release_generator.rs"]
 mod generator;
+#[path = "release_paths.rs"]
+mod paths;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::{collections::BTreeSet, fs, path::Path, process::Command};
@@ -452,13 +454,7 @@ pub fn apply(root: &Path, state: &State) -> Result<()> {
     fs::write(state_path, serde_json::to_string_pretty(&recorded)? + "\n")?;
     let status = Command::new("cargo")
         .current_dir(root)
-        .args([
-            "metadata",
-            "--offline",
-            "--no-deps",
-            "--format-version",
-            "1",
-        ])
+        .args(["metadata", "--offline", "--format-version", "1"])
         .stdout(std::process::Stdio::null())
         .status()?;
     if !status.success() {
@@ -831,6 +827,54 @@ mod tests {
             next.releases[0].notes
         );
         assert!(next.releases[0].notes.contains("preserve read bounds"));
+    }
+    #[test]
+    fn preparation_refreshes_an_existing_lock_for_locked_validation() {
+        let fixture = fixture();
+        let root = fixture.path();
+        let before = Command::new("cargo")
+            .current_dir(root)
+            .args(["generate-lockfile", "--offline"])
+            .output()
+            .unwrap();
+        assert!(
+            before.status.success(),
+            "{}",
+            String::from_utf8_lossy(&before.stderr)
+        );
+        let changes = [change(
+            "fix: preserve bounded reads",
+            &["plugins/a/src/lib.rs"],
+        )];
+        let state = plan(root, &changes, "a".repeat(40)).unwrap();
+        apply(root, &state).unwrap();
+        let locked = Command::new("cargo")
+            .current_dir(root)
+            .args(["metadata", "--locked", "--offline", "--format-version", "1"])
+            .output()
+            .unwrap();
+        assert!(
+            locked.status.success(),
+            "{}",
+            String::from_utf8_lossy(&locked.stderr)
+        );
+        let metadata: Value = serde_json::from_slice(&locked.stdout).unwrap();
+        assert!(
+            metadata["packages"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p["name"] == "a" && p["version"] == "1.0.1")
+        );
+        let lock: toml::Value =
+            toml::from_str(&fs::read_to_string(root.join("Cargo.lock")).unwrap()).unwrap();
+        assert!(
+            lock["package"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p["name"].as_str() == Some("a") && p["version"].as_str() == Some("1.0.1"))
+        );
     }
     #[test]
     fn pending_plugins_survive_another_preparation_batch() {
