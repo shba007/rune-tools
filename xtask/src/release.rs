@@ -1,7 +1,7 @@
 //! Deterministic per-plugin preparation. Git access is read-only; --apply only writes files.
 use semver::Version;
-#[path = "cliff.rs"]
-mod cliff;
+#[path = "release_generator.rs"]
+mod generator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::{collections::BTreeSet, fs, path::Path, process::Command};
@@ -94,7 +94,10 @@ pub fn notes(text: &str, name: &str, version: &str) -> Result<String> {
                 .strip_prefix("## ")?
                 .split_whitespace()
                 .next()?
-                .trim_matches(['[', ']']);
+                .trim_start_matches('[')
+                .split(']')
+                .next()
+                .unwrap_or("");
             (token == version
                 || token == format!("v{version}")
                 || token == format!("{name}-v{version}"))
@@ -232,6 +235,8 @@ pub struct Prepared {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct State {
+    #[serde(default)]
+    pub generator: Option<String>,
     pub source_head: String,
     pub releases: Vec<Prepared>,
 }
@@ -340,11 +345,12 @@ pub fn plan(root: &Path, changes: &[Change], source_head: String) -> Result<Stat
                 Err(e) => Some(Err(e)),
             })
             .collect::<Result<Vec<_>>>()?;
-        if let Some(release) = cliff::generate(&p, &baseline(&registry, &p)?, &selected)? {
+        if let Some(release) = generator::generate(&p, &baseline(&registry, &p)?, &selected)? {
             releases.push(release);
         }
     }
     Ok(State {
+        generator: Some(crate::cocogitto::GENERATOR.into()),
         source_head,
         releases,
     })
@@ -365,22 +371,23 @@ pub fn repository_plan(root: &Path) -> Result<State> {
     let registry = published_registry(root)?;
     let mut releases = vec![];
     for p in plugins(root)? {
-        let new = cliff::history(root, &p, &format!("{consumed}..HEAD"))?;
+        let new = generator::history(root, &p, &format!("{consumed}..HEAD"))?;
         let previous = baseline(&registry, &p)?;
-        if cliff::generate(&p, &previous, &new)?.is_none() {
+        if generator::generate(&p, &previous, &new)?.is_none() {
             continue;
         }
         let all = if previous.is_empty() {
             new
         } else {
-            let tag = cliff::published_tag(root, &p, &previous)?;
-            cliff::history(root, &p, &format!("{tag}..HEAD"))?
+            let tag = generator::published_tag(root, &p, &previous)?;
+            generator::history(root, &p, &format!("{tag}..HEAD"))?
         };
-        if let Some(release) = cliff::generate(&p, &previous, &all)? {
+        if let Some(release) = generator::generate(&p, &previous, &all)? {
             releases.push(release);
         }
     }
     Ok(State {
+        generator: Some(crate::cocogitto::GENERATOR.into()),
         source_head: head,
         releases,
     })
@@ -419,7 +426,12 @@ pub fn apply(root: &Path, state: &State) -> Result<()> {
             replace_unpublished_section(&old, &p.name, &p.version, &release.notes)?
         } else {
             let offset = old.find("\n## ").map(|i| i + 1).unwrap_or(old.len());
-            format!("{}{}\n{}", &old[..offset], release.notes, &old[offset..])
+            format!(
+                "{}{}\n- - -\n\n{}",
+                &old[..offset],
+                release.notes,
+                &old[offset..]
+            )
         };
         fs::write(changelog, rendered)?;
     }
@@ -533,6 +545,13 @@ pub fn verify_promotion(root: &Path) -> Result<()> {
     Ok(())
 }
 fn validate_prepared(root: &Path, state: &State, pending: &[Plugin]) -> Result<()> {
+    if state
+        .generator
+        .as_deref()
+        .is_some_and(|g| g != crate::cocogitto::GENERATOR)
+    {
+        return Err("Unsupported prepared changelog generator".into());
+    }
     if state.source_head.len() != 40 || !state.source_head.chars().all(|c| c.is_ascii_hexdigit()) {
         return Err("prepared source_head must be a full Git commit SHA".into());
     }
@@ -591,7 +610,10 @@ fn replace_unpublished_section(old: &str, name: &str, version: &str, new: &str) 
                 .split_whitespace()
                 .next()
                 .unwrap_or_default()
-                .trim_matches(['[', ']']);
+                .trim_start_matches('[')
+                .split(']')
+                .next()
+                .unwrap_or("");
             if token == version
                 || token == format!("v{version}")
                 || token == format!("{name}-v{version}")
@@ -603,7 +625,7 @@ fn replace_unpublished_section(old: &str, name: &str, version: &str, new: &str) 
     }
     if matches.is_empty() {
         let at = headings.first().copied().unwrap_or(old.len());
-        return Ok(format!("{}{}\n{}", &old[..at], new, &old[at..]));
+        return Ok(format!("{}{}\n- - -\n\n{}", &old[..at], new, &old[at..]));
     }
     if matches.len() != 1 {
         return Err(format!("{name} {version}: expected one unpublished section to update").into());
@@ -612,8 +634,13 @@ fn replace_unpublished_section(old: &str, name: &str, version: &str, new: &str) 
     let end = headings
         .into_iter()
         .find(|i| *i > start)
-        .unwrap_or(old.len());
-    Ok(format!("{}{}\n{}", &old[..start], new, &old[end..]))
+        .unwrap_or_else(|| old.find("Changelog generated by").unwrap_or(old.len()));
+    Ok(format!(
+        "{}{}\n- - -\n\n{}",
+        &old[..start],
+        new,
+        &old[end..]
+    ))
 }
 
 #[cfg(test)]
@@ -906,7 +933,7 @@ mod tests {
             .unwrap();
         let text = fs::read_to_string(root.join(&p.folder).join("CHANGELOG.md")).unwrap();
         let n = notes(&text, &p.name, "0.4.1").unwrap();
-        assert!(n.starts_with("## rune-filesystem-v0.4.1"));
+        assert!(n.starts_with("## [rune-filesystem-v0.4.1]"));
         assert!(n.contains("confine and bound two read-only tools"));
         assert!(!n.contains("## rune-filesystem-v0.4.0"));
     }
@@ -924,12 +951,12 @@ mod package_tests {
             .find(|p| p.name == "rune-filesystem")
             .unwrap();
         assert_eq!(
-            cliff::published_tag(root, &p, "0.4.1").unwrap(),
+            generator::published_tag(root, &p, "0.4.1").unwrap(),
             "rune-filesystem-v0.4.1"
         );
-        assert!(cliff::published_tag(root, &p, "999.0.0").is_err());
+        assert!(generator::published_tag(root, &p, "999.0.0").is_err());
         let history =
-            cliff::history(root, &p, "rune-filesystem-v0.4.0..rune-filesystem-v0.4.1").unwrap();
+            generator::history(root, &p, "rune-filesystem-v0.4.0..rune-filesystem-v0.4.1").unwrap();
         assert!(
             history
                 .iter()
@@ -1007,7 +1034,7 @@ mod package_tests {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(
-                cliff::generate(&plugin, base, &changes)
+                generator::generate(&plugin, base, &changes)
                     .unwrap()
                     .unwrap()
                     .version,
@@ -1025,14 +1052,13 @@ mod package_tests {
             message: "fix(read): preserve boundaries (#17)".into(),
             paths: vec![],
         };
-        let release = cliff::generate(&p, "1.0.0", &[c]).unwrap().unwrap();
+        let release = generator::generate(&p, "1.0.0", &[c]).unwrap().unwrap();
         for text in [
-            "## a-v1.0.1",
-            "compare/a-v1.0.0...a-v1.0.1",
-            "### Fixes",
+            "## [a-v1.0.1]",
+            "compare/a-v1.0.0..a-v1.0.1",
+            "#### 🐛 Bug Fixes",
             "commit/aaaaaaaa",
-            "pull/17",
-            "### Contributors",
+            "(#17)",
             "Example Maintainer",
         ] {
             assert!(
@@ -1052,7 +1078,7 @@ mod package_tests {
             message: "feat: expose bounded reads".into(),
             paths: vec![],
         };
-        let release = cliff::generate(&p, "", &[c]).unwrap().unwrap();
+        let release = generator::generate(&p, "", &[c]).unwrap().unwrap();
         assert_eq!(release.version, p.version);
         assert!(!release.notes.contains("/compare/"));
     }

@@ -15,7 +15,7 @@ in temporary fixtures only. Preserve historical content, commits, tags and relea
 For agent-run tests set CARGO_HUSKY_DONT_INSTALL_HOOKS=true; do not install hooks.
 Do not modify sibling repositories.
 
-Use pinned git-cliff-core 2.14.2 and cliff.toml for commit interpretation,
+Use pinned Cocogitto 7.0.0 and cog.toml for commit interpretation,
 version calculation, grouping and rendering through Rust xtask. Do not retain a
 custom bump algorithm/renderer or use an AI service. `cargo xtask prepare`
 is a read-only preview; --apply writes release files only and is reserved for

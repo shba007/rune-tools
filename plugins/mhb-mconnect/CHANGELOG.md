@@ -2,10 +2,59 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
-## mhb-mconnect-v0.2.0 - 2026-10-21
+
+## [mhb-mconnect-v0.2.0](https://github.com/shba007/rune-tools/compare/mhb-mconnect-v0.1.3..mhb-mconnect-v0.2.0) - 2026-10-21
+
 #### 🚀 Features
-- enhance tool rules validation and annotations - (482c069) - Shirsendu Bairagi
-- implement tool safety rules, A2UI blueprints, and handoff report - (e40d5f1) - Shirsendu Bairagi
+- enhance tool rules validation and annotations - ([482c069](https://github.com/shba007/rune-tools/commit/482c069a1560b505f75bc9479c74818ac390b954)) - Shirsendu Bairagi
+- implement tool safety rules, A2UI blueprints, and handoff report - ([e40d5f1](https://github.com/shba007/rune-tools/commit/e40d5f1db8cfce55afa331d33e0abfcf84dce097)) - Shirsendu Bairagi
+
+- - -
+
+## [mhb-mconnect-v0.1.3](https://github.com/shba007/rune-tools/compare/mhb-mconnect-v0.1.2..mhb-mconnect-v0.1.3) - 2026-09-30
+
+#### 🚜 Refactoring
+- dependencies and remove obsolete plugin - ([fefd5f0](https://github.com/shba007/rune-tools/commit/fefd5f01a3123d2176c5e672d59ab9c835662d2a)) - Shirsendu Bairagi
+
+#### ⚙️ Miscellaneous
+- bump versions and update plugin metadata for rune-memory, rune-sequential-thinking, rune-slides, rune-time, and rune-video - ([b05a3d5](https://github.com/shba007/rune-tools/commit/b05a3d53e4bccb9bed802ad767ca3751f8a43aa3)) - Shirsendu Bairagi
+
+- - -
+
+## [mhb-mconnect-v0.1.2](https://github.com/shba007/rune-tools/compare/mhb-mconnect-v0.1.1..mhb-mconnect-v0.1.2) - 2026-09-29
+
+#### 🚀 Features
+- add initial implementation of rune-figma plugin with operations and types - ([6cb7671](https://github.com/shba007/rune-tools/commit/6cb76715e450a647b53ef0ca6856a1f2a7ed6a55)) - Shirsendu Bairagi
+
+#### 🚜 Refactoring
+- enhance functionality in rune-figma and rune-filesystem plugins - ([e83c5f7](https://github.com/shba007/rune-tools/commit/e83c5f79542a2cf21460cb2b3baac98b19899369)) - Shirsendu Bairagi
+
+- - -
+
+## [mhb-mconnect-v0.1.1](https://github.com/shba007/rune-tools/compare/mhb-mconnect-v0.1.0..mhb-mconnect-v0.1.1) - 2026-09-17
+
+#### 🚀 Features
+- add rune-slides plugin for markdown-based presentations - ([67d8f5d](https://github.com/shba007/rune-tools/commit/67d8f5d2c4f5aa518f066c02e3125c272f569819)) - Shirsendu Bairagi
+- revamp readme and plugin documentation - ([4f88a2b](https://github.com/shba007/rune-tools/commit/4f88a2ba07d2d35b66655ce15ab44cba0b919941)) - Shirsendu Bairagi
+- add multiple new plugins with documentation and capabilities - ([b4f45bb](https://github.com/shba007/rune-tools/commit/b4f45bbb370912831aa5f473ef0e443970fb7c49)) - Shirsendu Bairagi
+
+#### ⚙️ Miscellaneous
+- update plugin versions for * - ([6f02ac2](https://github.com/shba007/rune-tools/commit/6f02ac20a8e96d2edd3f53fd9852c4d83c7fa1a1)) - Shirsendu Bairagi
+
+- - -
+
+## mhb-mconnect-v0.1.0 - 2026-09-03
+
+#### 🚀 Features
+- project structure with cargo configuration and plugin implementations - ([eece334](https://github.com/shba007/rune-tools/commit/eece33483266bfb48760196a99b4d9663e65bce6)) - Shirsendu Bairagi
+- add rune-time plugin for timezone conversion and enhance rune-fs plugin - ([6de898b](https://github.com/shba007/rune-tools/commit/6de898b06bc5eaa727e4987b6d62a616e5795996)) - Shirsendu Bairagi
+- implement a test suite for WASM plugins to validate filesystem operations. - ([17b9900](https://github.com/shba007/rune-tools/commit/17b99001e554b9aa5a692dd17cf8a22b38c82a09)) - Shirsendu Bairagi
+- Introduce rune-sidecar crate and enhance rune-fetch plugin - ([787b64b](https://github.com/shba007/rune-tools/commit/787b64b176edb48deac4cfc2efe7c0b0696644d3)) - Shirsendu Bairagi
+- (**rune-git**) add native sidecar binary with stdio JSON-RPC protocol - ([e871293](https://github.com/shba007/rune-tools/commit/e8712937cc49f9465af863c63737a760d8f341db)) - Shirsendu Bairagi
+- (**mhb-mconnect**) add email template connector plugin - ([c2bf87e](https://github.com/shba007/rune-tools/commit/c2bf87ec41e2d5018953e742711d62d57d4180a7)) - Shirsendu Bairagi
+
+#### 🚜 Refactoring
+- simplify conditional checks and improve readability in various operations - ([a671986](https://github.com/shba007/rune-tools/commit/a67198681b37e4be80f9a144882c325a79303134)) - Shirsendu Bairagi
 
 - - -
 

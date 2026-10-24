@@ -1,4 +1,5 @@
 [package]
+default-run = "xtask"
 name = "xtask"
 version.workspace = true
 edition.workspace = true
@@ -9,8 +10,9 @@ rune-pdk.workspace = true
 serde_json.workspace = true
 toml = "1.1"
 toml_edit = "0.25"
-git-cliff-core = "=2.14.2"
-glob = "0.3"
+cocogitto = "=7.0.0"
+conventional_commit_parser = "=0.9.4"
+chrono = "0.4"
 semver = "1"
 serde = { workspace = true }
 sha2 = "0.11"
@@ -25,3 +27,7 @@ tempfile.workspace = true
 version = "1"
 default-features = false
 features = ["user-hooks"]
+
+[[bin]]
+name = "render-notes"
+path = "src/render_notes.rs"

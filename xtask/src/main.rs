@@ -1,3 +1,4 @@
+mod cocogitto;
 // xtask/src/main.rs
 //
 // Repo-local build orchestrator, invoked as `cargo xtask <command>` via the

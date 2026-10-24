@@ -2,10 +2,55 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
-## rune-memory-v0.3.0 - 2026-10-21
+
+## [rune-memory-v0.3.0](https://github.com/shba007/rune-tools/compare/rune-memory-v0.2.2..rune-memory-v0.3.0) - 2026-10-21
+
 #### 🚀 Features
-- enhance tool rules validation and annotations - (482c069) - Shirsendu Bairagi
-- implement tool safety rules, A2UI blueprints, and handoff report - (e40d5f1) - Shirsendu Bairagi
+- enhance tool rules validation and annotations - ([482c069](https://github.com/shba007/rune-tools/commit/482c069a1560b505f75bc9479c74818ac390b954)) - Shirsendu Bairagi
+- implement tool safety rules, A2UI blueprints, and handoff report - ([e40d5f1](https://github.com/shba007/rune-tools/commit/e40d5f1db8cfce55afa331d33e0abfcf84dce097)) - Shirsendu Bairagi
+
+- - -
+
+## [rune-memory-v0.2.2](https://github.com/shba007/rune-tools/compare/rune-memory-v0.2.1..rune-memory-v0.2.2) - 2026-09-30
+
+#### 🚀 Features
+- add initial implementation of rune-figma plugin with operations and types - ([6cb7671](https://github.com/shba007/rune-tools/commit/6cb76715e450a647b53ef0ca6856a1f2a7ed6a55)) - Shirsendu Bairagi
+
+#### 🚜 Refactoring
+- dependencies and remove obsolete plugin - ([fefd5f0](https://github.com/shba007/rune-tools/commit/fefd5f01a3123d2176c5e672d59ab9c835662d2a)) - Shirsendu Bairagi
+
+#### ⚙️ Miscellaneous
+- bump versions and update plugin metadata for rune-memory, rune-sequential-thinking, rune-slides, rune-time, and rune-video - ([b05a3d5](https://github.com/shba007/rune-tools/commit/b05a3d53e4bccb9bed802ad767ca3751f8a43aa3)) - Shirsendu Bairagi
+
+- - -
+
+## [rune-memory-v0.2.1](https://github.com/shba007/rune-tools/compare/rune-memory-v0.2.0..rune-memory-v0.2.1) - 2026-09-17
+
+#### 🚀 Features
+- update README files and add rune-slides plugin documentation - ([f0e3d81](https://github.com/shba007/rune-tools/commit/f0e3d816784f541ce50bddf28c4e2824bbae9c11)) - Shirsendu Bairagi
+- revamp readme and plugin documentation - ([4f88a2b](https://github.com/shba007/rune-tools/commit/4f88a2ba07d2d35b66655ce15ab44cba0b919941)) - Shirsendu Bairagi
+- add multiple new plugins with documentation and capabilities - ([b4f45bb](https://github.com/shba007/rune-tools/commit/b4f45bbb370912831aa5f473ef0e443970fb7c49)) - Shirsendu Bairagi
+
+#### ⚙️ Miscellaneous
+- update plugin versions for * - ([6f02ac2](https://github.com/shba007/rune-tools/commit/6f02ac20a8e96d2edd3f53fd9852c4d83c7fa1a1)) - Shirsendu Bairagi
+
+- - -
+
+## rune-memory-v0.2.0 - 2026-09-03
+
+#### 🚀 Features
+- project structure with cargo configuration and plugin implementations - ([eece334](https://github.com/shba007/rune-tools/commit/eece33483266bfb48760196a99b4d9663e65bce6)) - Shirsendu Bairagi
+- add rune-time plugin for timezone conversion and enhance rune-fs plugin - ([6de898b](https://github.com/shba007/rune-tools/commit/6de898b06bc5eaa727e4987b6d62a616e5795996)) - Shirsendu Bairagi
+- add rune-memory plugin for knowledge graph management and persistence - ([b846091](https://github.com/shba007/rune-tools/commit/b84609158de8e571d581c29ed63c3c250aa67ed9)) - Shirsendu Bairagi
+- implement a test suite for WASM plugins to validate filesystem operations. - ([17b9900](https://github.com/shba007/rune-tools/commit/17b99001e554b9aa5a692dd17cf8a22b38c82a09)) - Shirsendu Bairagi
+- Introduce rune-sidecar crate and enhance rune-fetch plugin - ([787b64b](https://github.com/shba007/rune-tools/commit/787b64b176edb48deac4cfc2efe7c0b0696644d3)) - Shirsendu Bairagi
+- (**rune-audio**) update description and add README with detailed use cases for audio extraction and music downloading tools - ([079e873](https://github.com/shba007/rune-tools/commit/079e873de4a44d050836046d8e0543b14d40ad62)) - Shirsendu Bairagi
+- add MCP configuration files for multiple plugins including audio, email, fetch, filesystem, git, image, memory, sequentialthinking, time, and video - ([44a9011](https://github.com/shba007/rune-tools/commit/44a90113e3749989d4247727f5fde70a2c8171b6)) - Shirsendu Bairagi
+- (**rune-memory**) add observation management, node search, and graph inspection - ([5e08cb5](https://github.com/shba007/rune-tools/commit/5e08cb549c9eda0b05755a771c5470e0aec47b90)) - Shirsendu Bairagi
+- (**rune-git**) add commit message validation tool - ([d40aa5d](https://github.com/shba007/rune-tools/commit/d40aa5d16e4f1535e1285d1fdb6250a2ad4e2f22)) - Shirsendu Bairagi
+
+#### 🚜 Refactoring
+- (**sequential-thinking**) rename plugin and restructure into standard layout - ([d6c17f1](https://github.com/shba007/rune-tools/commit/d6c17f166e9e313c78de1f6eb5ec7e4cbe3e67df)) - Shirsendu Bairagi
 
 - - -
 

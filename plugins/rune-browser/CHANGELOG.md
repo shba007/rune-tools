@@ -2,11 +2,44 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
-## rune-browser-v0.3.0 - 2026-10-21
+
+## [rune-browser-v0.3.0](https://github.com/shba007/rune-tools/compare/rune-browser-v0.2.4..rune-browser-v0.3.0) - 2026-10-21
+
 #### 🚀 Features
-- (**rune-ssh**) add SSH and SFTP operations with WASM support - (9cc5df9) - Shirsendu Bairagi
-- enhance tool rules validation and annotations - (482c069) - Shirsendu Bairagi
-- implement tool safety rules, A2UI blueprints, and handoff report - (e40d5f1) - Shirsendu Bairagi
+- (**rune-ssh**) add SSH and SFTP operations with WASM support - ([9cc5df9](https://github.com/shba007/rune-tools/commit/9cc5df9a642fe884fa1c88316052ba4caa67711e)) - Shirsendu Bairagi
+- enhance tool rules validation and annotations - ([482c069](https://github.com/shba007/rune-tools/commit/482c069a1560b505f75bc9479c74818ac390b954)) - Shirsendu Bairagi
+- implement tool safety rules, A2UI blueprints, and handoff report - ([e40d5f1](https://github.com/shba007/rune-tools/commit/e40d5f1db8cfce55afa331d33e0abfcf84dce097)) - Shirsendu Bairagi
+
+- - -
+
+## [rune-browser-v0.2.4](https://github.com/shba007/rune-tools/compare/rune-browser-v0.2.2..rune-browser-v0.2.4) - 2026-09-30
+
+#### 🚜 Refactoring
+- dependencies and remove obsolete plugin - ([fefd5f0](https://github.com/shba007/rune-tools/commit/fefd5f01a3123d2176c5e672d59ab9c835662d2a)) - Shirsendu Bairagi
+
+#### ⚙️ Miscellaneous
+- bump versions and update plugin metadata for rune-memory, rune-sequential-thinking, rune-slides, rune-time, and rune-video - ([b05a3d5](https://github.com/shba007/rune-tools/commit/b05a3d53e4bccb9bed802ad767ca3751f8a43aa3)) - Shirsendu Bairagi
+
+- - -
+
+## rune-browser-v0.2.2 - 2026-09-29
+
+#### 🚀 Features
+- project structure with cargo configuration and plugin implementations - ([eece334](https://github.com/shba007/rune-tools/commit/eece33483266bfb48760196a99b4d9663e65bce6)) - Shirsendu Bairagi
+- add rune-time plugin for timezone conversion and enhance rune-fs plugin - ([6de898b](https://github.com/shba007/rune-tools/commit/6de898b06bc5eaa727e4987b6d62a616e5795996)) - Shirsendu Bairagi
+- implement a test suite for WASM plugins to validate filesystem operations. - ([17b9900](https://github.com/shba007/rune-tools/commit/17b99001e554b9aa5a692dd17cf8a22b38c82a09)) - Shirsendu Bairagi
+- Introduce rune-sidecar crate and enhance rune-fetch plugin - ([787b64b](https://github.com/shba007/rune-tools/commit/787b64b176edb48deac4cfc2efe7c0b0696644d3)) - Shirsendu Bairagi
+- (**rune-git**) add native sidecar binary with stdio JSON-RPC protocol - ([e871293](https://github.com/shba007/rune-tools/commit/e8712937cc49f9465af863c63737a760d8f341db)) - Shirsendu Bairagi
+- revamp readme and plugin documentation - ([4f88a2b](https://github.com/shba007/rune-tools/commit/4f88a2ba07d2d35b66655ce15ab44cba0b919941)) - Shirsendu Bairagi
+- add multiple new plugins with documentation and capabilities - ([b4f45bb](https://github.com/shba007/rune-tools/commit/b4f45bbb370912831aa5f473ef0e443970fb7c49)) - Shirsendu Bairagi
+- Implement rune-browser plugin with session management and browser operations - ([3f0d519](https://github.com/shba007/rune-tools/commit/3f0d51965fff94a9ff3dd4397e6f08536ec78273)) - Shirsendu Bairagi
+- (**rune-browser**) add BrowserBinaryConfig and PlatformConfig for binary management - ([a18e534](https://github.com/shba007/rune-tools/commit/a18e5346481baf19c557a59a9f2b598e624395c5)) - Shirsendu Bairagi
+- add initial implementation of rune-figma plugin with operations and types - ([6cb7671](https://github.com/shba007/rune-tools/commit/6cb76715e450a647b53ef0ca6856a1f2a7ed6a55)) - Shirsendu Bairagi
+
+#### 🚜 Refactoring
+- simplify conditional checks and improve readability in various operations - ([a671986](https://github.com/shba007/rune-tools/commit/a67198681b37e4be80f9a144882c325a79303134)) - Shirsendu Bairagi
+- improve code readability and formatting in native_sidecar and operations modules - ([2309e2a](https://github.com/shba007/rune-tools/commit/2309e2ad1668a105b3f148bb4e7a9e9967f19d00)) - Shirsendu Bairagi
+- enhance functionality in rune-figma and rune-filesystem plugins - ([e83c5f7](https://github.com/shba007/rune-tools/commit/e83c5f79542a2cf21460cb2b3baac98b19899369)) - Shirsendu Bairagi
 
 - - -
 

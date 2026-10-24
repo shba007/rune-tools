@@ -9,20 +9,20 @@ No AI service generates notes.
 
 ## Generator and package selection
 
-`git-cliff-core` is pinned exactly to **2.14.2** in xtask/Cargo.toml/Cargo.lock.
-`cliff.toml` configures its Conventional Commit parser, semantic version policy,
+`cocogitto` is pinned exactly to **7.0.0** in xtask/Cargo.toml/Cargo.lock.
+`cog.toml` configures its Conventional Commit parser, semantic version policy,
 grouping, links, contributors and Markdown rendering. xtask does not implement
 a second bump algorithm or changelog renderer. semver is used only for validation;
 toml_edit synchronizes manifests. Generation runs offline without remote API calls.
 
 - `feat` advances minor, including below 1.0; fix/perf/maintenance advance patch.
 - Breaking changes take precedence: major after 1.0, minor below 1.0. These
-  git-cliff defaults are explicitly configured and tested.
+  Cocogitto commit types are explicitly configured; the integration maps pre-1.0 breaking fixes to a minor increment for classification only.
 - All valid semantic types are eligible, including docs/refactor/style/test/build/
   ci/chore/revert/custom. Release/version/registry and autoformat bookkeeping,
   invalid commits, placeholders and internal planning labels are excluded.
-- A plugin's packaged source selects that plugin. git-cliff's native monorepo
-  include/exclude path and prefixed-tag filters read its relevant history.
+- A plugin's packaged source selects that plugin. Read-only Git history and
+  the repository's dependency-aware path filter select relevant commits.
   Local dependency traversal adds shared crate paths: PDK selects all 14 active
   consumers; sidecar selects the nine native consumers. Draft plugins are excluded.
 - Markdown, examples, tests, mcp.json client configuration and .env changes alone
@@ -30,7 +30,7 @@ toml_edit synchronizes manifests. Generation runs offline without remote API cal
   conservatively select consumers, excluding lock changes belonging only to xtask.
 - Registry versions and matching `<plugin>-v<version>` tags define each published
   baseline. Fetch tags and origin/main before a local preview. A newly introduced
-  plugin uses git-cliff's initial-tag setting, seeded from its manifest version,
+  plugin uses its reviewed manifest version as the initial version,
   with no fabricated previous tag or compare link.
 
 Generation uses all eligible history since each published tag. A pending version
@@ -41,10 +41,10 @@ published sections remain unchanged. `.release/prepared.json` records consumed
 source history and exact notes. A merged preparation with no new changes produces
 no new PR; changes arriving before merge update the same fixed branch/PR.
 
-New sections follow changelogen's presentation: a prefixed version heading,
-compare link between actual previous/new tags, applicable grouped changes,
-linked commits and PR references, explicit breaking descriptions and contributors
-when available. Empty groups are omitted. Publication extracts that exact section;
+New sections use the shared Cocogitto template: dated version headings,
+comparison links between actual previous/new tags, emoji groups and linked commits
+with author signatures. PR references remain in commit summaries. Breaking-change
+body/footer descriptions are retained. Missing historical commit metadata is not invented. Empty groups are omitted. Publication extracts that exact section;
 it never regenerates prose from post-merge Git history.
 
 ## Local previews
