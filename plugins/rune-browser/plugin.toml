@@ -16,3 +16,20 @@ exec = { allowed_binaries = ["agent-browser", "rune-browser-native"] }
 version = ">=0.38.0"
 optional = false
 description = "Headless browser automation engine"
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.allowed_dir]
+type = "string"
+description = "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions."
+required = false
+secret = false
+env = ["ALLOWED_DIR"]
+
+[configuration.fields.output_directory]
+type = "string"
+description = "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR."
+required = false
+secret = false
+env = ["OUTPUT_DIRECTORY", "OUTPUT_DIR", "ALLOWED_DIR"]

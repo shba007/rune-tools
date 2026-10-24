@@ -11,3 +11,14 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/mhb-mco
 network_hosts = ["api.modesthumanbrands.com"]
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.base_url]
+type = "string"
+description = "API base URL. MHB_BASE_URL takes precedence over BASE_URL; a per-call baseUrl overrides both."
+required = false
+secret = false
+env = ["MHB_BASE_URL", "BASE_URL"]
+default = "https://api.modesthumanbrands.com"

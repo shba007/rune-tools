@@ -11,3 +11,21 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-me
 network_hosts = []
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.allowed_dir]
+type = "string"
+description = "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions."
+required = false
+secret = false
+config_key = "allowed_dir"
+
+[configuration.fields.memory_file]
+type = "string"
+description = "Knowledge graph JSON file, resolved against allowed_dir when configured. Per-call memoryFile overrides this setting."
+required = false
+secret = false
+config_key = "memory_file"
+default = "memory.json"

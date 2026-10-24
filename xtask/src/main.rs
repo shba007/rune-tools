@@ -12,6 +12,7 @@ mod cocogitto;
 
 mod config;
 mod hooks;
+mod metadata;
 mod postman;
 mod publication;
 mod registry;
@@ -151,6 +152,7 @@ fn print_usage() {
          cargo xtask test <plugin-name>\n  \
          cargo xtask test-all\n  \
          cargo xtask detect-publishable   (CI: emit release matrices)\n  \
+         cargo xtask registry-metadata --repo OWNER/REPO --output DIR\n  \
          cargo xtask prepare [--apply]     (dry-run by default; CI/owner applies)\n  \
          cargo xtask hooks                (install git hooks from .cargo-husky/hooks)"
     );
@@ -175,6 +177,9 @@ fn main() -> ExitCode {
 
     let command = args.first().map(String::as_str);
     match command {
+        Some("registry-metadata") => {
+            return report(metadata::command(&args).map_err(|e| e.to_string()));
+        }
         Some("postman") => return report(postman::command(args.iter().any(|a| a == "--check"))),
         Some("detect-publishable") => {
             return report(registry::detect_publishable(&cargo_metadata()));

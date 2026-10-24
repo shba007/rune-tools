@@ -10,3 +10,14 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-ti
 [capabilities]
 network_hosts = []
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.default_timezone]
+type = "string"
+description = "Default IANA timezone for get_current_time when timezone is omitted."
+required = false
+secret = false
+config_key = "default_timezone"
+default = "UTC"

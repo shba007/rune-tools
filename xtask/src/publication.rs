@@ -22,7 +22,7 @@ pub fn payloads(p: &Plugin) -> Vec<(String, String)> {
 fn tag(p: &Plugin) -> String {
     format!("{}-v{}", p.name, p.version)
 }
-fn hash(bytes: &[u8]) -> String {
+pub(crate) fn hash(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()
         .map(|byte| format!("{byte:02x}"))
@@ -274,6 +274,9 @@ pub fn command(args: &[String]) -> Result<()> {
             index[&p.name]["versions"][&p.version] = e;
             index[&p.name]["latest"] = json!(p.version);
             index[&p.name]["description"] = json!(p.description);
+        }
+        if evidence.as_object().is_some_and(|o| !o.is_empty()) {
+            index = crate::metadata::enrich_latest(root, repo, &index)?;
         }
         let out = Path::new(opt("--output")?);
         fs::create_dir_all(out)?;

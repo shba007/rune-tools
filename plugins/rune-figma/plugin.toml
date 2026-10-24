@@ -11,3 +11,28 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-fi
 network_hosts = ["localhost", "127.0.0.1"]
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.ws_url]
+type = "string"
+description = "TalkToFigma relay WebSocket URL. Takes precedence over FIGMA_PORT; otherwise ws://127.0.0.1:3055 is used."
+required = false
+secret = false
+env = ["FIGMA_WS_URL"]
+
+[configuration.fields.port]
+type = "integer"
+description = "Loopback relay port used only when FIGMA_WS_URL is absent."
+required = false
+secret = false
+env = ["FIGMA_PORT"]
+default = 3055
+
+[configuration.fields.channel]
+type = "string"
+description = "Initial TalkToFigma channel; alternatively select a channel with join_channel."
+required = false
+secret = false
+env = ["FIGMA_CHANNEL"]

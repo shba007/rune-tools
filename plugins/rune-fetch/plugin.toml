@@ -10,3 +10,8 @@ filesystem = { mode = "none" }
 exec = { allowed_binaries = [] }
 
 [dependencies.binaries]
+
+[configuration]
+schema_version = 1
+
+[configuration.fields]

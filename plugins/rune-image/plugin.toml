@@ -23,3 +23,125 @@ exec = { allowed_binaries = ["gallery-dl"] }
 version = ">=1.26.0"
 optional = false
 description = "Image gallery and social media scraper"
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.allowed_dir]
+type = "string"
+description = "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions."
+required = false
+secret = false
+env = ["ALLOWED_DIR"]
+
+[configuration.fields.output_directory]
+type = "string"
+description = "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR."
+required = false
+secret = false
+env = ["OUTPUT_DIRECTORY", "OUTPUT_DIR", "ALLOWED_DIR"]
+
+[configuration.fields.cookies_file]
+type = "string"
+description = "Path to a cookie file for authenticated downloads; takes precedence over cookie directory and browser extraction."
+required = false
+secret = true
+env = ["COOKIES_FILE"]
+
+[configuration.fields.cookies_dir]
+type = "string"
+description = "Directory containing domain-matched cookie files for downloads."
+required = false
+secret = false
+env = ["COOKIES_DIR"]
+
+[configuration.fields.cookies_from_browser]
+type = "string"
+description = "Browser identifier used to obtain cookies when no explicit or matching cookie file is selected."
+required = false
+secret = false
+env = ["COOKIES_FROM_BROWSER"]
+
+[configuration.fields.proxy]
+type = "string"
+description = "Proxy URL for gallery-dl downloads when proxy is omitted. May contain credentials."
+required = false
+secret = true
+env = ["PROXY"]
+
+[configuration.fields.trace_color_mode]
+type = "string"
+description = "Raster tracing color mode: color or binary. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["TRACE_COLOR_MODE"]
+
+[configuration.fields.trace_hierarchical]
+type = "string"
+description = "Raster tracing hierarchy mode: stacked or cutout. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["TRACE_HIERARCHICAL"]
+
+[configuration.fields.trace_curve_mode]
+type = "string"
+description = "Raster tracing curve mode: spline, polygon or none. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["TRACE_CURVE_MODE"]
+
+[configuration.fields.color_precision]
+type = "integer"
+description = "Raster tracing color precision. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["COLOR_PRECISION"]
+
+[configuration.fields.filter_speckle]
+type = "integer"
+description = "Raster tracing speckle filter. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["FILTER_SPECKLE"]
+
+[configuration.fields.layer_difference]
+type = "integer"
+description = "Raster tracing layer difference. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["LAYER_DIFFERENCE"]
+
+[configuration.fields.corner_threshold]
+type = "integer"
+description = "Raster tracing corner threshold. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["CORNER_THRESHOLD"]
+
+[configuration.fields.length_threshold]
+type = "number"
+description = "Raster tracing length threshold. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["LENGTH_THRESHOLD"]
+
+[configuration.fields.splice_threshold]
+type = "integer"
+description = "Raster tracing splice threshold. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["SPLICE_THRESHOLD"]
+
+[configuration.fields.max_iterations]
+type = "integer"
+description = "Raster tracing iteration count. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["MAX_ITERATIONS"]
+
+[configuration.fields.path_precision]
+type = "integer"
+description = "Raster tracing path precision. Used when the corresponding tool argument is omitted."
+required = false
+secret = false
+env = ["PATH_PRECISION"]

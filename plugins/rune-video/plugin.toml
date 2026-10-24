@@ -36,3 +36,125 @@ description = "Video stream extraction, playlist crawling, and metadata inspecti
 version = ">=6.0.0"
 optional = true
 description = "Live broadcast capture and recording"
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.allowed_dir]
+type = "string"
+description = "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions."
+required = false
+secret = false
+env = ["ALLOWED_DIR"]
+
+[configuration.fields.output_directory]
+type = "string"
+description = "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR."
+required = false
+secret = false
+env = ["OUTPUT_DIRECTORY", "OUTPUT_DIR", "ALLOWED_DIR"]
+
+[configuration.fields.cookies_file]
+type = "string"
+description = "Path to a cookie file for authenticated downloads; takes precedence over cookie directory and browser extraction."
+required = false
+secret = true
+env = ["COOKIES_FILE"]
+
+[configuration.fields.cookies_dir]
+type = "string"
+description = "Directory containing domain-matched cookie files for downloads."
+required = false
+secret = false
+env = ["COOKIES_DIR"]
+
+[configuration.fields.cookies_from_browser]
+type = "string"
+description = "Browser identifier used to obtain cookies when no explicit or matching cookie file is selected."
+required = false
+secret = false
+env = ["COOKIES_FROM_BROWSER"]
+
+[configuration.fields.proxy]
+type = "string"
+description = "Proxy URL for yt-dlp downloads when proxy is omitted. May contain credentials."
+required = false
+secret = true
+env = ["PROXY"]
+
+[configuration.fields.player_client]
+type = "string"
+description = "YouTube player client passed to yt-dlp extractor arguments."
+required = false
+secret = false
+env = ["PLAYER_CLIENT"]
+
+[configuration.fields.max_resolution]
+type = "string"
+description = "Default maximum video height when maxResolution is omitted."
+required = false
+secret = false
+env = ["MAX_RESOLUTION", "MAXRESOLUTION"]
+default = "1080p"
+
+[configuration.fields.write_subtitles]
+type = "boolean"
+description = "Download subtitles when writeSubtitles is omitted."
+required = false
+secret = false
+env = ["WRITE_SUBTITLES"]
+default = false
+
+[configuration.fields.subtitles_lang]
+type = "string"
+description = "Default subtitle language when subtitlesLang is omitted."
+required = false
+secret = false
+env = ["SUBTITLES_LANG", "SUBTITLESLANG"]
+default = "en"
+
+[configuration.fields.start_index]
+type = "integer"
+description = "Default first playlist item when startIndex is omitted."
+required = false
+secret = false
+env = ["START_INDEX"]
+default = 1
+
+[configuration.fields.end_index]
+type = "integer"
+description = "Default last playlist item when endIndex is omitted."
+required = false
+secret = false
+env = ["END_INDEX"]
+
+[configuration.fields.max_videos]
+type = "integer"
+description = "Default playlist download count when maxVideos is omitted."
+required = false
+secret = false
+env = ["MAX_VIDEOS"]
+
+[configuration.fields.quality]
+type = "string"
+description = "Default stream quality when quality is omitted."
+required = false
+secret = false
+env = ["QUALITY"]
+default = "best"
+
+[configuration.fields.duration_minutes]
+type = "integer"
+description = "Default stream recording duration in minutes."
+required = false
+secret = false
+env = ["DURATION_MINUTES"]
+default = 5
+
+[configuration.fields.lossless]
+type = "boolean"
+description = "Use stream copy for trimming when lossless is omitted."
+required = false
+secret = false
+env = ["LOSSLESS"]
+default = false

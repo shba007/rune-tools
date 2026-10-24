@@ -126,13 +126,22 @@ fn lock_inputs(text: &str, name: &str) -> Result<BTreeMap<String, toml::Value>> 
     }
     Ok(inputs)
 }
+fn plugin_inputs(text: &str) -> Result<toml::Value> {
+    let mut doc: toml::Value = toml::from_str(text)?;
+    doc.as_table_mut()
+        .ok_or("invalid plugin manifest")?
+        .remove("configuration");
+    Ok(doc)
+}
+
 pub(super) fn runtime_paths(
     root: &Path,
     p: &Plugin,
     id: &str,
     mut paths: Vec<String>,
 ) -> Result<Vec<String>> {
-    for file in ["Cargo.toml", "Cargo.lock"] {
+    let plugin_manifest = format!("{}/plugin.toml", p.folder);
+    for file in ["Cargo.toml", "Cargo.lock", plugin_manifest.as_str()] {
         if !paths.iter().any(|s| s == file) {
             continue;
         }
@@ -143,8 +152,10 @@ pub(super) fn runtime_paths(
         let same = if file == "Cargo.toml" {
             let keys = workspace_keys(root, &p.folder, &mut BTreeSet::new())?;
             manifest_inputs(&old, &p.folder, &keys)? == manifest_inputs(&new, &p.folder, &keys)?
-        } else {
+        } else if file == "Cargo.lock" {
             lock_inputs(&old, &p.name)? == lock_inputs(&new, &p.name)?
+        } else {
+            plugin_inputs(&old)? == plugin_inputs(&new)?
         };
         if same {
             paths.retain(|s| s != file)
@@ -156,6 +167,21 @@ pub(super) fn runtime_paths(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn configuration_metadata_does_not_select_a_payload_release() {
+        let original = "[plugin]\nname='test'\nversion='1.0.0'\n[capabilities]\nnetwork_hosts=[]\n";
+        let metadata =
+            format!("{original}[configuration]\nschema_version=1\n[configuration.fields]\n");
+        assert_eq!(
+            plugin_inputs(original).unwrap(),
+            plugin_inputs(&metadata).unwrap()
+        );
+        assert_ne!(
+            plugin_inputs(original).unwrap(),
+            plugin_inputs(&metadata.replace("network_hosts=[]", "network_hosts=['example.com']"))
+                .unwrap()
+        );
+    }
     #[test]
     fn lock_edges_ignore_unrelated_versions_and_abbreviation_changes() {
         let old = "[[package]]\nname='plugin'\nversion='1.0.0'\ndependencies=['dep 1.0.0']\n[[package]]\nname='dep'\nversion='1.0.0'\n[[package]]\nname='dep'\nversion='2.0.0'\n";

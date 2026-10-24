@@ -40,6 +40,40 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.1.3/mhb-mconnect-0.1.3.wasm"
       },
       "0.2.0": {
+        "checksums": {
+          "mhb-mconnect-native-0.2.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "35dee9d0594655ec8dd9d7d15215d2e5c5c99df55f76f1dadbd1c69e943860fc",
+            "size": 1429912
+          },
+          "mhb-mconnect-native-0.2.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "8ee5d7c3d1b2f4135c0ea41e6e5ad6ac44390a71c31ae922f346fca9696f23a5",
+            "size": 1572933
+          },
+          "mhb-mconnect-native-0.2.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "b0fdfd1deac1b8d25ccb47f8273aa8bcc9a3569d0bbf19c3f0898f214651d6a7",
+            "size": 1445891
+          },
+          "mhb-mconnect-native-0.2.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "abfeb0153089785bec05d5dbddb7b4177457a5823286818ce5d4f9ab07f34af5",
+            "size": 1669012
+          }
+        },
+        "configuration": {
+          "fields": {
+            "base_url": {
+              "default": "https://api.modesthumanbrands.com",
+              "description": "API base URL. MHB_BASE_URL takes precedence over BASE_URL; a per-call baseUrl overrides both.",
+              "env": [
+                "MHB_BASE_URL",
+                "BASE_URL"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.2.0/mhb-mconnect-native-0.2.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/mhb-mconnect-v0.2.0/mhb-mconnect-native-0.2.0-x86_64-apple-darwin.tar.gz",
@@ -99,6 +133,107 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.2.3/rune-audio-0.2.3.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-audio-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "dd0456d9502eb04702cfe8f124d1c3ede8cdc6129b1365da113dabd887eea136",
+            "size": 219023
+          },
+          "rune-audio-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "95b0ba02454fab3d3b4b5113a688dea71e433630037bf49cae1fa032fa795255",
+            "size": 233490
+          },
+          "rune-audio-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "a79a943c4d28832e77e1e26daba65576f5aea612ca77cab5ede84cb8d7485259",
+            "size": 192092
+          },
+          "rune-audio-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "0dd5656b4966624eba27d8eab46a840bc918b37de278b0cce3d6244b7623b089",
+            "size": 244491
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "env": [
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "audio_quality": {
+              "default": 0,
+              "description": "Default yt-dlp audio quality when audioQuality is omitted.",
+              "env": [
+                "AUDIO_QUALITY"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "cookies_dir": {
+              "description": "Directory containing domain-matched cookie files for downloads.",
+              "env": [
+                "COOKIES_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "cookies_file": {
+              "description": "Path to a cookie file for authenticated downloads; takes precedence over cookie directory and browser extraction.",
+              "env": [
+                "COOKIES_FILE"
+              ],
+              "required": false,
+              "secret": true,
+              "type": "string"
+            },
+            "cookies_from_browser": {
+              "description": "Browser identifier used to obtain cookies when no explicit or matching cookie file is selected.",
+              "env": [
+                "COOKIES_FROM_BROWSER"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "include_lyrics": {
+              "default": false,
+              "description": "Default inclusion of lyrics for Spotify downloads.",
+              "env": [
+                "INCLUDE_LYRICS"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "boolean"
+            },
+            "output_directory": {
+              "description": "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR.",
+              "env": [
+                "OUTPUT_DIRECTORY",
+                "OUTPUT_DIR",
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "proxy": {
+              "description": "Proxy URL for downloads. HTTPS_PROXY takes precedence over HTTP_PROXY, then PROXY. May contain credentials.",
+              "env": [
+                "HTTPS_PROXY",
+                "HTTP_PROXY",
+                "PROXY"
+              ],
+              "required": false,
+              "secret": true,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.3.0/rune-audio-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-audio-v0.3.0/rune-audio-native-0.3.0-x86_64-apple-darwin.tar.gz",
@@ -131,6 +266,49 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.2.4/rune-browser-0.2.4.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-browser-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "d4724016a789e029f4791b132a03f5f605bd12584bd606fe339e5b1ec49e60fc",
+            "size": 274436
+          },
+          "rune-browser-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "945c8a4b13b379ff52781c60504f78465e9c7837578d9f7616cc0b25542691bf",
+            "size": 291487
+          },
+          "rune-browser-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "ebfafce3c78345ea869fe0682c136c169554acdaf383834a50697d0057ec78e2",
+            "size": 261866
+          },
+          "rune-browser-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "2ac032a6b64f37cee2d5a44a5a97c6ff1cd85705aab3fc34354a4804b5bf682b",
+            "size": 303492
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "env": [
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "output_directory": {
+              "description": "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR.",
+              "env": [
+                "OUTPUT_DIRECTORY",
+                "OUTPUT_DIR",
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.3.0/rune-browser-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-browser-v0.3.0/rune-browser-native-0.3.0-x86_64-apple-darwin.tar.gz",
@@ -190,6 +368,157 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.1.5/rune-email-0.1.5.wasm"
       },
       "0.2.0": {
+        "checksums": {
+          "rune-email-native-0.2.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "39c2352447e3b30d68ea4d2d1c7061827dd529d0ee5cc213c2c4dfd8cd5b8374",
+            "size": 520277
+          },
+          "rune-email-native-0.2.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "1c3c04a5c1bc7585ff2a119e4b75cbdfc1659954ab337c8425c2d962bf8d807d",
+            "size": 533844
+          },
+          "rune-email-native-0.2.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "6a573cc77529e8cd3a894b0c41ca757fab3b8be26b78d323b95ced43a3960cf3",
+            "size": 502718
+          },
+          "rune-email-native-0.2.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "54904880d9d0eeaf78c7128ee29248ba2828a94bea9b6d224db354872dc4ff17",
+            "size": 567663
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "env": [
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "display_name": {
+              "description": "Sender display name. DISPLAY_NAME takes precedence over DISPLAYNAME, then EMAIL_DISPLAY_NAME.",
+              "env": [
+                "DISPLAY_NAME",
+                "DISPLAYNAME",
+                "EMAIL_DISPLAY_NAME"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "email": {
+              "description": "Account username/address. Used for IMAP, SMTP and sender address. A per-call email overrides these environment values in listed order.",
+              "env": [
+                "EMAIL",
+                "EMAIL_USER",
+                "IMAP_USER",
+                "SMTP_USER"
+              ],
+              "required": true,
+              "secret": false,
+              "type": "string"
+            },
+            "imap_host": {
+              "description": "IMAP server hostname; required unless supplied by a recognized preset or tool argument.",
+              "env": [
+                "IMAP_HOST",
+                "IMAPHOST"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "imap_port": {
+              "default": 993,
+              "description": "IMAP server port; defaults to 993.",
+              "env": [
+                "IMAP_PORT",
+                "IMAPPORT"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "imap_tls": {
+              "default": true,
+              "description": "IMAP TLS preference. Published connection code always establishes TLS.",
+              "env": [
+                "IMAP_TLS",
+                "IMAPTLS"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "boolean"
+            },
+            "output_directory": {
+              "description": "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR.",
+              "env": [
+                "OUTPUT_DIRECTORY",
+                "OUTPUT_DIR",
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "password": {
+              "description": "Account password or application password shared by IMAP and SMTP. A per-call password overrides these environment values in listed order.",
+              "env": [
+                "PASSWORD",
+                "EMAIL_PASSWORD",
+                "IMAP_PASSWORD",
+                "SMTP_PASSWORD"
+              ],
+              "required": true,
+              "secret": true,
+              "type": "string"
+            },
+            "preset": {
+              "description": "Provider preset: gmail, hostinger or outlook. Without a preset, configure both IMAP_HOST and SMTP_HOST. PRESET takes precedence over EMAIL_PRESET.",
+              "env": [
+                "PRESET",
+                "EMAIL_PRESET"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "smtp_host": {
+              "description": "SMTP server hostname; required unless supplied by a recognized preset or tool argument.",
+              "env": [
+                "SMTP_HOST",
+                "SMTPHOST"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "smtp_port": {
+              "description": "SMTP port; defaults to 587 for outlook, 465 otherwise.",
+              "env": [
+                "SMTP_PORT",
+                "SMTPPORT"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "smtp_tls": {
+              "default": true,
+              "description": "SMTP TLS preference. Published connection code selects STARTTLS for port 587 and implicit TLS for other ports.",
+              "env": [
+                "SMTP_TLS",
+                "SMTPTLS"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "boolean"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.2.0/rune-email-native-0.2.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-email-v0.2.0/rune-email-native-0.2.0-x86_64-apple-darwin.tar.gz",
@@ -216,6 +545,16 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.3.2/rune-fetch-0.3.2.wasm"
       },
       "0.4.0": {
+        "checksums": {
+          "rune-fetch-0.4.0.wasm": {
+            "sha256": "e23f653a01ed4baeb16cd26a90a503b6dfdcd9e8858554fc06fdbdd382c20adb",
+            "size": 292408
+          }
+        },
+        "configuration": {
+          "fields": {},
+          "schema_version": 1
+        },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-fetch-v0.4.0/rune-fetch-0.4.0.wasm"
       }
     }
@@ -241,6 +580,57 @@
         }
       },
       "0.3.0": {
+        "checksums": {
+          "rune-figma-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "254f9866c965c7375caf02a575a81897bc33e4e34e3d7c4d7973dd019261b8e7",
+            "size": 395231
+          },
+          "rune-figma-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "1e90bdd20c526b72882787b49a723dda193885cc217efee994f2c45eb82982e4",
+            "size": 416236
+          },
+          "rune-figma-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "e5eb03bdc93bee8d4fb1f496d3a6dd21cdac7ec1e1058832521544b6b9b73dd7",
+            "size": 385234
+          },
+          "rune-figma-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "2e2d53e71202a704fecd3c68bf73948d375ace3e0add837cb490e305d744239a",
+            "size": 443438
+          }
+        },
+        "configuration": {
+          "fields": {
+            "channel": {
+              "description": "Initial TalkToFigma channel; alternatively select a channel with join_channel.",
+              "env": [
+                "FIGMA_CHANNEL"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "port": {
+              "default": 3055,
+              "description": "Loopback relay port used only when FIGMA_WS_URL is absent.",
+              "env": [
+                "FIGMA_PORT"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "ws_url": {
+              "description": "TalkToFigma relay WebSocket URL. Takes precedence over FIGMA_PORT; otherwise ws://127.0.0.1:3055 is used.",
+              "env": [
+                "FIGMA_WS_URL"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.3.0/rune-figma-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-figma-v0.3.0/rune-figma-native-0.3.0-x86_64-apple-darwin.tar.gz",
@@ -273,6 +663,24 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.4.0/rune-filesystem-0.4.0.wasm"
       },
       "0.4.1": {
+        "checksums": {
+          "rune-filesystem-0.4.1.wasm": {
+            "sha256": "b513ddd8fc248d436d4b4aa3904a49885239ab75ca8d59550c6fc5b756c2d067",
+            "size": 455785
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "config_key": "allowed_dir",
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "required": true,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-filesystem-v0.4.1/rune-filesystem-0.4.1.wasm"
       }
     }
@@ -327,6 +735,69 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.2.4/rune-git-0.2.4.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-git-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "adb23fc393ea312c7338db0ddeb6f0904be5e0e11580e99e3c6c6385f0cb9200",
+            "size": 214685
+          },
+          "rune-git-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "a6c02fafff159cdf84cd11f5139547c546fe9f54508cd343cda5f9d825aea93a",
+            "size": 228942
+          },
+          "rune-git-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "3be059285b83f6a4ba29f5f1ebb46cc7a57fd0d804ef1d4f3ca08009e9668ba5",
+            "size": 188131
+          },
+          "rune-git-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "a58ebe84391b3c60ee92da82ae504e2328cb762b64a81990d2229d6afb6f8865",
+            "size": 239116
+          }
+        },
+        "configuration": {
+          "fields": {
+            "conventional": {
+              "default": false,
+              "description": "Require Conventional Commit syntax during commit-message validation.",
+              "env": [
+                "CONVENTIONAL"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "boolean"
+            },
+            "max_count": {
+              "default": 10,
+              "description": "Default maximum entries for git_log.",
+              "env": [
+                "MAX_COUNT"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "max_subject_length": {
+              "default": 72,
+              "description": "Default maximum subject length for validate_commit_message.",
+              "env": [
+                "MAX_SUBJECT_LENGTH"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "repo_path": {
+              "description": "Default repository directory. REPO_PATH takes precedence over ALLOWED_DIR; per-call repoPath overrides both.",
+              "env": [
+                "REPO_PATH",
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.3.0/rune-git-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-git-v0.3.0/rune-git-native-0.3.0-x86_64-apple-darwin.tar.gz",
@@ -386,6 +857,184 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.2.2/rune-image-0.2.2.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-image-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "ca9fce7acfd494a232dba33f73dec0c46af95091261660ed0bb454f173d849db",
+            "size": 1949706
+          },
+          "rune-image-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "0103b4805a7e5e1cfc793114438dfb388b5c62358543ed8bbbc2a0174318ace9",
+            "size": 2070238
+          },
+          "rune-image-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "2d7033a7539b21fc980ebbedb55efc316c00ce9e8e7983f2f37f5c1f484d3a9b",
+            "size": 2155810
+          },
+          "rune-image-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "27ea2c9b0dca9630a4e1a1fec7ff59b49bc7abee495ab6eee6138e3021bc9930",
+            "size": 2203074
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "env": [
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "color_precision": {
+              "description": "Raster tracing color precision. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "COLOR_PRECISION"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "cookies_dir": {
+              "description": "Directory containing domain-matched cookie files for downloads.",
+              "env": [
+                "COOKIES_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "cookies_file": {
+              "description": "Path to a cookie file for authenticated downloads; takes precedence over cookie directory and browser extraction.",
+              "env": [
+                "COOKIES_FILE"
+              ],
+              "required": false,
+              "secret": true,
+              "type": "string"
+            },
+            "cookies_from_browser": {
+              "description": "Browser identifier used to obtain cookies when no explicit or matching cookie file is selected.",
+              "env": [
+                "COOKIES_FROM_BROWSER"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "corner_threshold": {
+              "description": "Raster tracing corner threshold. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "CORNER_THRESHOLD"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "filter_speckle": {
+              "description": "Raster tracing speckle filter. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "FILTER_SPECKLE"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "layer_difference": {
+              "description": "Raster tracing layer difference. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "LAYER_DIFFERENCE"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "length_threshold": {
+              "description": "Raster tracing length threshold. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "LENGTH_THRESHOLD"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "number"
+            },
+            "max_iterations": {
+              "description": "Raster tracing iteration count. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "MAX_ITERATIONS"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "output_directory": {
+              "description": "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR.",
+              "env": [
+                "OUTPUT_DIRECTORY",
+                "OUTPUT_DIR",
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "path_precision": {
+              "description": "Raster tracing path precision. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "PATH_PRECISION"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "proxy": {
+              "description": "Proxy URL for gallery-dl downloads when proxy is omitted. May contain credentials.",
+              "env": [
+                "PROXY"
+              ],
+              "required": false,
+              "secret": true,
+              "type": "string"
+            },
+            "splice_threshold": {
+              "description": "Raster tracing splice threshold. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "SPLICE_THRESHOLD"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "trace_color_mode": {
+              "description": "Raster tracing color mode: color or binary. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "TRACE_COLOR_MODE"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "trace_curve_mode": {
+              "description": "Raster tracing curve mode: spline, polygon or none. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "TRACE_CURVE_MODE"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "trace_hierarchical": {
+              "description": "Raster tracing hierarchy mode: stacked or cutout. Used when the corresponding tool argument is omitted.",
+              "env": [
+                "TRACE_HIERARCHICAL"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.3.0/rune-image-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-image-v0.3.0/rune-image-native-0.3.0-x86_64-apple-darwin.tar.gz",
@@ -409,6 +1058,32 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-memory-v0.2.2/rune-memory-0.2.2.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-memory-0.3.0.wasm": {
+            "sha256": "0d3770fb2bf0226f4d531fa33d2dd7f9e19fa7687d0840acc75f7a33ebf30728",
+            "size": 303031
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "config_key": "allowed_dir",
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "memory_file": {
+              "config_key": "memory_file",
+              "default": "memory.json",
+              "description": "Knowledge graph JSON file, resolved against allowed_dir when configured. Per-call memoryFile overrides this setting.",
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-memory-v0.3.0/rune-memory-0.3.0.wasm"
       }
     }
@@ -427,6 +1102,16 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-sequential-thinking-v0.2.0/rune-sequential-thinking-0.2.0.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-sequential-thinking-0.3.0.wasm": {
+            "sha256": "83bc7ec26288b646361d858a1366cb820030309ea9ad45baaf540d94f5dabde5",
+            "size": 234640
+          }
+        },
+        "configuration": {
+          "fields": {},
+          "schema_version": 1
+        },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-sequential-thinking-v0.3.0/rune-sequential-thinking-0.3.0.wasm"
       }
     }
@@ -463,6 +1148,39 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.2.0/rune-slides-0.2.0.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-slides-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "0394c88a2dc180935d904ab4ed6267f2bb4ad10d5f941e507b4e008cd0c8e001",
+            "size": 4738663
+          },
+          "rune-slides-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "09fc43c445a9a15cdbcf9c24c5a56966dd3570ed92e912a985291074da618ec0",
+            "size": 4778362
+          },
+          "rune-slides-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "a70da7377c195495039529cd2e715c3f65cf752028407ceededb4e9b21237dbf",
+            "size": 4868372
+          },
+          "rune-slides-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "480c879b9d37cf7469a87ce50a8bb6c328c0568062408749f95ec7f4f894e027",
+            "size": 4920275
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "description": "Base directory for relative project and export paths. ALLOWED_DIR takes precedence over OUTPUT_DIR. This setting does not confine absolute paths.",
+              "env": [
+                "ALLOWED_DIR",
+                "OUTPUT_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.3.0/rune-slides-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-slides-v0.3.0/rune-slides-native-0.3.0-x86_64-apple-darwin.tar.gz",
@@ -504,6 +1222,25 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.2.2/rune-time-0.2.2.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-time-0.3.0.wasm": {
+            "sha256": "a80fa8c15bc63df2078ef4fa371395efed2d1bf312889e84530f3a67919c68f7",
+            "size": 1183561
+          }
+        },
+        "configuration": {
+          "fields": {
+            "default_timezone": {
+              "config_key": "default_timezone",
+              "default": "UTC",
+              "description": "Default IANA timezone for get_current_time when timezone is omitted.",
+              "required": false,
+              "secret": false,
+              "type": "string"
+            }
+          },
+          "schema_version": 1
+        },
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-time-v0.3.0/rune-time-0.3.0.wasm"
       }
     }
@@ -549,6 +1286,184 @@
         "url": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.2.0/rune-video-0.2.0.wasm"
       },
       "0.3.0": {
+        "checksums": {
+          "rune-video-native-0.3.0-aarch64-apple-darwin.tar.gz": {
+            "sha256": "f372744341f83a4bf27195edf44775acdb13439c33f49211d0a69a5da6be7875",
+            "size": 234908
+          },
+          "rune-video-native-0.3.0-x86_64-apple-darwin.tar.gz": {
+            "sha256": "298ac72a38b076e18e71fe734f3bc38bc6eab91ff088f11a8f99ef2dd1fc0028",
+            "size": 250519
+          },
+          "rune-video-native-0.3.0-x86_64-pc-windows-msvc.zip": {
+            "sha256": "cf2f6c2fb0dc205f12ca5c125e783f58a269e1026487f20e21efac815e650b04",
+            "size": 212188
+          },
+          "rune-video-native-0.3.0-x86_64-unknown-linux-gnu.tar.gz": {
+            "sha256": "e840b6f0391c71371213c794a1ba0cb9279e3f57a348f5a6dbb6401cb22f5f9e",
+            "size": 261364
+          }
+        },
+        "configuration": {
+          "fields": {
+            "allowed_dir": {
+              "description": "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions.",
+              "env": [
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "cookies_dir": {
+              "description": "Directory containing domain-matched cookie files for downloads.",
+              "env": [
+                "COOKIES_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "cookies_file": {
+              "description": "Path to a cookie file for authenticated downloads; takes precedence over cookie directory and browser extraction.",
+              "env": [
+                "COOKIES_FILE"
+              ],
+              "required": false,
+              "secret": true,
+              "type": "string"
+            },
+            "cookies_from_browser": {
+              "description": "Browser identifier used to obtain cookies when no explicit or matching cookie file is selected.",
+              "env": [
+                "COOKIES_FROM_BROWSER"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "duration_minutes": {
+              "default": 5,
+              "description": "Default stream recording duration in minutes.",
+              "env": [
+                "DURATION_MINUTES"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "end_index": {
+              "description": "Default last playlist item when endIndex is omitted.",
+              "env": [
+                "END_INDEX"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "lossless": {
+              "default": false,
+              "description": "Use stream copy for trimming when lossless is omitted.",
+              "env": [
+                "LOSSLESS"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "boolean"
+            },
+            "max_resolution": {
+              "default": "1080p",
+              "description": "Default maximum video height when maxResolution is omitted.",
+              "env": [
+                "MAX_RESOLUTION",
+                "MAXRESOLUTION"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "max_videos": {
+              "description": "Default playlist download count when maxVideos is omitted.",
+              "env": [
+                "MAX_VIDEOS"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "output_directory": {
+              "description": "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR.",
+              "env": [
+                "OUTPUT_DIRECTORY",
+                "OUTPUT_DIR",
+                "ALLOWED_DIR"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "player_client": {
+              "description": "YouTube player client passed to yt-dlp extractor arguments.",
+              "env": [
+                "PLAYER_CLIENT"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "proxy": {
+              "description": "Proxy URL for yt-dlp downloads when proxy is omitted. May contain credentials.",
+              "env": [
+                "PROXY"
+              ],
+              "required": false,
+              "secret": true,
+              "type": "string"
+            },
+            "quality": {
+              "default": "best",
+              "description": "Default stream quality when quality is omitted.",
+              "env": [
+                "QUALITY"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "start_index": {
+              "default": 1,
+              "description": "Default first playlist item when startIndex is omitted.",
+              "env": [
+                "START_INDEX"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "integer"
+            },
+            "subtitles_lang": {
+              "default": "en",
+              "description": "Default subtitle language when subtitlesLang is omitted.",
+              "env": [
+                "SUBTITLES_LANG",
+                "SUBTITLESLANG"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "string"
+            },
+            "write_subtitles": {
+              "default": false,
+              "description": "Download subtitles when writeSubtitles is omitted.",
+              "env": [
+                "WRITE_SUBTITLES"
+              ],
+              "required": false,
+              "secret": false,
+              "type": "boolean"
+            }
+          },
+          "schema_version": 1
+        },
         "native": {
           "aarch64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.3.0/rune-video-native-0.3.0-aarch64-apple-darwin.tar.gz",
           "x86_64-apple-darwin": "https://github.com/shba007/rune-tools/releases/download/rune-video-v0.3.0/rune-video-native-0.3.0-x86_64-apple-darwin.tar.gz",

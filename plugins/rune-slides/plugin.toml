@@ -11,3 +11,13 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-sl
 network_hosts = []
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.allowed_dir]
+type = "string"
+description = "Base directory for relative project and export paths. ALLOWED_DIR takes precedence over OUTPUT_DIR. This setting does not confine absolute paths."
+required = false
+secret = false
+env = ["ALLOWED_DIR", "OUTPUT_DIR"]

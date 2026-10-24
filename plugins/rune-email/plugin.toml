@@ -11,3 +11,93 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-em
 network_hosts = ["*"]
 filesystem = { mode = "scoped", root_param = "allowed_dir" }
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.allowed_dir]
+type = "string"
+description = "Owner-selected filesystem root. Supply an absolute trusted directory; this metadata grants no filesystem permissions."
+required = false
+secret = false
+env = ["ALLOWED_DIR"]
+
+[configuration.fields.output_directory]
+type = "string"
+description = "Default output directory when the call does not supply one. OUTPUT_DIRECTORY takes precedence over OUTPUT_DIR, then ALLOWED_DIR."
+required = false
+secret = false
+env = ["OUTPUT_DIRECTORY", "OUTPUT_DIR", "ALLOWED_DIR"]
+
+[configuration.fields.preset]
+type = "string"
+description = "Provider preset: gmail, hostinger or outlook. Without a preset, configure both IMAP_HOST and SMTP_HOST. PRESET takes precedence over EMAIL_PRESET."
+required = false
+secret = false
+env = ["PRESET", "EMAIL_PRESET"]
+
+[configuration.fields.email]
+type = "string"
+description = "Account username/address. Used for IMAP, SMTP and sender address. A per-call email overrides these environment values in listed order."
+required = true
+secret = false
+env = ["EMAIL", "EMAIL_USER", "IMAP_USER", "SMTP_USER"]
+
+[configuration.fields.password]
+type = "string"
+description = "Account password or application password shared by IMAP and SMTP. A per-call password overrides these environment values in listed order."
+required = true
+secret = true
+env = ["PASSWORD", "EMAIL_PASSWORD", "IMAP_PASSWORD", "SMTP_PASSWORD"]
+
+[configuration.fields.display_name]
+type = "string"
+description = "Sender display name. DISPLAY_NAME takes precedence over DISPLAYNAME, then EMAIL_DISPLAY_NAME."
+required = false
+secret = false
+env = ["DISPLAY_NAME", "DISPLAYNAME", "EMAIL_DISPLAY_NAME"]
+
+[configuration.fields.imap_host]
+type = "string"
+description = "IMAP server hostname; required unless supplied by a recognized preset or tool argument."
+required = false
+secret = false
+env = ["IMAP_HOST", "IMAPHOST"]
+
+[configuration.fields.smtp_host]
+type = "string"
+description = "SMTP server hostname; required unless supplied by a recognized preset or tool argument."
+required = false
+secret = false
+env = ["SMTP_HOST", "SMTPHOST"]
+
+[configuration.fields.imap_port]
+type = "integer"
+description = "IMAP server port; defaults to 993."
+required = false
+secret = false
+env = ["IMAP_PORT", "IMAPPORT"]
+default = 993
+
+[configuration.fields.smtp_port]
+type = "integer"
+description = "SMTP port; defaults to 587 for outlook, 465 otherwise."
+required = false
+secret = false
+env = ["SMTP_PORT", "SMTPPORT"]
+
+[configuration.fields.imap_tls]
+type = "boolean"
+description = "IMAP TLS preference. Published connection code always establishes TLS."
+required = false
+secret = false
+env = ["IMAP_TLS", "IMAPTLS"]
+default = true
+
+[configuration.fields.smtp_tls]
+type = "boolean"
+description = "SMTP TLS preference. Published connection code selects STARTTLS for port 587 and implicit TLS for other ports."
+required = false
+secret = false
+env = ["SMTP_TLS", "SMTPTLS"]
+default = true

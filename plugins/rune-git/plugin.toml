@@ -16,3 +16,37 @@ exec = { allowed_binaries = ["git"] }
 version = ">=2.30.0"
 optional = true
 description = "Distributed version control system"
+
+[configuration]
+schema_version = 1
+
+[configuration.fields.repo_path]
+type = "string"
+description = "Default repository directory. REPO_PATH takes precedence over ALLOWED_DIR; per-call repoPath overrides both."
+required = false
+secret = false
+env = ["REPO_PATH", "ALLOWED_DIR"]
+
+[configuration.fields.max_count]
+type = "integer"
+description = "Default maximum entries for git_log."
+required = false
+secret = false
+env = ["MAX_COUNT"]
+default = 10
+
+[configuration.fields.max_subject_length]
+type = "integer"
+description = "Default maximum subject length for validate_commit_message."
+required = false
+secret = false
+env = ["MAX_SUBJECT_LENGTH"]
+default = 72
+
+[configuration.fields.conventional]
+type = "boolean"
+description = "Require Conventional Commit syntax during commit-message validation."
+required = false
+secret = false
+env = ["CONVENTIONAL"]
+default = false

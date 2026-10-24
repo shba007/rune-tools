@@ -10,3 +10,8 @@ documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-se
 [capabilities]
 network_hosts = []
 exec = { allowed_binaries = [] }
+
+[configuration]
+schema_version = 1
+
+[configuration.fields]

@@ -1,5 +1,9 @@
 <div align="center">
 
+<p align="center">
+  <img src="./public/logo.svg" alt="Rune Kit ASCII logo" width="180" height="120">
+</p>
+
 # Rune Tools
 
 **Modular, Sandboxed Model Context Protocol (MCP) Plugins for AI Runtimes**
