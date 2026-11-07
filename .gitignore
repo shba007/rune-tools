@@ -29,7 +29,8 @@ temp
 # ==========================================
 # Downloaded Tooling & Third-Party Binaries
 # ==========================================
-**/bin/
+/bin/
+!**/src/bin/
 **/ffmpeg*
 **/yt-dlp*
 **/spotdl*
