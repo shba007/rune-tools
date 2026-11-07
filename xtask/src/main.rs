@@ -59,7 +59,11 @@ fn discover_plugins(metadata: &Value, filter: Option<&str>) -> Vec<PluginTargets
         .iter()
         .filter_map(|pkg| {
             let manifest_path = pkg["manifest_path"].as_str()?;
-            if !manifest_path.contains("/plugins/") && !manifest_path.contains("\\plugins\\") {
+            if !manifest_path.contains("/mcps/")
+                && !manifest_path.contains("\\mcps\\")
+                && !manifest_path.contains("/plugins/")
+                && !manifest_path.contains("\\plugins\\")
+            {
                 return None; // skip crates/rune-pdk, crates/rune-sidecar, xtask itself, etc.
             }
 
@@ -230,7 +234,7 @@ fn main() -> ExitCode {
         };
         let found = discover_plugins(&metadata, Some(name));
         if found.is_empty() {
-            eprintln!("error: no plugin named '{}' found under plugins/", name);
+            eprintln!("error: no plugin named '{}' found under mcps/", name);
             return ExitCode::FAILURE;
         }
         found

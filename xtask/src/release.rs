@@ -31,7 +31,10 @@ pub fn plugins(root: &Path) -> Result<Vec<Plugin>> {
         .as_array()
         .ok_or("workspace members missing")?
         .iter()
-        .filter_map(|m| m.as_str().filter(|s| s.starts_with("plugins/")))
+        .filter_map(|m| {
+            m.as_str()
+                .filter(|s| s.starts_with("mcps/") || s.starts_with("plugins/"))
+        })
         .map(|folder| {
             let cargo: toml::Value =
                 toml::from_str(&fs::read_to_string(root.join(folder).join("Cargo.toml"))?)?;
@@ -311,7 +314,8 @@ pub fn affected(root: &Path, p: &Plugin, paths: &[String]) -> Result<bool> {
     let xtask_only = runtime
         .iter()
         .filter(|p| {
-            p.starts_with("plugins/")
+            p.starts_with("mcps/")
+                || p.starts_with("plugins/")
                 || p.starts_with("crates/")
                 || matches!(p.as_str(), "Cargo.toml" | "Cargo.lock")
                 || p.starts_with("xtask/")

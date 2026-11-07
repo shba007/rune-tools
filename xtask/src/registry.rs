@@ -68,7 +68,7 @@ struct Plugin {
     bins: Vec<String>,
 }
 
-/// Every `plugins/*` package that produces a wasm or native artifact.
+/// Every `mcps/*` package that produces a wasm or native artifact.
 fn discover(metadata: &Value) -> Vec<Plugin> {
     let packages = metadata["packages"].as_array().cloned().unwrap_or_default();
 
@@ -76,7 +76,10 @@ fn discover(metadata: &Value) -> Vec<Plugin> {
         .iter()
         .filter_map(|pkg| {
             let manifest = Path::new(pkg["manifest_path"].as_str()?);
-            if !manifest.components().any(|c| c.as_os_str() == "plugins") {
+            if !manifest
+                .components()
+                .any(|c| c.as_os_str() == "mcps" || c.as_os_str() == "plugins")
+            {
                 return None; // crates/rune-pdk, crates/rune-sidecar, xtask, etc.
             }
 

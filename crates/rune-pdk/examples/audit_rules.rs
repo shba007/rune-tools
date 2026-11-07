@@ -1,38 +1,38 @@
 //! Audit declarations without invoking tools, including inactive draft plugins.
 #![allow(dead_code)]
-#[path = "../../../plugins/mhb-mconnect/src/definitions.rs"]
+#[path = "../../../mcps/mhb-mconnect/src/definitions.rs"]
 mod mhb_mconnect;
-#[path = "../../../plugins/rune-audio/src/definitions.rs"]
+#[path = "../../../mcps/rune-audio/src/definitions.rs"]
 mod rune_audio;
-#[path = "../../../plugins/rune-browser/src/definitions.rs"]
+#[path = "../../../mcps/rune-browser/src/definitions.rs"]
 mod rune_browser;
-#[path = "../../../plugins/rune-email/src/definitions.rs"]
+#[path = "../../../mcps/rune-email/src/definitions.rs"]
 mod rune_email;
-#[path = "../../../plugins/rune-fetch/src/definitions.rs"]
+#[path = "../../../mcps/rune-fetch/src/definitions.rs"]
 mod rune_fetch;
-#[path = "../../../plugins/rune-figma/src/definitions.rs"]
+#[path = "../../../mcps/rune-figma/src/definitions.rs"]
 mod rune_figma;
-#[path = "../../../plugins/rune-filesystem/src/definitions.rs"]
+#[path = "../../../mcps/rune-filesystem/src/definitions.rs"]
 mod rune_filesystem;
-#[path = "../../../plugins/rune-git/src/definitions.rs"]
+#[path = "../../../mcps/rune-git/src/definitions.rs"]
 mod rune_git;
-#[path = "../../../plugins/rune-image/src/definitions.rs"]
+#[path = "../../../mcps/rune-image/src/definitions.rs"]
 mod rune_image;
-#[path = "../../../plugins/rune-memory/src/definitions.rs"]
+#[path = "../../../mcps/rune-memory/src/definitions.rs"]
 mod rune_memory;
-#[path = "../../../plugins/rune-print/src/definitions.rs"]
+#[path = "../../../mcps/rune-print/src/definitions.rs"]
 mod rune_print;
-#[path = "../../../plugins/rune-scan/src/definitions.rs"]
+#[path = "../../../mcps/rune-scan/src/definitions.rs"]
 mod rune_scan;
-#[path = "../../../plugins/rune-sequential-thinking/src/definitions.rs"]
+#[path = "../../../mcps/rune-sequential-thinking/src/definitions.rs"]
 mod rune_sequential_thinking;
-#[path = "../../../plugins/rune-slides/src/definitions.rs"]
+#[path = "../../../mcps/rune-slides/src/definitions.rs"]
 mod rune_slides;
-#[path = "../../../plugins/rune-ssh/src/definitions.rs"]
+#[path = "../../../mcps/rune-ssh/src/definitions.rs"]
 mod rune_ssh;
-#[path = "../../../plugins/rune-time/src/definitions.rs"]
+#[path = "../../../mcps/rune-time/src/definitions.rs"]
 mod rune_time;
-#[path = "../../../plugins/rune-video/src/definitions.rs"]
+#[path = "../../../mcps/rune-video/src/definitions.rs"]
 mod rune_video;
 fn main() {
     let mut catalog = Vec::new();

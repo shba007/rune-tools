@@ -1,55 +1,55 @@
 use serde_json::{Value, json};
 use std::{fs, path::Path};
 #[allow(dead_code)]
-#[path = "../../plugins/mhb-mconnect/src/definitions.rs"]
+#[path = "../../mcps/mhb-mconnect/src/definitions.rs"]
 mod mhb_mconnect;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-audio/src/definitions.rs"]
+#[path = "../../mcps/rune-audio/src/definitions.rs"]
 mod rune_audio;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-browser/src/definitions.rs"]
+#[path = "../../mcps/rune-browser/src/definitions.rs"]
 mod rune_browser;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-email/src/definitions.rs"]
+#[path = "../../mcps/rune-email/src/definitions.rs"]
 mod rune_email;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-fetch/src/definitions.rs"]
+#[path = "../../mcps/rune-fetch/src/definitions.rs"]
 mod rune_fetch;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-figma/src/definitions.rs"]
+#[path = "../../mcps/rune-figma/src/definitions.rs"]
 mod rune_figma;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-filesystem/src/definitions.rs"]
+#[path = "../../mcps/rune-filesystem/src/definitions.rs"]
 mod rune_filesystem;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-git/src/definitions.rs"]
+#[path = "../../mcps/rune-git/src/definitions.rs"]
 mod rune_git;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-image/src/definitions.rs"]
+#[path = "../../mcps/rune-image/src/definitions.rs"]
 mod rune_image;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-memory/src/definitions.rs"]
+#[path = "../../mcps/rune-memory/src/definitions.rs"]
 mod rune_memory;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-print/src/definitions.rs"]
+#[path = "../../mcps/rune-print/src/definitions.rs"]
 mod rune_print;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-scan/src/definitions.rs"]
+#[path = "../../mcps/rune-scan/src/definitions.rs"]
 mod rune_scan;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-sequential-thinking/src/definitions.rs"]
+#[path = "../../mcps/rune-sequential-thinking/src/definitions.rs"]
 mod rune_sequential_thinking;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-slides/src/definitions.rs"]
+#[path = "../../mcps/rune-slides/src/definitions.rs"]
 mod rune_slides;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-ssh/src/definitions.rs"]
+#[path = "../../mcps/rune-ssh/src/definitions.rs"]
 mod rune_ssh;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-time/src/definitions.rs"]
+#[path = "../../mcps/rune-time/src/definitions.rs"]
 mod rune_time;
 #[allow(dead_code)]
-#[path = "../../plugins/rune-video/src/definitions.rs"]
+#[path = "../../mcps/rune-video/src/definitions.rs"]
 mod rune_video;
 fn plugins() -> Vec<(&'static str, Vec<rune_pdk::ToolDefinition>)> {
     vec![
@@ -129,7 +129,7 @@ pub fn command(check: bool) -> Result<(), String> {
     for (plugin, tools) in plugins() {
         let folder = base.join(plugin);
         let manifest: toml::Value = toml::from_str(
-            &fs::read_to_string(format!("plugins/{plugin}/plugin.toml"))
+            &fs::read_to_string(format!("mcps/{plugin}/plugin.toml"))
                 .map_err(|e| e.to_string())?
                 .replace("\r\n", "\n"),
         )
@@ -166,7 +166,7 @@ pub fn command(check: bool) -> Result<(), String> {
         for tool in &tools {
             let message = json!({"jsonrpc":"2.0","id":format!("{plugin}/{}",tool.name),"method":"tools/call","params":{"name":format!("{{{{{key}_namespace}}}}__{}",tool.name),"arguments":example(&tool.input_schema),"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"postman-rune-tools","version":"1.0.0"}}}});
             let description = format!(
-                "{}\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: plugins/{plugin}/src/definitions.rs ({version}). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{}\n\nPlugin rules:\n{}",
+                "{}\n\nArgument TEMPLATE only: replace <set this value> and review optional properties in inputSchema. Source: mcps/{plugin}/src/definitions.rs ({version}). This request may have external effects when read_only_flag is cleared; no call is executed by generation.\n\ninputSchema:\n{}\n\nPlugin rules:\n{}",
                 tool.description,
                 serde_json::to_string_pretty(&tool.input_schema).unwrap(),
                 serde_json::to_string_pretty(&tool.rules).unwrap()

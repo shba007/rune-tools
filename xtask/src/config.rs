@@ -11,7 +11,7 @@ fn needs_dotenvx(text: &str) -> bool {
         })
 }
 pub fn test_plugin(name: &str) -> bool {
-    let path = format!("plugins/{name}/.env");
+    let path = format!("mcps/{name}/.env");
     let text = match std::fs::read_to_string(&path) {
         Ok(s) => s,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
