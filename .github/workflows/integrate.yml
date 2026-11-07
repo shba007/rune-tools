@@ -108,8 +108,8 @@ jobs:
           commit-message: 'ci(release): update version'
           body-path: release-summary.md
           add-paths: |
-            plugins/*/Cargo.toml
-            plugins/*/plugin.toml
-            plugins/*/CHANGELOG.md
+            mcps/*/Cargo.toml
+            mcps/*/plugin.toml
+            mcps/*/CHANGELOG.md
             Cargo.lock
             .release/prepared.json
