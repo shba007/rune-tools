@@ -233,6 +233,12 @@ fn enrich(root: &Path, repo: &str, index: &Value, remote: &impl Published) -> Re
         let updated = &mut result[&p.name]["versions"][&p.version];
         updated["configuration"] = config;
         updated["checksums"] = checksums;
+        if root.join(&p.folder).join("icon.svg").is_file() {
+            result[&p.name]["icon"] = json!(format!(
+                "https://raw.githubusercontent.com/{repo}/refs/heads/main/{}/icon.svg",
+                p.folder
+            ));
+        }
     }
     Ok(result)
 }
@@ -500,6 +506,7 @@ mod tests {
         fs::write(root.join("plugins/test/Cargo.toml"), manifest).unwrap();
         let plugin = "[plugin]\nname='test'\nversion='1.0.0'\nexecution_model='wasm'\n[configuration]\nschema_version=1\n[configuration.fields]\n";
         fs::write(root.join("plugins/test/plugin.toml"), plugin).unwrap();
+        fs::write(root.join("plugins/test/icon.svg"), "<svg/>").unwrap();
         let index = json!({"test":{"latest":p.version,"description":"keep","versions":{"0.9.0":{"url":"historical","custom":true},"1.0.0":entry}}});
         let enriched = enrich(root, "a/b", &index, &remote).unwrap();
         assert_eq!(
@@ -507,6 +514,10 @@ mod tests {
             index["test"]["versions"]["0.9.0"]
         );
         assert_eq!(enriched["test"]["description"], "keep");
+        assert_eq!(
+            enriched["test"]["icon"],
+            "https://raw.githubusercontent.com/a/b/refs/heads/main/plugins/test/icon.svg"
+        );
         assert_eq!(enriched["test"]["versions"]["1.0.0"]["url"], entry["url"]);
         assert_eq!(enrich(root, "a/b", &enriched, &remote).unwrap(), enriched);
         fs::write(
