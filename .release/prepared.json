@@ -1,0 +1,76 @@
+{
+  "generator": "cocogitto@7.0.0",
+  "source_head": "ce8a646d9b3a709ad31224e60b1ba2da5592a8cd",
+  "releases": [
+    {
+      "name": "mhb-mconnect",
+      "version": "0.3.0",
+      "notes": "## [mhb-mconnect-v0.3.0](https://github.com/shba007/rune-tools/compare/mhb-mconnect-v0.2.0..mhb-mconnect-v0.3.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-audio",
+      "version": "0.4.0",
+      "notes": "## [rune-audio-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-audio-v0.3.0..rune-audio-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-browser",
+      "version": "0.4.0",
+      "notes": "## [rune-browser-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-browser-v0.3.0..rune-browser-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-email",
+      "version": "0.3.0",
+      "notes": "## [rune-email-v0.3.0](https://github.com/shba007/rune-tools/compare/rune-email-v0.2.0..rune-email-v0.3.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-fetch",
+      "version": "0.5.0",
+      "notes": "## [rune-fetch-v0.5.0](https://github.com/shba007/rune-tools/compare/rune-fetch-v0.4.0..rune-fetch-v0.5.0) - 2026-11-10\n\n#### 🚀 Features\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-figma",
+      "version": "0.4.0",
+      "notes": "## [rune-figma-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-figma-v0.3.0..rune-figma-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-filesystem",
+      "version": "0.5.0",
+      "notes": "## [rune-filesystem-v0.5.0](https://github.com/shba007/rune-tools/compare/rune-filesystem-v0.4.1..rune-filesystem-v0.5.0) - 2026-11-10\n\n#### 🚀 Features\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-git",
+      "version": "0.4.0",
+      "notes": "## [rune-git-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-git-v0.3.0..rune-git-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🐛 Bug Fixes\n- (**mcps**) track mcps/rune-git source files instead of submodule - ([fbcaa71](https://github.com/shba007/rune-tools/commit/fbcaa71787eee006616ba7fa61ead145fe6abf38)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-image",
+      "version": "0.4.0",
+      "notes": "## [rune-image-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-image-v0.3.0..rune-image-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-memory",
+      "version": "0.4.0",
+      "notes": "## [rune-memory-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-memory-v0.3.0..rune-memory-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-sequential-thinking",
+      "version": "0.4.0",
+      "notes": "## [rune-sequential-thinking-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-sequential-thinking-v0.3.0..rune-sequential-thinking-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-slides",
+      "version": "0.4.0",
+      "notes": "## [rune-slides-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-slides-v0.3.0..rune-slides-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-time",
+      "version": "0.4.0",
+      "notes": "## [rune-time-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-time-v0.3.0..rune-time-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    },
+    {
+      "name": "rune-video",
+      "version": "0.4.0",
+      "notes": "## [rune-video-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-video-v0.3.0..rune-video-v0.4.0) - 2026-11-10\n\n#### 🚀 Features\n- add native sidecar implementations for various plugins - ([7c31cc5](https://github.com/shba007/rune-tools/commit/7c31cc55c7e0780546373c27c0dc74068286bd57)) - Shirsendu Bairagi\n- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi\n\n#### 🚜 Refactoring\n- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi\n"
+    }
+  ]
+}

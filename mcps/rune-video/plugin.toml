@@ -2,7 +2,7 @@
 name = "rune-video"
 execution_model = "native"
 description = "Video streaming, playlist extraction, live broadcast recording, and media trimming powered by yt-dlp, streamlink, and ffmpeg."
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Shirsendu Bairagi"]
 license = "MIT"
 documentation = "https://github.com/shba007/rune-tools/blob/main/plugins/rune-video/README.md"
