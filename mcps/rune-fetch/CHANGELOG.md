@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file. See [conven
 
 - - -
 
+## [rune-fetch-v0.5.0](https://github.com/shba007/rune-tools/compare/rune-fetch-v0.4.0..rune-fetch-v0.5.0) - 2026-11-10
+
+#### 🚀 Features
+- add icon.svg files for various plugins and update metadata to include icon URLs - ([ce8a646](https://github.com/shba007/rune-tools/commit/ce8a646d9b3a709ad31224e60b1ba2da5592a8cd)) - Shirsendu Bairagi
+
+#### 🚜 Refactoring
+- remove rune-git plugin and related tests - ([511fab7](https://github.com/shba007/rune-tools/commit/511fab73163a174abd0609efba61335e20a0a4eb)) - Shirsendu Bairagi
+
+- - -
+
 ## [rune-fetch-v0.4.0](https://github.com/shba007/rune-tools/compare/rune-fetch-v0.3.2..rune-fetch-v0.4.0) - 2026-10-21
 
 #### 🚀 Features
