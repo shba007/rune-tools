@@ -2,12 +2,15 @@
   "mcpServers": {
     "rune-scan": {
       "command": "rune-kit",
-      "args": ["run", "rune-scan"],
+      "args": [
+        "run",
+        "rune-scan"
+      ],
       "env": {
+        "ALLOWED_DIR": "./test-dir",
         "SCANNER_IP": "192.168.1.2",
         "SCANNER_PORT": "443",
-        "SCANNER_USE_HTTPS": "true",
-        "ALLOWED_DIR": "./test-dir"
+        "SCANNER_USE_HTTPS": "true"
       }
     }
   }

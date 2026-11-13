@@ -2,7 +2,10 @@
   "mcpServers": {
     "rune-time": {
       "command": "rune-kit",
-      "args": ["run", "rune-time"],
+      "args": [
+        "run",
+        "rune-time"
+      ],
       "env": {
         "DEFAULT_TIMEZONE": "Asia/Kolkata"
       }

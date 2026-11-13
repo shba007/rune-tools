@@ -1,12 +1,15 @@
 {
-	"mcpServers": {
-		"rune-memory": {
-			"command": "rune-kit",
-			"args": ["run", "rune-memory"],
-			"env": {
-				"ALLOWED_DIR": "<CODE DIR>",
-				"MEMORY_FILE": "<memory.json>"
-			}
-		}
-	}
+  "mcpServers": {
+    "rune-memory": {
+      "command": "rune-kit",
+      "args": [
+        "run",
+        "rune-memory"
+      ],
+      "env": {
+        "ALLOWED_DIR": "<CODE DIR>",
+        "MEMORY_FILE": "<memory.json>"
+      }
+    }
+  }
 }

@@ -2,10 +2,13 @@
   "mcpServers": {
     "rune-browser": {
       "command": "rune-kit",
-      "args": ["run", "rune-browser"],
+      "args": [
+        "run",
+        "rune-browser"
+      ],
       "env": {
-        "OUTPUT_DIR": "./test-dir/browser-out",
-        "ALLOWED_DIR": "./test-dir"
+        "ALLOWED_DIR": "./test-dir",
+        "OUTPUT_DIR": "./test-dir/browser-out"
       }
     }
   }

@@ -2,7 +2,10 @@
   "mcpServers": {
     "mhb-mconnect": {
       "command": "rune-kit",
-      "args": ["run", "mhb-mconnect"],
+      "args": [
+        "run",
+        "mhb-mconnect"
+      ],
       "env": {
         "MHB_BASE_URL": "https://api.modesthumanbrands.com"
       }

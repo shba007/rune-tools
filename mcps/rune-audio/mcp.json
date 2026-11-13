@@ -2,11 +2,14 @@
   "mcpServers": {
     "rune-audio": {
       "command": "rune-kit",
-      "args": ["run", "rune-audio"],
+      "args": [
+        "run",
+        "rune-audio"
+      ],
       "env": {
+        "ALLOWED_DIR": "./test-dir",
         "COOKIES_DIR": "./test-dir/cookies",
-        "OUTPUT_DIR": "./test-dir/audio",
-        "ALLOWED_DIR": "./test-dir"
+        "OUTPUT_DIR": "./test-dir/audio"
       }
     }
   }

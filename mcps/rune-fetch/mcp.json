@@ -2,7 +2,10 @@
   "mcpServers": {
     "rune-fetch": {
       "command": "rune-kit",
-      "args": ["run", "rune-fetch"]
+      "args": [
+        "run",
+        "rune-fetch"
+      ]
     }
   }
 }

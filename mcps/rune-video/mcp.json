@@ -2,11 +2,14 @@
   "mcpServers": {
     "rune-video": {
       "command": "rune-kit",
-      "args": ["run", "rune-video"],
+      "args": [
+        "run",
+        "rune-video"
+      ],
       "env": {
+        "ALLOWED_DIR": "./test-dir",
         "COOKIES_DIR": "./test-dir/cookies",
-        "OUTPUT_DIR": "./test-dir/video",
-        "ALLOWED_DIR": "./test-dir"
+        "OUTPUT_DIR": "./test-dir/video"
       }
     }
   }
