@@ -49,20 +49,20 @@ pub fn published_tool_definitions() -> Vec<ToolDefinitionWithOutputSchema> {
     tool_definitions()
         .into_iter()
         .map(|tool| {
-            let schema = match tool.name.as_str() {
-                "get_current_time" => json!({
+            let output_schema = match tool.name.as_str() {
+                "get_current_time" => Some(json!({
                     "type": "object",
                     "properties": {
                         "timezone": {"type": "string", "description": "Canonical IANA timezone of the local datetime."},
                         "datetime": {"type": "string", "description": "Current local datetime in RFC 3339 format."},
                         "utcDatetime": {"type": "string", "description": "The same instant in UTC, in RFC 3339 format."},
                         "utcOffset": {"type": "string", "description": "Local UTC offset formatted as a signed hours-and-minutes offset."},
-                        "timestampEpochSeconds": {"type": "integer", "minimum": i64::MIN, "maximum": i64::MAX, "description": "Whole seconds since the Unix epoch at the current instant."}
+                        "timestampEpochSeconds": {"type": "integer", "description": "Whole seconds since the Unix epoch at the current instant."}
                     },
                     "required": ["timezone", "datetime", "utcDatetime", "utcOffset", "timestampEpochSeconds"],
                     "additionalProperties": false
-                }),
-                "convert_time" => json!({
+                })),
+                "convert_time" => Some(json!({
                     "type": "object",
                     "properties": {
                         "source": timezone_details_schema("Source timezone and datetime before conversion."),
@@ -71,10 +71,14 @@ pub fn published_tool_definitions() -> Vec<ToolDefinitionWithOutputSchema> {
                     },
                     "required": ["source", "target", "timeDifferenceHours"],
                     "additionalProperties": false
-                }),
-                _ => unreachable!("every rune-time tool must declare an output schema"),
+                })),
+                // A tool without an output contract is still listed, just without one.
+                _ => None,
             };
-            tool.with_output_schema(schema)
+            ToolDefinitionWithOutputSchema {
+                definition: tool,
+                output_schema,
+            }
         })
         .collect()
 }
