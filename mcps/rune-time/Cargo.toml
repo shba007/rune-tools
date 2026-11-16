@@ -20,3 +20,4 @@ extism-pdk.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+jsonschema = { version = "0.60", default-features = false }

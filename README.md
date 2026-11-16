@@ -18,6 +18,14 @@
 
 ---
 
+## Goal
+
+Full statement: [`Goal.md`](Goal.md). It describes direction; the rest of this README describes what works today.
+
+**Current goal.** A small set of dependable first-party plugins for Rune, a local, Jarvis-like AI harness. Each tool declares an output schema so Rune Studio can show its result automatically, and can describe a change before making it. Where a dependable existing MCP server exists, hosting it through Rune Kit is preferred over writing a plugin.
+
+**Not goals.** Wrapping Rune Infer's model operations as plugins, storing memory (Rune Lake), private single-customer integrations in the public registry. A non-goal is not a removal order: existing code outside these goals stays until the owner explicitly approves removing it.
+
 ## Overview
 
 The **Rune Tools** ecosystem is a Rust-based suite of Model Context Protocol (MCP) plugins engineered for autonomous AI agents and supervisor runtimes (such as `rune-kit`). It cleanly isolates capability code from the trusted host using two first-class execution models: **Pure WASM plugins** (`wasm32-wasip1`) executing inside memory-isolated Extism/Wasmtime sandboxes for pure in-process compute, and **Direct Native plugins** communicating over Stdio JSON-RPC 2.0 to drive external binaries and OS-level operations without intermediate serialization hops.

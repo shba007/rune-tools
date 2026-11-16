@@ -1,0 +1,118 @@
+[
+  {
+    "input": {
+      "name": "get_current_time",
+      "arguments": {
+        "timezone": "Asia/Kolkata"
+      }
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"datetime\":\"2026-11-17T03:39:51.439368200+05:30\",\"timestampEpochSeconds\":1794866991,\"timezone\":\"Asia/Kolkata\",\"utcDatetime\":\"2026-11-16T22:09:51.439368200+00:00\",\"utcOffset\":\"+05:30\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "name": "convert_time",
+      "arguments": {
+        "time": "2026-09-02T12:00:00",
+        "targetTimezone": "Asia/Kolkata",
+        "sourceTimezone": "UTC"
+      }
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"source\":{\"datetime\":\"2026-09-02T12:00:00+00:00\",\"timezone\":\"UTC\",\"utcOffset\":\"+00:00\"},\"target\":{\"datetime\":\"2026-09-02T17:30:00+05:30\",\"timezone\":\"Asia/Kolkata\",\"utcOffset\":\"+05:30\"},\"timeDifferenceHours\":5.5},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "name": "get_current_time",
+      "arguments": {
+        "timezone": "Invalid/Zone"
+      }
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"error\":\"Invalid IANA timezone 'Invalid/Zone'. Example: 'America/New_York' or 'Asia/Kolkata'\",\"status\":\"error\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "name": "convert_time",
+      "arguments": {
+        "time": "2026-09-02T12:00:00",
+        "targetTimezone": "UTC",
+        "sourceTimezone": "Invalid/Zone"
+      }
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"error\":\"Invalid source IANA timezone: 'Invalid/Zone'\",\"status\":\"error\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  }
+]

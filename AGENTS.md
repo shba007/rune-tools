@@ -1,6 +1,18 @@
 <!-- Current transport/release amendment: docs/KIT-HTTP.md supersedes older stdio and trigger examples. -->
 # Rune Tool - Agent Documentation
 
+> `Goal.md` holds the current goals and non-goals; read it before proposing work.
+> It states intent, not status. In short: a small set of dependable first-party
+> plugins, each declaring an output schema so Rune Studio can render its result
+> automatically, and able to describe a change before making it. Prefer hosting
+> an existing MCP server through Kit over a new plugin once Kit can host stdio
+> servers. Memory storage moves to Rune Lake.
+>
+> Not goals: wrapping Rune Infer's model operations as plugins, private
+> single-customer integrations in the public registry. A non-goal is not a
+> removal order: never remove, disable or rewrite an existing plugin because it
+> is a non-goal without the owner's explicit permission.
+
 ## Working agreement
 
 Agents implement/test locally and leave changes unstaged and uncommitted.

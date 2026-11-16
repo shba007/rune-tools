@@ -75,6 +75,21 @@ fn parse_flexible_datetime(input: &str) -> Result<NaiveDateTime, String> {
 }
 
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+    execute_tool_with_clock(request, Utc::now)
+}
+
+#[cfg(test)]
+pub(crate) fn execute_tool_at(
+    request: ToolCallRequest,
+    now: DateTime<Utc>,
+) -> Result<Value, String> {
+    execute_tool_with_clock(request, || now)
+}
+
+fn execute_tool_with_clock(
+    request: ToolCallRequest,
+    clock: impl FnOnce() -> DateTime<Utc>,
+) -> Result<Value, String> {
     match request.name.as_str() {
         "get_current_time" => {
             let default_tz_str =
@@ -89,7 +104,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 )
             })?;
 
-            let now_utc: DateTime<Utc> = Utc::now();
+            let now_utc = clock();
             let now_local = now_utc.with_timezone(&tz);
             let offset = now_local.offset().fix();
 

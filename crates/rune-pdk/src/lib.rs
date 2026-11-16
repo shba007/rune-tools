@@ -251,6 +251,14 @@ impl Serialize for ToolDefinition {
 }
 
 impl ToolDefinition {
+    /// Add an output contract without changing existing struct-literal callers.
+    pub fn with_output_schema(self, output_schema: Value) -> ToolDefinitionWithOutputSchema {
+        ToolDefinitionWithOutputSchema {
+            definition: self,
+            output_schema: Some(output_schema),
+        }
+    }
+
     pub fn new(
         name: impl Into<String>,
         description: impl Into<String>,
@@ -277,6 +285,32 @@ impl ToolDefinition {
         }
         self.rules = Some(rules);
     }
+}
+
+/// Opt-in published definition; the underlying definition keeps its existing serializer.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ToolDefinitionWithOutputSchema {
+    #[serde(flatten)]
+    pub definition: ToolDefinition,
+    #[serde(
+        rename = "outputSchema",
+        alias = "output_schema",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub output_schema: Option<Value>,
+}
+
+/// Successful MCP result with a legacy text representation and an object payload.
+pub fn structured_tool_result(
+    text: impl Into<String>,
+    structured_content: serde_json::Map<String, Value>,
+) -> Value {
+    serde_json::json!({
+        "content": [{"type": "text", "text": text.into()}],
+        "structuredContent": structured_content,
+        "isError": false,
+    })
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
