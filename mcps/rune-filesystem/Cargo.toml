@@ -26,3 +26,4 @@ cap-std = "3.4.6"
 
 [dev-dependencies]
 tempfile.workspace = true
+jsonschema = { version = "0.60", default-features = false }

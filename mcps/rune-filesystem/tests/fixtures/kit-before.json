@@ -1,0 +1,438 @@
+[
+  {
+    "input": {
+      "arguments": {
+        "path": "notes.txt"
+      },
+      "name": "read_text_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"alpha\\nbeta\",\"hasMore\":false,\"lineOffset\":0,\"linesReturned\":2,\"maxInputBytes\":8388608,\"maxOutputBytes\":65536,\"nextLineOffset\":null,\"totalLines\":2},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "image.png"
+      },
+      "name": "read_media_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":[{\"data\":\"AQID\",\"mimeType\":\"image/png\",\"type\":\"image\"}],\"paging\":{\"bytesReturned\":3,\"hasMore\":false,\"nextOffset\":null,\"offset\":0,\"totalBytes\":3}},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "paths": [
+          "notes.txt"
+        ]
+      },
+      "name": "read_multiple_files"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"--- notes.txt ---\\nalpha\\nbeta\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "content": "new content",
+        "path": "write.txt"
+      },
+      "name": "write_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"Successfully wrote 11 bytes to write.txt\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "edit.txt",
+        "edits": [
+          {
+            "oldText": "alpha",
+            "newText": "gamma"
+          }
+        ],
+        "dryRun": true
+      },
+      "name": "edit_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"--- chunk 1\\n- alpha\\n+ gamma\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "new-dir"
+      },
+      "name": "create_directory"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"Directory 'new-dir' ready\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "listing"
+      },
+      "name": "list_directory"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"[FILE] one.txt\",\"entriesReturned\":1,\"hasMore\":false,\"maxEntries\":200,\"maxOutputBytes\":65536,\"truncated\":false},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "listing"
+      },
+      "name": "list_directory_with_sizes"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"[FILE] one.txt                        (      11 bytes)\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "tree"
+      },
+      "name": "directory_tree"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"{\\n  \\\"children\\\": [\\n    {\\n      \\\"name\\\": \\\"one.txt\\\",\\n      \\\"type\\\": \\\"file\\\"\\n    }\\n  ],\\n  \\\"name\\\": \\\"tree\\\",\\n  \\\"type\\\": \\\"directory\\\"\\n}\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "source": "move.txt",
+        "destination": "moved.txt"
+      },
+      "name": "move_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"Successfully moved 'move.txt' to 'moved.txt'\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "pattern": "*.txt",
+        "path": "search"
+      },
+      "name": "search_files"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"C:/Users/shba007/.codex/visualizations/2026/11/16/01a1e663-6c7e-7320-b80a-dd3b23d1cb54/filesystem-output/fixture/search/one.txt\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "notes.txt"
+      },
+      "name": "get_file_info"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"{\\n  \\\"created\\\": \\\"2026-01-02T03:04:05+00:00\\\",\\n  \\\"is_directory\\\": false,\\n  \\\"is_file\\\": true,\\n  \\\"is_readonly\\\": true,\\n  \\\"modified\\\": \\\"2026-01-02T03:04:05+00:00\\\",\\n  \\\"path\\\": \\\"notes.txt\\\",\\n  \\\"size_bytes\\\": 11\\n}\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {},
+      "name": "list_allowed_directories"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"result\":{\"content\":\"[\\\"C:/Users/shba007/.codex/visualizations/2026/11/16/01a1e663-6c7e-7320-b80a-dd3b23d1cb54/filesystem-output/fixture\\\"]\"},\"status\":\"success\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "path": "../outside.txt"
+      },
+      "name": "read_text_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"error\":\"Access denied: traversal, device paths and alternate streams are not accepted\",\"status\":\"error\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "input": {
+      "arguments": {
+        "edits": [
+          {
+            "oldText": "absent",
+            "newText": "gamma"
+          }
+        ],
+        "path": "edit.txt"
+      },
+      "name": "edit_file"
+    },
+    "response": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "rune-kit",
+            "version": "0.9.0"
+          }
+        },
+        "content": [
+          {
+            "text": "{\"error\":\"Edit #1 failed: text to replace was not found in 'edit.txt'\",\"status\":\"error\"}",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  }
+]

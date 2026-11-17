@@ -76,6 +76,14 @@ fn number(
 
 /// `root` is supplied by host configuration, never request arguments.
 pub fn execute(request: ToolCallRequest, root: Option<&str>) -> Result<Value, String> {
+    execute_with_items(request, root, &mut None)
+}
+
+pub(crate) fn execute_with_items(
+    request: ToolCallRequest,
+    root: Option<&str>,
+    listing: &mut Option<crate::output::Listing>,
+) -> Result<Value, String> {
     let root = root.filter(|r| !r.trim().is_empty()).ok_or(
         "Configure an existing absolute root using -p allowed_dir=<folder> before reading",
     )?;
@@ -168,19 +176,24 @@ pub fn execute(request: ToolCallRequest, root: Option<&str>) -> Result<Value, St
             let mut lines = Vec::new();
             let mut bytes = 0;
             let mut more = false;
+            let mut total = 0;
             for entry in entries {
                 let (name, kind) =
                     entry.map_err(|e| format!("Cannot inspect directory entry: {e}"))?;
+                total += 1;
                 let line = format!("[{kind}] {name}");
                 let extra = line.len() + usize::from(!lines.is_empty());
-                if lines.len() == max || bytes + extra > MAX_OUTPUT_BYTES {
+                if more || lines.len() == max || bytes + extra > MAX_OUTPUT_BYTES {
                     more = true;
-                    break;
+                    continue;
                 }
                 bytes += extra;
                 lines.push(line);
             }
             lines.sort();
+            let mut captured = crate::output::Listing::lines(&lines);
+            captured.total = total;
+            *listing = Some(captured);
             Ok(
                 json!({"content":lines.join("\n"),"entriesReturned":lines.len(),
                 "hasMore":more,"truncated":more,"maxEntries":max,"maxOutputBytes":MAX_OUTPUT_BYTES}),

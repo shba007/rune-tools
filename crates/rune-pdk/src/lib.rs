@@ -313,6 +313,16 @@ pub fn structured_tool_result(
     })
 }
 
+/// Failed tool call, retaining the legacy JSON error text while marking it as an error.
+pub fn tool_error(error: impl Into<String>) -> Value {
+    serde_json::json!({
+        "content": [{"type": "text", "text": serde_json::json!({
+            "status": "error", "error": error.into()
+        }).to_string()}],
+        "isError": true,
+    })
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolCallRequest {
     pub name: String,

@@ -110,8 +110,27 @@ pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
 }
 
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
+    execute_tool_with_items(request).map(|(value, _)| value)
+}
+
+pub(crate) fn execute_tool_with_items(
+    request: ToolCallRequest,
+) -> Result<(Value, Option<crate::output::Listing>), String> {
+    let mut listing = None;
+    let value = execute_tool_inner(request, &mut listing)?;
+    Ok((value, listing))
+}
+
+fn execute_tool_inner(
+    request: ToolCallRequest,
+    listing: &mut Option<crate::output::Listing>,
+) -> Result<Value, String> {
     if matches!(request.name.as_str(), "read_text_file" | "list_directory") {
-        return crate::pilot_reads::execute(request, get_allowed_root().as_deref());
+        return crate::pilot_reads::execute_with_items(
+            request,
+            get_allowed_root().as_deref(),
+            listing,
+        );
     }
     match request.name.as_str() {
         "read_media_file" => {
@@ -374,6 +393,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 })
                 .collect();
 
+            *listing = Some(crate::output::Listing::lines(&lines));
             Ok(json!({ "content": lines.join("\n") }))
         }
 
@@ -429,6 +449,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 "children": build_tree(&path, &excludes)
             });
 
+            *listing = Some(crate::output::Listing::tree(&tree));
             Ok(json!({ "content": serde_json::to_string_pretty(&tree).unwrap_or_default() }))
         }
 
@@ -502,6 +523,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
                 }
             }
 
+            *listing = Some(crate::output::Listing::lines(&matches));
             Ok(json!({ "content": matches.join("\n") }))
         }
 
@@ -542,6 +564,7 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
         "list_allowed_directories" => {
             let allowed = get_allowed_root().unwrap_or_else(|| ".".to_string());
+            *listing = Some(crate::output::Listing::directories(&allowed));
             Ok(json!({ "content": serde_json::to_string(&vec![allowed]).unwrap() }))
         }
 

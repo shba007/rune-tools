@@ -27,10 +27,7 @@ fn tool_result(result: Result<Value, String>) -> Value {
                     .clone(),
             )
         }
-        Err(error) => json!({
-            "content": [{"type": "text", "text": json!({"status": "error", "error": error}).to_string()}],
-            "isError": true
-        }),
+        Err(error) => rune_pdk::tool_error(error),
     }
 }
 

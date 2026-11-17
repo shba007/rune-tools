@@ -2,6 +2,18 @@ use rune_pdk::{ToolDefinition, ToolDefinitionWithOutputSchema, ToolRules, struct
 use serde_json::{Value, json};
 
 #[test]
+fn shared_error_keeps_legacy_text_and_sets_error_flag() {
+    let error = "Failed: \"quoted\" path\ntry again";
+    let result = rune_pdk::tool_error(error);
+    assert_eq!(result["isError"], true);
+    assert_eq!(
+        result["content"],
+        json!([{"type":"text", "text":json!({"error":error,"status":"error"}).to_string()}])
+    );
+    assert!(result.get("structuredContent").is_none());
+}
+
+#[test]
 fn absent_output_schema_preserves_exact_serialization() {
     // A struct literal remains source-compatible, with the original wire bytes.
     let tool = ToolDefinition {

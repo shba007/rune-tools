@@ -1,5 +1,5 @@
-use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
-use serde_json::json;
+use rune_pdk::{RiskLevel, ToolDefinition, ToolDefinitionWithOutputSchema, ToolEffect, ToolRules};
+use serde_json::{Value, json};
 
 pub const MAX_FILE_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_OUTPUT_BYTES: usize = 64 * 1024;
@@ -11,6 +11,89 @@ fn approved_read() -> ToolRules {
         root_param: Some("allowed_dir".into()),
         ..Default::default()
     })
+}
+
+/// Publish output contracts without changing existing input-only definition users.
+pub fn published_tool_definitions() -> Vec<ToolDefinitionWithOutputSchema> {
+    tool_definitions()
+        .into_iter()
+        .map(|tool| {
+            let output_schema = output_schema(&tool.name);
+            ToolDefinitionWithOutputSchema {
+                definition: tool,
+                output_schema,
+            }
+        })
+        .collect()
+}
+
+fn output_schema(name: &str) -> Option<Value> {
+    let content = json!({"type": "string", "description": "The tool's existing text result, with an explicit omission notice if this preview is truncated."});
+    let count =
+        |description: &str| json!({"type": "integer", "minimum": 0, "description": description});
+    let flag = |description: &str| json!({"type": "boolean", "description": description});
+    let mut properties = json!({"content": content});
+    match name {
+        // Kit caps structured results at 8 MiB, but media permits 20 MiB.
+        // Preserve this tool's legacy payload without outputSchema/structuredContent.
+        "read_media_file" => return None,
+        "read_text_file" => {
+            properties["lineOffset"] = count("Zero-based line offset of the returned page.");
+            properties["linesReturned"] = count("Number of complete lines returned.");
+            properties["totalLines"] = count("Total number of lines in the source file.");
+            properties["hasMore"] = flag("Whether additional source lines remain after this page.");
+            properties["nextLineOffset"] = json!({"type": ["integer", "null"], "minimum": 0, "description": "Next line offset, or null when no lines remain."});
+            properties["maxInputBytes"] = count("Maximum accepted input file size in bytes.");
+            properties["maxOutputBytes"] = count("Maximum returned text content size in bytes.");
+        }
+        "list_directory"
+        | "list_directory_with_sizes"
+        | "directory_tree"
+        | "search_files"
+        | "list_allowed_directories" => {
+            let items = if name == "directory_tree" {
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "File or directory name, including the requested root node."},
+                        "path": {"type": "string", "description": "Path formed from the requested root and descendant names."},
+                        "type": {"type": "string", "enum": ["directory", "file"], "description": "Kind of tree node."}
+                    },
+                    "required": ["name", "path", "type"],
+                    "additionalProperties": false
+                })
+            } else {
+                json!({"type": "string", "description": "One complete directory row, matching path, or allowed root."})
+            };
+            properties["entries"] = json!({"type": "array", "items": items, "description": "Complete retained items in display order; tree nodes use depth-first order including the root."});
+            properties["total"] = count(
+                "Real total number of matching items before any truncation or page cap; trees count all nodes including the root.",
+            );
+            properties["truncated"] = flag("Whether any items were omitted from this result.");
+            if name == "list_directory" {
+                properties["entriesReturned"] =
+                    count("Number of complete directory rows returned.");
+                properties["hasMore"] = flag("Whether any directory entries were omitted.");
+                properties["maxEntries"] = count("Requested entry cap, at most 200.");
+                properties["maxOutputBytes"] = count("Existing directory content byte limit.");
+            }
+        }
+        "read_multiple_files" | "edit_file" => {
+            properties["total"] = count(
+                "Original size of the complete text result in UTF-8 bytes, before preview truncation.",
+            );
+            properties["truncated"] = flag(
+                "Whether the returned text preview omits UTF-8 bytes; filesystem operations still complete in full.",
+            );
+        }
+        "write_file" | "create_directory" | "move_file" | "get_file_info" => {}
+        _ => return None,
+    }
+    let required: Vec<_> = properties.as_object().unwrap().keys().cloned().collect();
+    Some(json!({
+        "type": "object", "properties": properties,
+        "required": required, "additionalProperties": false
+    }))
 }
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
