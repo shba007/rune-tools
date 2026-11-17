@@ -1,3 +1,4 @@
+use crate::access::Broker;
 use crate::types::TextEdit;
 use base64::Engine;
 use chrono::{DateTime, Utc};
@@ -109,16 +110,151 @@ pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
     resolve_path_with_root(relative_or_abs, allowed.as_deref())
 }
 
+/// MCP content block for one chunk of a media file.
+pub(crate) fn media_response(
+    shown_path: &str,
+    mime: &str,
+    offset: u64,
+    total_size: u64,
+    buf: &[u8],
+) -> Value {
+    let n = buf.len();
+    let end = offset + n as u64;
+    let has_more = end < total_size;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(buf);
+    let media_type = if mime.starts_with("image/") {
+        "image"
+    } else if mime.starts_with("audio/") {
+        "audio"
+    } else {
+        "resource"
+    };
+    let paging = json!({
+        "totalBytes": total_size,
+        "offset": offset,
+        "bytesReturned": n,
+        "hasMore": has_more,
+        "nextOffset": if has_more { Some(end) } else { None }
+    });
+    if media_type == "resource" {
+        json!({
+            "content": [{
+                "type": "resource",
+                "resource": {
+                    "uri": format!("file:///{}", shown_path),
+                    "mimeType": mime,
+                    "blob": b64
+                }
+            }],
+            "paging": paging
+        })
+    } else {
+        json!({
+            "content": [{
+                "type": media_type,
+                "data": b64,
+                "mimeType": mime
+            }],
+            "paging": paging
+        })
+    }
+}
+
+/// Apply `edits` in order; returns the new text and the diff log.
+pub(crate) fn apply_edits(
+    mut text: String,
+    edits: &[TextEdit],
+    path_str: &str,
+) -> Result<(String, String), String> {
+    let mut diff_log = String::new();
+    for (idx, edit) in edits.iter().enumerate() {
+        if !text.contains(&edit.old_text) {
+            return Err(format!(
+                "Edit #{} failed: text to replace was not found in '{}'",
+                idx + 1,
+                path_str
+            ));
+        }
+        diff_log.push_str(&format!(
+            "--- chunk {}\n- {}\n+ {}\n",
+            idx + 1,
+            edit.old_text,
+            edit.new_text
+        ));
+        text = text.replacen(&edit.old_text, &edit.new_text, 1);
+    }
+    Ok((text, diff_log))
+}
+
+/// How file operations reach the folder.
+pub enum Mode<'a> {
+    /// WASI (or the native process) opens files itself.
+    Direct,
+    /// Kit staged this plugin: every operation goes through `host_file_access`, with
+    /// absolute paths under `root` (the config key `rune_staged_root`).
+    Staged {
+        root: &'a str,
+        broker: &'a dyn Broker,
+    },
+}
+
+/// Staged state from host config (`rune_staged`, `rune_staged_root`); only WASM has any.
+fn host_staged_root() -> Result<Option<String>, String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        crate::host_staged_root()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        Ok(None)
+    }
+}
+
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     execute_tool_with_items(request).map(|(value, _)| value)
+}
+
+/// Run a tool in an explicit mode (used by tests to simulate `host_file_access`).
+pub fn execute_tool_in(request: ToolCallRequest, mode: &Mode) -> Result<Value, String> {
+    execute_in(request, mode, &mut None)
 }
 
 pub(crate) fn execute_tool_with_items(
     request: ToolCallRequest,
 ) -> Result<(Value, Option<crate::output::Listing>), String> {
     let mut listing = None;
-    let value = execute_tool_inner(request, &mut listing)?;
+    let value = match host_staged_root()? {
+        Some(root) => {
+            let broker = crate::host_broker();
+            let mode = Mode::Staged {
+                root: &root,
+                broker: broker.as_ref(),
+            };
+            execute_in(request, &mode, &mut listing)?
+        }
+        None => execute_in(request, &Mode::Direct, &mut listing)?,
+    };
     Ok((value, listing))
+}
+
+pub(crate) fn execute_in_mode(
+    request: ToolCallRequest,
+    mode: &Mode,
+) -> Result<(Value, Option<crate::output::Listing>), String> {
+    let mut listing = None;
+    let value = execute_in(request, mode, &mut listing)?;
+    Ok((value, listing))
+}
+
+fn execute_in(
+    request: ToolCallRequest,
+    mode: &Mode,
+    listing: &mut Option<crate::output::Listing>,
+) -> Result<Value, String> {
+    match mode {
+        Mode::Staged { root, broker } => crate::staged::execute(&request, root, *broker, listing),
+        Mode::Direct => execute_tool_inner(request, listing),
+    }
 }
 
 fn execute_tool_inner(
@@ -131,6 +267,14 @@ fn execute_tool_inner(
             get_allowed_root().as_deref(),
             listing,
         );
+    }
+    // With a configured root, the remaining reads are confined by the same capability
+    // as the two pilot reads. Without one, the legacy unrooted behavior is unchanged.
+    if crate::read_tools::is_read_tool(&request.name)
+        && let Some(root) = get_allowed_root().filter(|r| !r.trim().is_empty())
+    {
+        let fs = crate::access::Scoped { root: &root };
+        return crate::read_tools::run(&request, &root, &fs, listing);
     }
     match request.name.as_str() {
         "read_media_file" => {
@@ -180,49 +324,13 @@ fn execute_tool_inner(
                 .map_err(|e| format!("Failed to read media file '{}': {}", path.display(), e))?;
             buf.truncate(n);
 
-            let end = offset + n as u64;
-            let has_more = end < total_size;
-
-            let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
-
-            let media_type = if mime.starts_with("image/") {
-                "image"
-            } else if mime.starts_with("audio/") {
-                "audio"
-            } else {
-                "resource"
-            };
-
-            let paging = json!({
-                "totalBytes": total_size,
-                "offset": offset,
-                "bytesReturned": n,
-                "hasMore": has_more,
-                "nextOffset": if has_more { Some(end) } else { None }
-            });
-
-            if media_type == "resource" {
-                Ok(json!({
-                    "content": [{
-                        "type": "resource",
-                        "resource": {
-                            "uri": format!("file:///{}", path.display()),
-                            "mimeType": mime,
-                            "blob": b64
-                        }
-                    }],
-                    "paging": paging
-                }))
-            } else {
-                Ok(json!({
-                    "content": [{
-                        "type": media_type,
-                        "data": b64,
-                        "mimeType": mime
-                    }],
-                    "paging": paging
-                }))
-            }
+            Ok(media_response(
+                &path.display().to_string(),
+                &mime,
+                offset,
+                total_size,
+                &buf,
+            ))
         }
 
         "read_multiple_files" => {
@@ -299,26 +407,10 @@ fn execute_tool_inner(
                 .unwrap_or(false);
 
             let path = resolve_path(path_str)?;
-            let mut text = fs::read_to_string(&path)
+            let text = fs::read_to_string(&path)
                 .map_err(|e| format!("Failed to read file '{}': {}", path.display(), e))?;
 
-            let mut diff_log = String::new();
-            for (idx, edit) in edits.iter().enumerate() {
-                if !text.contains(&edit.old_text) {
-                    return Err(format!(
-                        "Edit #{} failed: text to replace was not found in '{}'",
-                        idx + 1,
-                        path_str
-                    ));
-                }
-                diff_log.push_str(&format!(
-                    "--- chunk {}\n- {}\n+ {}\n",
-                    idx + 1,
-                    edit.old_text,
-                    edit.new_text
-                ));
-                text = text.replacen(&edit.old_text, &edit.new_text, 1);
-            }
+            let (text, diff_log) = apply_edits(text, &edits, path_str)?;
 
             if !dry_run {
                 fs::write(&path, &text)

@@ -89,7 +89,21 @@ fn output_schema(name: &str) -> Option<Value> {
         "write_file" | "create_directory" | "move_file" | "get_file_info" => {}
         _ => return None,
     }
-    let required: Vec<_> = properties.as_object().unwrap().keys().cloned().collect();
+    if matches!(
+        name,
+        "write_file" | "edit_file" | "create_directory" | "move_file"
+    ) {
+        properties["staged"] = flag(
+            "True when the host staged this change for review instead of changing the real folder; absent for direct writes and dry runs.",
+        );
+    }
+    let required: Vec<_> = properties
+        .as_object()
+        .unwrap()
+        .keys()
+        .filter(|key| *key != "staged")
+        .cloned()
+        .collect();
     Some(json!({
         "type": "object", "properties": properties,
         "required": required, "additionalProperties": false
@@ -133,7 +147,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "read_multiple_files".to_string(),
@@ -149,7 +163,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["paths"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "write_file".to_string(),
@@ -241,7 +255,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "directory_tree".to_string(),
@@ -257,7 +271,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "move_file".to_string(),
@@ -297,7 +311,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path", "pattern"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "get_file_info".to_string(),
@@ -312,7 +326,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 },
                 "required": ["path"]
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
         ToolDefinition {
             name: "list_allowed_directories".to_string(),
@@ -321,7 +335,7 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {}
             }),
-            rules: Some(ToolRules::read_only_fs("allowed_dir")),
+            rules: Some(approved_read()),
         },
     ]
 }

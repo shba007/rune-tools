@@ -20,10 +20,12 @@ fn validator(name: &str) -> jsonschema::Validator {
 fn assert_properties(schema: &Value) {
     if let Some(properties) = schema["properties"].as_object() {
         let required = schema["required"].as_array().unwrap();
-        assert_eq!(required.len(), properties.len());
+        // `staged` is the only optional property: present only on staged writes.
+        let optional = usize::from(properties.contains_key("staged"));
+        assert_eq!(required.len() + optional, properties.len());
         for (name, property) in properties {
             assert!(!property["description"].as_str().unwrap().is_empty());
-            assert!(required.contains(&json!(name)));
+            assert!(name == "staged" || required.contains(&json!(name)));
             assert_properties(property);
         }
     }

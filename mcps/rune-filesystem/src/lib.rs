@@ -1,7 +1,10 @@
+pub mod access;
 pub mod definitions;
 pub mod operations;
 mod output;
 pub mod pilot_reads;
+mod read_tools;
+mod staged;
 pub mod types;
 
 #[cfg(test)]
@@ -14,33 +17,104 @@ pub(crate) fn host_allowed_root() -> Option<String> {
     extism_pdk::config::get("allowed_dir").ok().flatten()
 }
 
+/// Kit sets `rune_staged = "true"` and `rune_staged_root = <real folder>` for a staged plugin.
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn host_staged_root() -> Result<Option<String>, String> {
+    let staged = extism_pdk::config::get("rune_staged").ok().flatten();
+    if staged.as_deref() != Some("true") {
+        return Ok(None);
+    }
+    match extism_pdk::config::get("rune_staged_root").ok().flatten() {
+        Some(root) if !root.trim().is_empty() => Ok(Some(root)),
+        _ => Err("Staged mode is on but rune_staged_root is missing; update rune-kit".into()),
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[extism_pdk::host_fn("extism:host/user")]
+extern "ExtismHost" {
+    fn host_file_access(input: String) -> String;
+}
+
+#[cfg(target_arch = "wasm32")]
+struct HostBroker;
+
+#[cfg(target_arch = "wasm32")]
+impl access::Broker for HostBroker {
+    fn call(&self, request: serde_json::Value) -> Result<serde_json::Value, String> {
+        // SAFETY: the host function is provided by rune-kit for every plugin load.
+        let output = unsafe { host_file_access(request.to_string()) }
+            .map_err(|e| format!("host_file_access failed: {e}"))?;
+        serde_json::from_str(&output).map_err(|e| format!("Invalid host_file_access reply: {e}"))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn host_broker() -> Box<dyn access::Broker> {
+    Box::new(HostBroker)
+}
+
+/// Only WASM can be staged, so a native build never reaches a broker.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn host_broker() -> Box<dyn access::Broker> {
+    struct Unavailable;
+    impl access::Broker for Unavailable {
+        fn call(&self, _: serde_json::Value) -> Result<serde_json::Value, String> {
+            Err("host_file_access is only available inside rune-kit".into())
+        }
+    }
+    Box::new(Unavailable)
+}
+
 use rune_pdk::ToolCallRequest;
 use serde_json::json;
 
 /// The host-testable boundary used by the WASM export.
 pub fn call_tool(request: ToolCallRequest) -> serde_json::Value {
+    call_with(request, |request| {
+        operations::execute_tool_with_items(request)
+    })
+}
+
+/// Same as [`call_tool`] with an explicit file-access mode (tests simulate the broker).
+pub fn call_tool_in(request: ToolCallRequest, mode: &operations::Mode) -> serde_json::Value {
+    call_with(request, |request| {
+        operations::execute_in_mode(request, mode)
+    })
+}
+
+fn call_with(
+    request: ToolCallRequest,
+    run: impl FnOnce(ToolCallRequest) -> Result<(serde_json::Value, Option<output::Listing>), String>,
+) -> serde_json::Value {
     if request.name == "read_media_file" {
         // Deliberately legacy: Kit caps structured results at 8 MiB, while this
         // tool permits 20 MiB media. Preserve its payload and error behavior.
-        return match operations::execute_tool(request) {
-            Ok(value) => json!({"status": "success", "result": value}),
+        return match run(request) {
+            Ok((value, _)) => json!({"status": "success", "result": value}),
             Err(error) => json!({"status": "error", "error": error}),
         };
     }
     let bounded_text = matches!(request.name.as_str(), "read_multiple_files" | "edit_file");
-    tool_result(operations::execute_tool_with_items(request), bounded_text)
+    tool_result(run(request), bounded_text)
 }
 
 fn tool_result(
     result: Result<(serde_json::Value, Option<output::Listing>), String>,
     bounded_text: bool,
 ) -> serde_json::Value {
-    match result {
+    let staged = matches!(&result, Ok((legacy, _)) if legacy["staged"] == true);
+    let mut out = match result {
         Ok((legacy, Some(listing))) => output::listing_result(legacy, &listing),
         Ok((legacy, None)) if bounded_text => output::text_result(legacy),
         Ok((legacy, None)) => output::success(legacy.clone(), legacy),
-        Err(error) => rune_pdk::tool_error(error),
+        Err(error) => return rune_pdk::tool_error(error),
+    };
+    // A truncated text preview is rebuilt without the flag; a staged write must keep it.
+    if staged && let Some(structured) = out["structuredContent"].as_object_mut() {
+        structured.insert("staged".into(), json!(true));
     }
+    out
 }
 
 #[cfg(target_arch = "wasm32")]

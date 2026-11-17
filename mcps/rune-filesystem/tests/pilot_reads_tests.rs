@@ -131,7 +131,20 @@ fn directory_is_bounded_with_explicit_truncation() {
 }
 
 #[test]
-fn exactly_two_filesystem_tools_are_eligible() {
+fn only_confined_read_tools_are_strictly_read_only() {
+    // Every tool here reads through a root-confined capability (or, staged, the host
+    // broker); confinement is tested in `read_tools` and `staged_tests`.
+    let strict = [
+        "read_text_file",
+        "read_media_file",
+        "read_multiple_files",
+        "list_directory",
+        "list_directory_with_sizes",
+        "directory_tree",
+        "search_files",
+        "get_file_info",
+        "list_allowed_directories",
+    ];
     let definitions: Vec<Value> = tool_definitions()
         .into_iter()
         .map(|tool| serde_json::to_value(tool).unwrap())
@@ -141,21 +154,30 @@ fn exactly_two_filesystem_tools_are_eligible() {
         .filter(|tool| tool["annotations"]["readOnlyHint"] == true)
         .map(|tool| tool["name"].as_str().unwrap())
         .collect();
-    assert_eq!(eligible, ["read_text_file", "list_directory"]);
+    assert_eq!(eligible, strict);
     for tool in definitions {
         assert_eq!(
             tool["annotations"]["readOnlyHint"],
             tool["annotations"]["readOnly"]
         );
+        let rules = &tool["inputSchema"]["x-rune-rules"];
         if tool["annotations"]["readOnlyHint"] == true {
-            assert_eq!(
-                tool["inputSchema"]["x-rune-rules"]["limits"]["root_param"],
-                "allowed_dir"
-            );
-            assert_eq!(
-                tool["inputSchema"]["x-rune-read-limits"]["maxContentBytes"],
-                MAX_OUTPUT_BYTES
-            );
+            assert_eq!(rules["limits"]["root_param"], "allowed_dir");
+            assert_eq!(rules["effects"], json!(["read"]));
+            assert_eq!(rules["risk"], "low");
+            if matches!(
+                tool["name"].as_str().unwrap(),
+                "read_text_file" | "list_directory"
+            ) {
+                assert_eq!(
+                    tool["inputSchema"]["x-rune-read-limits"]["maxContentBytes"],
+                    MAX_OUTPUT_BYTES
+                );
+            }
+        } else {
+            // Writers stay non-strict and keep their root and effects.
+            assert_eq!(rules["limits"]["root_param"], "allowed_dir");
+            assert_ne!(rules["effects"], json!(["read"]));
         }
     }
 }

@@ -239,3 +239,18 @@ Some operation tests call live external services or installed binaries. A full
 run depends on that environment; do not remove the tests or claim a passing
 run from an excluded subset. `imap-proto` currently emits a dependency
 future-compatibility warning, independent of project Clippy diagnostics.
+
+## rune-filesystem staged mode
+
+When Kit sets config `rune_staged = "true"` and `rune_staged_root = <real folder>`,
+rune-filesystem routes every operation (reads included) through the
+`host_file_access` import (schema_version 1) with absolute paths under that root;
+otherwise it uses WASI as before. It imports no `host_cmd_exec`,
+`host_sidecar_exec` or `host_get_binary_path`. Paths are confined with the same
+`relative_path` checks in both modes. Staged writes add `staged: true` to the
+structured result (`staged` is an optional boolean in the output schemas).
+Moves compose `read_file` + `write_file` + `delete_file` (folders: `create_directory`,
+recurse, `remove_directory`); `mkdir -p` is one `create_directory` per level.
+Strictly read-only tools: `read_text_file`, `read_media_file`, `read_multiple_files`,
+`list_directory`, `list_directory_with_sizes`, `directory_tree`, `search_files`,
+`get_file_info`, `list_allowed_directories`. Needs a Kit that provides `host_file_access`.
