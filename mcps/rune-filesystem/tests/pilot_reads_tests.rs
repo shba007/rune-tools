@@ -159,3 +159,60 @@ fn exactly_two_filesystem_tools_are_eligible() {
         }
     }
 }
+
+#[test]
+fn a_missing_path_is_named_as_given_without_an_os_error_code() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().to_str().unwrap();
+    fs::write(dir.path().join("Expenses.txt"), "15 Nov\n49 internet\n").unwrap();
+    let error = call(Some(root), "read_text_file", json!({"path":"missing.txt"})).unwrap_err();
+    assert!(
+        error.contains("\"missing.txt\"") && error.contains("no such file or directory"),
+        "{error}"
+    );
+    assert!(!error.contains("os error"), "{error}");
+    assert!(
+        !error.contains("marker"),
+        "a plain missing name gets no marker hint: {error}"
+    );
+    let missing_dir = call(Some(root), "list_directory", json!({"path":"nowhere"})).unwrap_err();
+    assert!(
+        missing_dir.contains("Cannot list directory \"nowhere\""),
+        "{missing_dir}"
+    );
+}
+
+#[test]
+fn a_whole_listing_row_used_as_a_path_is_refused_with_a_hint() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().to_str().unwrap();
+    fs::write(dir.path().join("Expenses.txt"), "15 Nov\n49 internet\n").unwrap();
+    fs::create_dir(dir.path().join("sub")).unwrap();
+    for (tool, path) in [
+        ("read_text_file", "[FILE] Expenses.txt"),
+        ("read_text_file", "  [FILE] Expenses.txt"),
+        ("list_directory", "[DIR] sub"),
+        ("read_text_file", "[LINK] Expenses.txt"),
+    ] {
+        let error = call(Some(root), tool, json!({"path":path})).unwrap_err();
+        assert!(error.contains(&format!("\"{path}\"")), "{error}");
+        assert!(
+            error.contains("without the [FILE], [DIR] or [LINK] marker"),
+            "{error}"
+        );
+    }
+    let ok = call(Some(root), "read_text_file", json!({"path":"Expenses.txt"})).unwrap();
+    assert!(ok["content"].as_str().unwrap().contains("49 internet"));
+}
+
+#[test]
+fn a_directory_given_to_read_text_file_names_the_path() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().to_str().unwrap();
+    fs::create_dir(dir.path().join("sub")).unwrap();
+    let error = call(Some(root), "read_text_file", json!({"path":"sub"})).unwrap_err();
+    assert!(
+        error.contains("\"sub\"") && error.contains("not a regular text file"),
+        "{error}"
+    );
+}

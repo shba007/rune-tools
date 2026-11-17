@@ -115,13 +115,22 @@ pub(crate) fn execute_with_items(
             if args.get("head").is_some() && args.get("tail").is_some() {
                 return Err("Use either head or tail, not both".into());
             }
-            let file = open_file(root, &relative)
-                .map_err(|e| format!("Cannot open file within allowed_dir: {e}"))?;
+            let file = match open_file(root, &relative) {
+                Ok(file) => file,
+                // Windows reports a directory opened as a file as "access denied".
+                Err(e)
+                    if e.kind() != std::io::ErrorKind::NotFound
+                        && directory_entries(root, &relative).is_ok() =>
+                {
+                    return Err(not_a_file(path));
+                }
+                Err(e) => return Err(open_error("open file", path, &e)),
+            };
             let metadata = file
                 .metadata()
                 .map_err(|e| format!("Cannot inspect opened file: {e}"))?;
             if !metadata.is_file() {
-                return Err("Path must refer to a regular text file".into());
+                return Err(not_a_file(path));
             }
             if metadata.len() > MAX_FILE_BYTES as u64 {
                 return Err(format!(
@@ -172,7 +181,7 @@ pub(crate) fn execute_with_items(
         "list_directory" => {
             let max = number(args, "maxEntries", "max_entries", MAX_ENTRIES, MAX_ENTRIES)?;
             let entries = directory_entries(root, &relative)
-                .map_err(|e| format!("Cannot list directory within allowed_dir: {e}"))?;
+                .map_err(|e| open_error("list directory", path, &e))?;
             let mut lines = Vec::new();
             let mut bytes = 0;
             let mut more = false;
@@ -201,6 +210,29 @@ pub(crate) fn execute_with_items(
         }
         _ => Err("Only read_text_file and list_directory use the approved read boundary".into()),
     }
+}
+
+fn not_a_file(given: &str) -> String {
+    format!("\"{given}\" is not a regular text file; give the name of a file, not a directory.")
+}
+
+/// A model that copies a whole `list_directory` row as a path gets this error again and
+/// again if it only says "no such file", so name the path as given and point at the cause.
+fn open_error(action: &str, given: &str, error: &std::io::Error) -> String {
+    let reason = if error.kind() == std::io::ErrorKind::NotFound {
+        "no such file or directory".to_string()
+    } else {
+        error.to_string()
+    };
+    let hint = if ["[FILE]", "[DIR]", "[LINK]"]
+        .iter()
+        .any(|marker| given.trim_start().starts_with(marker))
+    {
+        " Use the name from list_directory without the [FILE], [DIR] or [LINK] marker."
+    } else {
+        ""
+    };
+    format!("Cannot {action} \"{given}\" within allowed_dir: {reason}.{hint}")
 }
 
 #[cfg(not(target_arch = "wasm32"))]
