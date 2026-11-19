@@ -1,6 +1,6 @@
 use rune_pdk::{PromptDefinition, ResourceDefinition, ToolCallRequest, ToolDefinition};
 use serde::Deserialize;
-use serde_json::{Map, Value, json};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 
@@ -207,65 +207,4 @@ pub fn parse_cli_args(args: &[String]) -> HashMap<String, String> {
     }
 
     map
-}
-
-pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Result<Value, String> {
-    let cli_map = parse_cli_args(cli_args);
-    let mut resolved_map = Map::new();
-
-    let properties = tool_def
-        .input_schema
-        .get("properties")
-        .and_then(Value::as_object);
-
-    if let Some(props) = properties {
-        for (prop_name, prop_spec) in props {
-            let target_type = prop_spec
-                .get("type")
-                .and_then(Value::as_str)
-                .unwrap_or("string");
-
-            let raw_value_opt = if let Some(cli_val) = cli_map.get(prop_name) {
-                Some(cli_val.clone())
-            } else {
-                let upper = prop_name.to_ascii_uppercase();
-                let lower = prop_name.to_ascii_lowercase();
-                std::env::var(&upper)
-                    .or_else(|_| std::env::var(&lower))
-                    .or_else(|_| std::env::var(prop_name))
-                    .ok()
-            };
-
-            if let Some(raw_val) = raw_value_opt {
-                let parsed_val = parse_typed_value(&raw_val, target_type)?;
-                resolved_map.insert(prop_name.clone(), parsed_val);
-            }
-        }
-    }
-
-    for (k, v) in cli_map {
-        if !resolved_map.contains_key(&k) {
-            resolved_map.insert(k, Value::String(v));
-        }
-    }
-
-    Ok(Value::Object(resolved_map))
-}
-
-fn parse_typed_value(raw: &str, target_type: &str) -> Result<Value, String> {
-    match target_type {
-        "integer" | "number" => raw
-            .parse::<i64>()
-            .map(|n| json!(n))
-            .or_else(|_| raw.parse::<f64>().map(|n| json!(n)))
-            .map_err(|_| format!("Failed to parse '{}' as number", raw)),
-        "boolean" => match raw.to_ascii_lowercase().as_str() {
-            "true" | "1" | "yes" => Ok(json!(true)),
-            "false" | "0" | "no" => Ok(json!(false)),
-            _ => Err(format!("Failed to parse '{}' as boolean", raw)),
-        },
-        "object" | "array" => serde_json::from_str(raw)
-            .map_err(|e| format!("Failed to parse '{}' as JSON: {}", raw, e)),
-        _ => Ok(json!(raw)),
-    }
 }
