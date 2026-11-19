@@ -12,12 +12,9 @@ mod output_contract_tests;
 
 #[cfg(target_arch = "wasm32")]
 pub(crate) fn host_allowed_root() -> Option<String> {
-    // Kit must configure both this value and the matching WASI preopen.
-    // An environment fallback could disagree with that capability.
     extism_pdk::config::get("allowed_dir").ok().flatten()
 }
 
-/// Kit sets `rune_staged = "true"` and `rune_staged_root = <real folder>` for a staged plugin.
 #[cfg(target_arch = "wasm32")]
 pub(crate) fn host_staged_root() -> Result<Option<String>, String> {
     let staged = extism_pdk::config::get("rune_staged").ok().flatten();
@@ -54,7 +51,6 @@ pub(crate) fn host_broker() -> Box<dyn access::Broker> {
     Box::new(HostBroker)
 }
 
-/// Only WASM can be staged, so a native build never reaches a broker.
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn host_broker() -> Box<dyn access::Broker> {
     struct Unavailable;
@@ -69,14 +65,12 @@ pub(crate) fn host_broker() -> Box<dyn access::Broker> {
 use rune_pdk::ToolCallRequest;
 use serde_json::json;
 
-/// The host-testable boundary used by the WASM export.
 pub fn call_tool(request: ToolCallRequest) -> serde_json::Value {
     call_with(request, |request| {
         operations::execute_tool_with_items(request)
     })
 }
 
-/// Same as [`call_tool`] with an explicit file-access mode (tests simulate the broker).
 pub fn call_tool_in(request: ToolCallRequest, mode: &operations::Mode) -> serde_json::Value {
     call_with(request, |request| {
         operations::execute_in_mode(request, mode)
@@ -88,8 +82,6 @@ fn call_with(
     run: impl FnOnce(ToolCallRequest) -> Result<(serde_json::Value, Option<output::Listing>), String>,
 ) -> serde_json::Value {
     if request.name == "read_media_file" {
-        // Deliberately legacy: Kit caps structured results at 8 MiB, while this
-        // tool permits 20 MiB media. Preserve its payload and error behavior.
         return match run(request) {
             Ok((value, _)) => json!({"status": "success", "result": value}),
             Err(error) => json!({"status": "error", "error": error}),
@@ -110,7 +102,6 @@ fn tool_result(
         Ok((legacy, None)) => output::success(legacy.clone(), legacy),
         Err(error) => return rune_pdk::tool_error(error),
     };
-    // A truncated text preview is rebuilt without the flag; a staged write must keep it.
     if staged && let Some(structured) = out["structuredContent"].as_object_mut() {
         structured.insert("staged".into(), json!(true));
     }

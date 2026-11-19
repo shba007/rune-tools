@@ -81,11 +81,8 @@ impl ToolRules {
         }
     }
 
-    /// Legacy helper name. File reads stay outside strict read-only mode until
-    /// callers establish root confinement for symlinks and Windows reparse points.
     pub fn read_only_fs(root_param: impl Into<String>) -> Self {
         Self {
-            // Root confinement (including symlinks) has not been established.
             read_only: false,
             risk: RiskLevel::Low,
             effects: vec![ToolEffect::Read],
@@ -96,7 +93,6 @@ impl ToolRules {
         }
     }
 
-    /// Reads remote state, but network access excludes strict read-only mode.
     pub fn read_only_network(hosts: impl IntoIterator<Item = impl Into<String>>) -> Self {
         Self {
             read_only: false,
@@ -109,7 +105,6 @@ impl ToolRules {
         }
     }
 
-    /// Inspects via a subprocess, which excludes strict read-only mode.
     pub fn read_only_exec(binaries: impl IntoIterator<Item = impl Into<String>>) -> Self {
         Self {
             read_only: false,
@@ -198,8 +193,6 @@ impl ToolRules {
     }
 }
 
-/// Transitional MCP aliases live here so they can be removed together later.
-/// Idempotence is deliberately unspecified: rules do not establish it.
 pub fn annotations_from_rules(rules: &ToolRules) -> Value {
     let destructive =
         rules.effects.contains(&ToolEffect::Delete) || rules.effects.contains(&ToolEffect::Exec);
@@ -251,7 +244,6 @@ impl Serialize for ToolDefinition {
 }
 
 impl ToolDefinition {
-    /// Add an output contract without changing existing struct-literal callers.
     pub fn with_output_schema(self, output_schema: Value) -> ToolDefinitionWithOutputSchema {
         ToolDefinitionWithOutputSchema {
             definition: self,
@@ -287,7 +279,6 @@ impl ToolDefinition {
     }
 }
 
-/// Opt-in published definition; the underlying definition keeps its existing serializer.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ToolDefinitionWithOutputSchema {
     #[serde(flatten)]
@@ -301,7 +292,6 @@ pub struct ToolDefinitionWithOutputSchema {
     pub output_schema: Option<Value>,
 }
 
-/// Successful MCP result with a legacy text representation and an object payload.
 pub fn structured_tool_result(
     text: impl Into<String>,
     structured_content: serde_json::Map<String, Value>,
@@ -313,7 +303,6 @@ pub fn structured_tool_result(
     })
 }
 
-/// Failed tool call, retaining the legacy JSON error text while marking it as an error.
 pub fn tool_error(error: impl Into<String>) -> Value {
     serde_json::json!({
         "content": [{"type": "text", "text": serde_json::json!({
@@ -623,18 +612,15 @@ mod tests {
         let serialized = serde_json::to_string(&tool).expect("serialize tool");
         let val: serde_json::Value = serde_json::from_str(&serialized).expect("parse json");
 
-        // Verify top-level rules field
         assert_eq!(val["rules"]["read_only"], false);
         assert_eq!(val["rules"]["risk"], "low");
         assert_eq!(val["rules"]["effects"][0], "read");
         assert_eq!(val["rules"]["limits"]["root_param"], "allowed_dir");
 
-        // Verify injected x-rune-rules inside inputSchema
         assert_eq!(val["inputSchema"]["x-rune-rules"]["read_only"], false);
         assert_eq!(val["inputSchema"]["x-rune-rules"]["risk"], "low");
         assert_eq!(val["inputSchema"]["x-rune-rules"]["effects"][0], "read");
 
-        // Verify deserialization back to ToolDefinition
         let deserialized: ToolDefinition = serde_json::from_str(&serialized).expect("deserialize");
         assert_eq!(deserialized.name, "test_read");
         assert!(deserialized.rules.is_some());

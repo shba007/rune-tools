@@ -49,7 +49,6 @@ fn published_schemas_match_typed_results_and_captured_client_text() {
             .unwrap();
         let old: Value = serde_json::from_str(old_text).unwrap();
         let output = if request.name == "get_current_time" {
-            // Only tests replay this captured instant. Production calls Utc::now.
             let now: DateTime<Utc> = old["result"]["utcDatetime"]
                 .as_str()
                 .unwrap()
@@ -65,8 +64,6 @@ fn published_schemas_match_typed_results_and_captured_client_text() {
         assert_eq!(output["structuredContent"], old["result"]);
         let structured = output["structuredContent"].clone();
         validator.validate(&structured).unwrap();
-        // The declared properties and required sets must match the serialized
-        // response types, including serde's camelCase names and nested objects.
         let typed = match tool.definition.name.as_str() {
             "get_current_time" => serde_json::to_value(
                 serde_json::from_value::<CurrentTimeResponse>(structured.clone()).unwrap(),

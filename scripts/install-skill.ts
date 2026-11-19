@@ -23,7 +23,6 @@ const targetCommandDir = join(zcodeBase, "commands", masterName);
 
 const tmpBase = await mkdtemp(join(tmpdir(), "zcode-install-"));
 
-// Default argument hints for known command types if omitted in source
 const DEFAULT_ARG_HINTS: Record<string, string> = {
 	audit: "[file | directory | manifest]",
 	review: "[target | diff | commit]",
@@ -88,7 +87,6 @@ function normalizeToMarkdown(rawContent: string, fileName: string, isToml: boole
 			body = rawContent;
 		}
 	} else {
-		// Process existing Markdown
 		const trimmed = rawContent.trim();
 		const frontmatterMatch = trimmed.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
 
@@ -143,9 +141,6 @@ try {
 
 	const repoPath = join(tmpBase, "repo");
 
-	// -------------------------------------------------------------
-	// 1. Process & Install Skills (~/.zcode/skills/<masterName>)
-	// -------------------------------------------------------------
 	await rm(targetSkillDir, { recursive: true, force: true });
 	await mkdir(targetSkillDir, { recursive: true });
 
@@ -181,9 +176,6 @@ try {
 		}
 	}
 
-	// -------------------------------------------------------------
-	// 2. Process, Convert & Install Commands (~/.zcode/commands/<masterName>)
-	// -------------------------------------------------------------
 	const commandCandidates = [
 		join(repoPath, "commands"),
 		join(repoPath, ".claude", "commands"),

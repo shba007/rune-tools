@@ -1,4 +1,3 @@
-//! Public Kit 2026-07-28 acceptance client. No plugin ABI changes or installation.
 use crate::release::Result;
 use serde_json::{Value, json};
 use std::{
@@ -410,7 +409,6 @@ fn filesystem(rune: &str, plugin: &str, fixture: &Path, require_link: bool) -> R
         );
         refused(g.call(read, json!({"path":"escape/secret.txt"}))?);
         refused(g.call(list, json!({"path":"escape"}))?);
-        // Alternate the real outside link with an in-root directory; restore without recursive removal.
         let active = root.join("race");
         let parked = root.join("race-link");
         let safe = root.join("race-safe");

@@ -1,4 +1,3 @@
-// plugins/rune-ssh/src/operations.rs
 #[cfg(target_arch = "wasm32")]
 use crate::types::{CmdExecRequest, CmdExecResponse};
 #[cfg(target_arch = "wasm32")]

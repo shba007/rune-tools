@@ -1,4 +1,3 @@
-// plugins/rune-ssh/src/lib.rs
 pub mod definitions;
 pub mod operations;
 pub mod types;

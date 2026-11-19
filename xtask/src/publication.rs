@@ -1,4 +1,3 @@
-//! Immutable GitHub publication and artifact-backed registry generation.
 use crate::registry::NATIVE_TARGETS;
 use crate::release::{self, Plugin, Result};
 use serde_json::{Value, json};
@@ -255,7 +254,6 @@ pub fn command(args: &[String]) -> Result<()> {
         let all = release::pending(root)?;
         let mut index = release::registry(root)?;
         let mut evidence = json!({});
-        // Validate every note before querying GitHub or changing any output.
         for p in &all {
             release::plugin_notes(root, p)?;
         }

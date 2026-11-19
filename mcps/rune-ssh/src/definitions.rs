@@ -1,4 +1,3 @@
-// plugins/rune-ssh/src/definitions.rs
 use rune_pdk::{RiskLevel, ToolDefinition, ToolEffect, ToolRules};
 use serde_json::json;
 

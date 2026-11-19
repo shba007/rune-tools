@@ -43,8 +43,6 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
     ]
 }
 
-/// Wire definitions, including output contracts. Keep the base definitions available
-/// to existing input/rules checks and the workspace's input-only Postman generator.
 pub fn published_tool_definitions() -> Vec<ToolDefinitionWithOutputSchema> {
     tool_definitions()
         .into_iter()
@@ -72,7 +70,6 @@ pub fn published_tool_definitions() -> Vec<ToolDefinitionWithOutputSchema> {
                     "required": ["source", "target", "timeDifferenceHours"],
                     "additionalProperties": false
                 })),
-                // A tool without an output contract is still listed, just without one.
                 _ => None,
             };
             ToolDefinitionWithOutputSchema {

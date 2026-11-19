@@ -2,10 +2,6 @@ use mhb_mconnect::operations::execute_tool;
 use rune_pdk::ToolCallRequest;
 use serde_json::json;
 
-// =========================================================================
-// 1. Validation & Unit Tests
-// =========================================================================
-
 #[test]
 fn test_mhb_missing_template_id_validation() {
     let req = ToolCallRequest {
@@ -33,7 +29,6 @@ fn test_mhb_empty_template_id_validation() {
 
 #[test]
 fn test_mhb_render_preview_validation() {
-    // Missing templateId
     let req_missing_id = ToolCallRequest {
         name: "mhb_render_template_preview".to_string(),
         arguments: json!({ "variables": {} }),
@@ -42,7 +37,6 @@ fn test_mhb_render_preview_validation() {
     assert!(res.is_err());
     assert!(res.unwrap_err().contains("Missing 'templateId' parameter"));
 
-    // Empty templateId
     let req_empty_id = ToolCallRequest {
         name: "mhb_render_template_preview".to_string(),
         arguments: json!({ "templateId": "   ", "variables": {} }),
@@ -54,7 +48,6 @@ fn test_mhb_render_preview_validation() {
             .contains("Parameter 'templateId' cannot be empty")
     );
 
-    // Missing variables
     let req_missing_vars = ToolCallRequest {
         name: "mhb_render_template_preview".to_string(),
         arguments: json!({ "templateId": "test-id" }),
@@ -63,7 +56,6 @@ fn test_mhb_render_preview_validation() {
     assert!(res.is_err());
     assert!(res.unwrap_err().contains("Missing 'variables' parameter"));
 
-    // Invalid variables type (string instead of object)
     let req_invalid_vars = ToolCallRequest {
         name: "mhb_render_template_preview".to_string(),
         arguments: json!({ "templateId": "test-id", "variables": "not_an_object" }),
@@ -97,10 +89,6 @@ fn test_unknown_tool_routing() {
     assert!(res.is_err());
     assert_eq!(res.unwrap_err(), "Unknown tool: non_existent_tool");
 }
-
-// =========================================================================
-// 2. Live API Integration Tests
-// =========================================================================
 
 #[test]
 fn test_live_mhb_list_templates() {
@@ -137,7 +125,6 @@ fn test_live_mhb_get_template_and_preview() {
         return;
     }
 
-    // 1. Fetch specific template schema
     let req_get = ToolCallRequest {
         name: "mhb_get_template".to_string(),
         arguments: json!({
@@ -156,7 +143,6 @@ fn test_live_mhb_get_template_and_preview() {
     assert_eq!(detail_res["id"], "internship-completion-certificate");
     assert!(detail_res["variables"].is_object());
 
-    // 2. Render template preview with payload variables
     let req_preview = ToolCallRequest {
         name: "mhb_render_template_preview".to_string(),
         arguments: json!({

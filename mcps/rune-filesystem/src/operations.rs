@@ -62,7 +62,6 @@ pub fn resolve_path_with_root(
         let root_path = PathBuf::from(root_trimmed);
         let normalized_root = normalize_path(&root_path);
 
-        // Check if this is an absolute path (Unix '/', Windows 'C:/', or UNC '//')
         let is_absolute = clean_input.starts_with('/')
             || clean_input.contains(":/")
             || clean_input.starts_with("//")
@@ -110,7 +109,6 @@ pub fn resolve_path(relative_or_abs: &str) -> Result<PathBuf, String> {
     resolve_path_with_root(relative_or_abs, allowed.as_deref())
 }
 
-/// MCP content block for one chunk of a media file.
 pub(crate) fn media_response(
     shown_path: &str,
     mime: &str,
@@ -160,7 +158,6 @@ pub(crate) fn media_response(
     }
 }
 
-/// Apply `edits` in order; returns the new text and the diff log.
 pub(crate) fn apply_edits(
     mut text: String,
     edits: &[TextEdit],
@@ -186,19 +183,14 @@ pub(crate) fn apply_edits(
     Ok((text, diff_log))
 }
 
-/// How file operations reach the folder.
 pub enum Mode<'a> {
-    /// WASI (or the native process) opens files itself.
     Direct,
-    /// Kit staged this plugin: every operation goes through `host_file_access`, with
-    /// absolute paths under `root` (the config key `rune_staged_root`).
     Staged {
         root: &'a str,
         broker: &'a dyn Broker,
     },
 }
 
-/// Staged state from host config (`rune_staged`, `rune_staged_root`); only WASM has any.
 fn host_staged_root() -> Result<Option<String>, String> {
     #[cfg(target_arch = "wasm32")]
     {
@@ -214,7 +206,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     execute_tool_with_items(request).map(|(value, _)| value)
 }
 
-/// Run a tool in an explicit mode (used by tests to simulate `host_file_access`).
 pub fn execute_tool_in(request: ToolCallRequest, mode: &Mode) -> Result<Value, String> {
     execute_in(request, mode, &mut None)
 }
@@ -268,8 +259,6 @@ fn execute_tool_inner(
             listing,
         );
     }
-    // With a configured root, the remaining reads are confined by the same capability
-    // as the two pilot reads. Without one, the legacy unrooted behavior is unchanged.
     if crate::read_tools::is_read_tool(&request.name)
         && let Some(root) = get_allowed_root().filter(|r| !r.trim().is_empty())
     {

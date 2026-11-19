@@ -541,7 +541,6 @@ fn test_resolve_path_relative_prefix() {
 
 #[test]
 fn test_resolve_path_strips_redundant_allowed_root() {
-    // Windows path resolution
     let root = Some("D:/Projects/Public/rune/code-tools/temp/cookies");
 
     let p1 = resolve_path_with_root("index.html", root).unwrap();
@@ -575,7 +574,6 @@ fn test_resolve_path_strips_redundant_allowed_root() {
     let p5 = resolve_path_with_root("C:/Windows/System32", root);
     assert!(p5.is_err());
 
-    // Unix path resolution
     let unix_root = Some("/tmp/cookies");
     let u1 = resolve_path_with_root("index.html", unix_root).unwrap();
     assert_eq!(u1, PathBuf::from("/tmp/cookies/index.html"));

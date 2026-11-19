@@ -1,4 +1,3 @@
-//! Root manifest/lock changes select only packages whose inputs actually changed.
 use super::{Plugin, Result, git};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -113,8 +112,6 @@ fn lock_inputs(text: &str, name: &str) -> Result<BTreeMap<String, toml::Value>> 
                 }
             }
         }
-        // Version qualifiers may disappear when an unrelated duplicate is removed.
-        // Compare resolved identities, not Cargo.lock's abbreviated edge spelling.
         normalized
             .as_table_mut()
             .ok_or("invalid lock package")?

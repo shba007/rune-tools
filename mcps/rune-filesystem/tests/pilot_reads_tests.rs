@@ -132,8 +132,6 @@ fn directory_is_bounded_with_explicit_truncation() {
 
 #[test]
 fn only_confined_read_tools_are_strictly_read_only() {
-    // Every tool here reads through a root-confined capability (or, staged, the host
-    // broker); confinement is tested in `read_tools` and `staged_tests`.
     let strict = [
         "read_text_file",
         "read_media_file",
@@ -175,7 +173,6 @@ fn only_confined_read_tools_are_strictly_read_only() {
                 );
             }
         } else {
-            // Writers stay non-strict and keep their root and effects.
             assert_eq!(rules["limits"]["root_param"], "allowed_dir");
             assert_ne!(rules["effects"], json!(["read"]));
         }

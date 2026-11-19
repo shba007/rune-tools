@@ -32,10 +32,6 @@ fn get_bool_arg(args: &Value, camel: &str, snake: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
-// =========================================================================
-// Session Management
-// =========================================================================
-
 pub fn validate_session_id(session_id: &str) -> Result<(), String> {
     let trimmed = session_id.trim();
     if trimmed.is_empty() {
@@ -174,10 +170,6 @@ fn delete_session(session_id: &str) -> Result<(), String> {
     Ok(())
 }
 
-// =========================================================================
-// Native Binary Execution (Host-Managed Resolution via rune-pdk)
-// =========================================================================
-
 #[cfg(not(target_arch = "wasm32"))]
 fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
     if rune_pdk::is_contract_test_mode() {
@@ -260,10 +252,6 @@ fn run_agent_browser_cli(args: Vec<String>) -> Result<CmdExecResponse, String> {
         Err(format!("agent-browser error: {}", err))
     }
 }
-
-// =========================================================================
-// Tool Router & Actions
-// =========================================================================
 
 pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
     let tool_name = request

@@ -144,10 +144,6 @@ fn test_unknown_tool_routing() {
     assert_eq!(res.unwrap_err(), "Unknown tool: non_existent_tool");
 }
 
-// =========================================================================
-// Live E2E Operations (Driven by dotenvx CLI injection)
-// =========================================================================
-
 #[test]
 fn test_live_verify_email_connection_e2e() {
     if std::env::var("CI").is_ok() {

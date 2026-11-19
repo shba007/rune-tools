@@ -27,14 +27,12 @@ fn test_wasm_filesystem_execution() {
 
     let mut plugin = Plugin::new(&manifest, [], true).expect("WASM plugin compilation failed");
 
-    // Test mcp_list_tools
     let tools_raw = plugin
         .call::<(), &str>("mcp_list_tools", ())
         .expect("Failed to call mcp_list_tools");
     let tools: Value = serde_json::from_str(tools_raw).unwrap();
     assert!(tools.as_array().unwrap().len() >= 13);
 
-    // Test mcp_call_tool (read_text_file with paging)
     let call_input = serde_json::json!({
         "name": "read_text_file",
         "arguments": {
@@ -49,8 +47,10 @@ fn test_wasm_filesystem_execution() {
         .expect("Failed to call mcp_call_tool");
     let output: Value = serde_json::from_str(output_raw).unwrap();
     assert_eq!(output["status"], "success");
-    assert!(output["result"]["content"]
-        .as_str()
-        .unwrap()
-        .contains("[workspace]"));
+    assert!(
+        output["result"]["content"]
+            .as_str()
+            .unwrap()
+            .contains("[workspace]")
+    );
 }

@@ -10,10 +10,6 @@ use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::path::PathBuf;
 
-// =========================================================================
-// WASM32 Target Implementation (Host Subprocess Bridge)
-// =========================================================================
-
 #[cfg(target_arch = "wasm32")]
 #[extism_pdk::host_fn("extism:host/user")]
 extern "ExtismHost" {
@@ -60,10 +56,6 @@ pub fn execute_tool(request: ToolCallRequest) -> Result<Value, String> {
 
     Ok(parsed_val)
 }
-
-// =========================================================================
-// Native Target Implementation (Direct OS Spooler & Network eSCL)
-// =========================================================================
 
 #[cfg(not(target_arch = "wasm32"))]
 fn get_config(key: &str) -> Option<String> {

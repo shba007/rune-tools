@@ -3,8 +3,6 @@ use serde_json::{Value, json};
 
 use crate::types::{FetchPayload, FetchResult};
 
-/// Default tool execution without an external fetcher.
-/// Complies with `test_plugin_contract!` requirements.
 pub fn execute_tool(req: ToolCallRequest) -> Result<Value, String> {
     execute_tool_with_fetcher(req, |url| {
         #[cfg(not(target_arch = "wasm32"))]
@@ -37,8 +35,6 @@ pub fn execute_tool(req: ToolCallRequest) -> Result<Value, String> {
     })
 }
 
-/// Executes tools with an injected network fetch closure.
-/// Keeps `operations.rs` free of `extism_pdk` or platform socket APIs (§2.1).
 pub fn execute_tool_with_fetcher<F>(req: ToolCallRequest, fetcher: F) -> Result<Value, String>
 where
     F: FnOnce(&str) -> Result<String, String>,
@@ -262,7 +258,6 @@ pub fn is_html(content: &str) -> bool {
         || (lower.contains("<ol") && lower.contains("</ol>"))
 }
 
-/// Converts HTML into clean Markdown without external dependencies.
 pub fn html_to_markdown(html: &str) -> String {
     let mut output = String::with_capacity(html.len());
     let mut chars = html.chars().peekable();

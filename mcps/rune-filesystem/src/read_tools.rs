@@ -1,6 +1,3 @@
-//! Read-only tools written once against [`ReadFs`]. They run over [`crate::access::Scoped`]
-//! (root-confined, direct mode) or [`crate::access::Brokered`] (staged mode, where reads see
-//! staged content). Neither backend can reach a path outside the configured root.
 use crate::access::{Meta, ReadFs};
 use crate::output::Listing;
 use crate::pilot_reads::{self, Page, relative_path};
@@ -14,7 +11,6 @@ use std::time::SystemTime;
 
 const MAX_CHUNK_BYTES: usize = 512 * 1024;
 const MAX_IMAGE_BYTES: usize = 20 * 1024 * 1024;
-/// Bounds recursive walks, which cost one broker call per entry in staged mode.
 pub(crate) const MAX_WALK_NODES: usize = 20_000;
 
 pub(crate) fn is_read_tool(name: &str) -> bool {
@@ -54,7 +50,6 @@ fn excludes(args: &Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Root-relative path and its forward-slash display form under the root.
 fn locate(path: &str, root: &str) -> Result<(PathBuf, String), String> {
     let rel = relative_path(path, root)?;
     Ok((rel.clone(), display(root, &rel)))
@@ -219,7 +214,6 @@ pub(crate) fn run(
             let mut matches = Vec::new();
             let mut nodes = 0;
             if let Ok(meta) = fs.stat(&rel) {
-                // The walk starts at, and tests, the requested path itself.
                 let name = rel
                     .file_name()
                     .map(|n| n.to_string_lossy().into_owned())
@@ -279,7 +273,6 @@ fn build_tree(
     nodes: &mut usize,
 ) -> Result<Value, String> {
     let mut children = Vec::new();
-    // Unreadable folders are skipped, as the unconfined walk always did.
     let Ok(entries) = fs.list(dir) else {
         return Ok(json!(children));
     };
@@ -338,7 +331,6 @@ fn search(
             excludes,
             matches,
         );
-        // Excluded folders are still searched, matching the earlier behavior.
         if entry.meta.is_dir && !entry.is_symlink {
             search(fs, root, &rel, pattern, excludes, matches, nodes)?;
         }
@@ -489,7 +481,6 @@ mod tests {
             for path in ["leak.txt", "leakdir", "leakdir/secret.txt"] {
                 if let Ok(value) = run_scoped(dir.path(), name, args_for(key, path)) {
                     let shown = value.to_string();
-                    // Per-file tolerant tools may report an error line, never the content.
                     assert!(
                         !shown.contains("secret\""),
                         "{name} leaked via {path}: {shown}"
@@ -502,7 +493,6 @@ mod tests {
                 }
             }
         }
-        // A walk lists the link itself but does not descend through it.
         let tree = run_scoped(dir.path(), "directory_tree", json!({"path": "."})).unwrap();
         let tree = tree["content"].as_str().unwrap();
         assert!(tree.contains("leakdir") && !tree.contains("secret.txt"));

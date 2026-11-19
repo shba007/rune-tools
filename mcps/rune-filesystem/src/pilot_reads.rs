@@ -1,5 +1,3 @@
-//! The two approved reads. WASM opens are enforced by the host's WASI preopen;
-//! validation here is policy/diagnostics, not a substitute for that capability.
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 use std::io::Read;
@@ -7,8 +5,6 @@ use std::path::{Path, PathBuf};
 
 pub use crate::definitions::{MAX_ENTRIES, MAX_FILE_BYTES, MAX_LINES, MAX_OUTPUT_BYTES};
 
-/// Convert a request path into a relative name inside the trusted root.
-/// No canonicalize-then-open security claim is made: the open below is scoped.
 pub fn relative_path(path: &str, root: &str) -> Result<PathBuf, String> {
     let input = path.replace('\\', "/");
     let root = root.replace('\\', "/");
@@ -74,7 +70,6 @@ pub(crate) fn number(
     Ok(value)
 }
 
-/// `root` is supplied by host configuration, never request arguments.
 pub fn execute(request: ToolCallRequest, root: Option<&str>) -> Result<Value, String> {
     execute_with_items(request, root, &mut None)
 }
@@ -111,7 +106,6 @@ pub(crate) fn execute_with_items(
             let page = Page::parse(args)?;
             let file = match open_file(root, &relative) {
                 Ok(file) => file,
-                // Windows reports a directory opened as a file as "access denied".
                 Err(e)
                     if e.kind() != std::io::ErrorKind::NotFound
                         && directory_entries(root, &relative).is_ok() =>
@@ -152,7 +146,6 @@ pub(crate) fn check_size(len: u64) -> Result<(), String> {
     Ok(())
 }
 
-/// Validated `read_text_file` paging arguments, parsed before any file is opened.
 pub(crate) struct Page {
     offset: usize,
     head: usize,
@@ -254,8 +247,6 @@ pub(crate) fn not_a_file(given: &str) -> String {
     format!("\"{given}\" is not a regular text file; give the name of a file, not a directory.")
 }
 
-/// A model that copies a whole `list_directory` row as a path gets this error again and
-/// again if it only says "no such file", so name the path as given and point at the cause.
 pub(crate) fn open_error(action: &str, given: &str, error: &std::io::Error) -> String {
     let reason = if error.kind() == std::io::ErrorKind::NotFound {
         "no such file or directory".to_string()
@@ -281,8 +272,6 @@ fn open_file(root: &str, path: &Path) -> std::io::Result<std::fs::File> {
 
 #[cfg(target_arch = "wasm32")]
 fn open_file(root: &str, path: &Path) -> std::io::Result<std::fs::File> {
-    // WASI resolves this through the host's preopened directory capability,
-    // including link resolution at open time, not a canonicalization snapshot.
     std::fs::File::open(Path::new(root).join(path))
 }
 

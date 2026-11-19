@@ -8,7 +8,6 @@ mod output_contract_tests;
 use rune_pdk::ToolCallRequest;
 use serde_json::{Value, json};
 
-/// The same result boundary is exercised by host tests and the WASM export.
 pub fn call_tool(request: ToolCallRequest) -> Value {
     tool_result(operations::execute_tool(request))
 }
@@ -16,8 +15,6 @@ pub fn call_tool(request: ToolCallRequest) -> Value {
 fn tool_result(result: Result<Value, String>) -> Value {
     match result {
         Ok(value) => {
-            // Preserve the exact compact JSON text observed through Kit before
-            // structured output was added, including the legacy success envelope.
             let text = json!({"status": "success", "result": value}).to_string();
             rune_pdk::structured_tool_result(
                 text,

@@ -1,4 +1,3 @@
-//! Deterministic per-plugin preparation. Git access is read-only; --apply only writes files.
 use semver::Version;
 #[path = "release_generator.rs"]
 mod generator;
@@ -252,7 +251,6 @@ fn runtime_path(path: &str) -> bool {
         || path.ends_with("/.env")
         || path.contains("/examples/"))
 }
-/// Follow local workspace dependencies, including native feature/target dependencies.
 fn depends(root: &Path, folder: &str, changed: &str, seen: &mut BTreeSet<String>) -> Result<bool> {
     if folder == changed {
         return Ok(true);
@@ -307,7 +305,6 @@ pub fn affected(root: &Path, p: &Plugin, paths: &[String]) -> Result<bool> {
             }
         }
     }
-    // Root dependency/lock changes conservatively affect all consumers, except xtask-only updates.
     let root_changed = runtime
         .iter()
         .any(|p| matches!(p.as_str(), "Cargo.toml" | "Cargo.lock"));
@@ -399,7 +396,6 @@ pub fn repository_plan(root: &Path) -> Result<State> {
     })
 }
 pub fn apply(root: &Path, state: &State) -> Result<()> {
-    // Caller authorizes file writes. Never stages, commits, pushes or installs hooks.
     let all = plugins(root)?;
     for release in &state.releases {
         let p = all
@@ -541,7 +537,6 @@ pub fn verify_promotion(root: &Path) -> Result<()> {
             "unprepared packaged changes remain; merge preparation before promoting".into(),
         );
     }
-    // Source ancestry above is required; ordinary main pushes need no title/parent-count marker.
     Ok(())
 }
 fn validate_prepared(root: &Path, state: &State, pending: &[Plugin]) -> Result<()> {
@@ -580,7 +575,6 @@ fn validate_prepared(root: &Path, state: &State, pending: &[Plugin]) -> Result<(
     }
     Ok(())
 }
-/// main owns artifact-backed registry updates; develop need not receive a bookkeeping merge first.
 fn published_registry(root: &Path) -> Result<Value> {
     let mut current = registry(root)?;
     if root.join(".git").exists() {
@@ -598,7 +592,6 @@ fn published_registry(root: &Path) -> Result<Value> {
     Ok(current)
 }
 
-/// Replace only an unpublished generated version section; preserve other bytes.
 fn replace_unpublished_section(old: &str, name: &str, version: &str, new: &str) -> Result<String> {
     let mut offset = 0;
     let mut matches = vec![];

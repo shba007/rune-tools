@@ -1,4 +1,3 @@
-// plugins/rune-ssh/src/bin/native_sidecar.rs
 #[cfg(not(target_arch = "wasm32"))]
 use rune_pdk::{ToolCallRequest, ToolDefinition};
 #[cfg(not(target_arch = "wasm32"))]

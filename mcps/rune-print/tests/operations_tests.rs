@@ -6,7 +6,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-// Prevents concurrent tests from locking up physical hardware
 static HARDWARE_LOCK: Mutex<()> = Mutex::new(());
 
 fn get_test_printer_ip() -> Option<String> {
@@ -29,10 +28,6 @@ fn setup_workspace() -> PathBuf {
     base
 }
 
-// =========================================================================
-// 1. Pure Unit Tests
-// =========================================================================
-
 #[test]
 fn test_jpeg_to_pdf_packaging() {
     let fake_jpeg = vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46];
@@ -45,10 +40,6 @@ fn test_jpeg_to_pdf_packaging() {
     assert!(pdf_str.contains("/ColorSpace /DeviceRGB"));
     assert!(pdf_str.ends_with("%%EOF\n"));
 }
-
-// =========================================================================
-// 2. Validation Tests
-// =========================================================================
 
 #[test]
 fn test_printer_print_document_validation() {
@@ -116,10 +107,6 @@ fn test_unknown_tool_routing() {
     assert!(res.is_err());
     assert_eq!(res.unwrap_err(), "Unknown tool: non_existent_tool");
 }
-
-// =========================================================================
-// 3. Real OS Spooler & Hardware Integration Tests
-// =========================================================================
 
 #[test]
 fn test_live_printer_list_printers_live() {

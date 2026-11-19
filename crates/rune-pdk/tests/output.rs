@@ -15,7 +15,6 @@ fn shared_error_keeps_legacy_text_and_sets_error_flag() {
 
 #[test]
 fn absent_output_schema_preserves_exact_serialization() {
-    // A struct literal remains source-compatible, with the original wire bytes.
     let tool = ToolDefinition {
         name: "example".into(),
         description: "Example tool".into(),

@@ -66,10 +66,6 @@ fn should_run_live_hardware_test() -> Option<String> {
     Some(ip)
 }
 
-// =========================================================================
-// 1. Pure Unit Tests
-// =========================================================================
-
 #[test]
 fn test_jpeg_to_pdf_packaging() {
     let fake_jpeg = vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46];
@@ -82,10 +78,6 @@ fn test_jpeg_to_pdf_packaging() {
     assert!(pdf_str.contains("/ColorSpace /DeviceRGB"));
     assert!(pdf_str.ends_with("%%EOF\n"));
 }
-
-// =========================================================================
-// 2. Validation Tests
-// =========================================================================
 
 #[test]
 fn test_scan_document_validation() {
@@ -138,10 +130,6 @@ fn test_unknown_tool_routing() {
     assert!(res.is_err());
     assert!(res.unwrap_err().contains("Unknown scan tool"));
 }
-
-// =========================================================================
-// 3. Live Hardware Tests
-// =========================================================================
 
 #[test]
 fn test_live_get_scanner_capabilities_live() {

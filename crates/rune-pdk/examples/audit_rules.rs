@@ -1,4 +1,3 @@
-//! Audit declarations without invoking tools, including inactive draft plugins.
 #![allow(dead_code)]
 #[path = "../../../mcps/mhb-mconnect/src/definitions.rs"]
 mod mhb_mconnect;

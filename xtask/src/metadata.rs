@@ -1,4 +1,3 @@
-//! Additive metadata for the latest published plugins. Downloads are never executed.
 use crate::release::{self, Plugin, Result};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
@@ -19,14 +18,11 @@ struct Field {
     #[serde(rename = "type")]
     kind: String,
     description: String,
-    // Required for the relevant operations unless supplied by their call arguments.
     required: bool,
     secret: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    // Native environment names, in precedence order. Values are serialized as strings.
     env: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    // WASM Extism configuration key; not an environment variable.
     config_key: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     default: Option<Value>,
@@ -260,7 +256,6 @@ pub fn enrich_latest(root: &Path, repo: &str, index: &Value) -> Result<Value> {
     enrich(root, repo, index, &Http(client))
 }
 
-/// Writes a candidate only, never source, Git state, or GitHub releases.
 pub fn command(args: &[String]) -> Result<()> {
     let option = |name: &str| -> Result<&str> {
         let i = args

@@ -1,4 +1,3 @@
-// plugins/rune-ssh/tests/operations_tests.rs
 use rune_pdk::ToolCallRequest;
 use rune_ssh::operations::execute_tool;
 use serde_json::json;
@@ -49,7 +48,6 @@ fn test_production_env_lifecycle() {
         return;
     }
 
-    // 1. SSH execution using environment variables (no host/user/key in arguments)
     let token = "rune_ssh_env_ok";
     let exec_req = ToolCallRequest {
         name: "ssh_run_command".to_string(),
@@ -62,7 +60,6 @@ fn test_production_env_lifecycle() {
     assert_eq!(exec_res["status"], "success");
     assert!(exec_res["output"].as_str().unwrap().contains(token));
 
-    // 2. SFTP Upload using env defaults
     let local_file = NamedTempFile::new().unwrap();
     let content = "Env-configured SFTP lifecycle test";
     fs::write(local_file.path(), content).unwrap();
@@ -78,7 +75,6 @@ fn test_production_env_lifecycle() {
     let upload_res = execute_tool(upload_req).expect("Failed SFTP upload with env defaults");
     assert_eq!(upload_res["status"], "success");
 
-    // 3. SFTP Download using env defaults
     let download_target = NamedTempFile::new().unwrap();
     let download_req = ToolCallRequest {
         name: "sftp_download".to_string(),
@@ -91,7 +87,6 @@ fn test_production_env_lifecycle() {
     assert_eq!(download_res["status"], "success");
     assert_eq!(fs::read_to_string(download_target.path()).unwrap(), content);
 
-    // 4. Remote cleanup
     let _ = execute_tool(ToolCallRequest {
         name: "ssh_run_command".to_string(),
         arguments: json!({

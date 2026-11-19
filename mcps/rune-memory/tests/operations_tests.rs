@@ -9,7 +9,6 @@ fn test_entity_and_relation_lifecycle() {
     let mem_file = dir.path().join("test_memory.json");
     let mem_path = mem_file.to_str().unwrap();
 
-    // 1. Create entities
     let create_req = ToolCallRequest {
         name: "create_entities".to_string(),
         arguments: json!({
@@ -31,7 +30,6 @@ fn test_entity_and_relation_lifecycle() {
     let res = execute_tool(create_req).unwrap();
     assert_eq!(res["created"].as_array().unwrap().len(), 2);
 
-    // 2. Add observation to Gemini
     let obs_req = ToolCallRequest {
         name: "add_observations".to_string(),
         arguments: json!({
@@ -50,7 +48,6 @@ fn test_entity_and_relation_lifecycle() {
         3
     );
 
-    // 3. Create relation
     let rel_req = ToolCallRequest {
         name: "create_relations".to_string(),
         arguments: json!({
@@ -67,7 +64,6 @@ fn test_entity_and_relation_lifecycle() {
     let res = execute_tool(rel_req).unwrap();
     assert_eq!(res["created"].as_array().unwrap().len(), 1);
 
-    // 4. Search nodes
     let search_req = ToolCallRequest {
         name: "search_nodes".to_string(),
         arguments: json!({
@@ -79,7 +75,6 @@ fn test_entity_and_relation_lifecycle() {
     assert_eq!(res["entities"].as_array().unwrap().len(), 1);
     assert_eq!(res["entities"][0]["name"], "Gemini");
 
-    // 5. Open nodes
     let open_req = ToolCallRequest {
         name: "open_nodes".to_string(),
         arguments: json!({
@@ -91,7 +86,6 @@ fn test_entity_and_relation_lifecycle() {
     assert_eq!(res["entities"].as_array().unwrap().len(), 1);
     assert_eq!(res["relations"].as_array().unwrap().len(), 1);
 
-    // 6. Delete entity cascade
     let del_req = ToolCallRequest {
         name: "delete_entities".to_string(),
         arguments: json!({
@@ -101,7 +95,6 @@ fn test_entity_and_relation_lifecycle() {
     };
     execute_tool(del_req).unwrap();
 
-    // 7. Verify relations were purged with entity deletion
     let read_req = ToolCallRequest {
         name: "read_graph".to_string(),
         arguments: json!({ "memoryFile": mem_path }),

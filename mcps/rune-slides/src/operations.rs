@@ -215,14 +215,11 @@ pub mod native {
 
     fn find_system_font() -> Result<Vec<u8>, String> {
         let candidate_paths = [
-            // Windows
             "C:\\Windows\\Fonts\\arial.ttf",
             "C:\\Windows\\Fonts\\segoeui.ttf",
-            // macOS
             "/System/Library/Fonts/Supplemental/Arial.ttf",
             "/System/Library/Fonts/Helvetica.ttc",
             "/Library/Fonts/Arial.ttf",
-            // Linux
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
             "/usr/share/fonts/dejavu/DejaVuSans.ttf",
             "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",

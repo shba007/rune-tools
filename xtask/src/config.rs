@@ -1,4 +1,3 @@
-//! Plain dotenv files use Rust. Retain dotenvx decryption and advanced expansion.
 use std::process::Command;
 fn needs_dotenvx(text: &str) -> bool {
     text.contains("encrypted:")

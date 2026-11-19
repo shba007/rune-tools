@@ -51,7 +51,6 @@ impl EsclClient {
             _ => ("RGB24", false),
         };
 
-        // Calculates the exact pixel dimensions based on the requested DPI for PDF generation
         let (px_width, px_height) = match resolution {
             75 => (638, 877),
             100 => (850, 1169),
@@ -68,7 +67,6 @@ impl EsclClient {
             }
         };
 
-        // HP firmware strictly requires ScanRegions defined in 300ths of an inch (2550x3300 = 8.5x11)
         let ticket = format!(
             r#"<?xml version="1.0" encoding="UTF-8"?>
 <scan:ScanSettings xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03" xmlns:pwg="http://www.pwg.org/schemas/2010/12/sm">

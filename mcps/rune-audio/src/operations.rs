@@ -18,7 +18,6 @@ fn get_str_arg(args: &Value, camel: &str, snake: &str) -> Option<String> {
     {
         return Some(val.to_string());
     }
-    // Scope environment variable fallbacks only to directory and config parameters
     if snake == "output_directory" {
         std::env::var("OUTPUT_DIRECTORY")
             .or_else(|_| std::env::var("OUTPUT_DIR"))

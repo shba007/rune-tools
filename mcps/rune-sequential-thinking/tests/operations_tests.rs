@@ -10,7 +10,6 @@ fn test_sequential_thinking_progression() {
     let _guard = TEST_LOCK.lock().unwrap();
     reset_session();
 
-    // Step 1: Initial hypothesis
     let req1 = ToolCallRequest {
         name: "sequential_thinking".to_string(),
         arguments: json!({
@@ -26,7 +25,6 @@ fn test_sequential_thinking_progression() {
     assert_eq!(res1["nextThoughtNeeded"], true);
     assert_eq!(res1["thoughtHistoryLength"], 1);
 
-    // Step 2: Dynamic expansion where thought number exceeds initial total
     let req2 = ToolCallRequest {
         name: "sequential_thinking".to_string(),
         arguments: json!({
@@ -47,7 +45,6 @@ fn test_branching_and_revision() {
     let _guard = TEST_LOCK.lock().unwrap();
     reset_session();
 
-    // Step 1: Base thought
     let req1 = ToolCallRequest {
         name: "sequential_thinking".to_string(),
         arguments: json!({
@@ -59,7 +56,6 @@ fn test_branching_and_revision() {
     };
     execute_tool(req1).unwrap();
 
-    // Step 2: Branch exploration
     let req_branch = ToolCallRequest {
         name: "sequential_thinking".to_string(),
         arguments: json!({

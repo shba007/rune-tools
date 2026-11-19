@@ -1,16 +1,8 @@
-//! File access backends. Nothing here imports `extism_pdk`; the WASM host import lives in
-//! `lib.rs` and reaches this module through the [`Broker`] trait.
-//!
-//! * [`Scoped`]: reads under a configured root (cap-std natively, the WASI preopen in WASM),
-//!   so `..` and symlink escapes are refused by the capability, not by string checks.
-//! * [`Brokered`]: every read and write goes through Kit's `host_file_access` (staged mode),
-//!   so reads see staged content and writes become reviewable changes.
 use serde_json::{Value, json};
 use std::io;
 use std::path::{Component, Path};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-/// One `host_file_access` round trip: JSON request in, JSON response out.
 pub trait Broker {
     fn call(&self, request: Value) -> Result<Value, String>;
 }
@@ -31,14 +23,10 @@ pub struct Entry {
     pub is_symlink: bool,
 }
 
-/// Read access to a tree. Paths are relative to the root (`.` is the root itself).
 pub trait ReadFs {
-    /// Metadata, following links when the backend can do so inside its boundary.
     fn stat(&self, rel: &Path) -> io::Result<Meta>;
     fn read(&self, rel: &Path) -> io::Result<Vec<u8>>;
-    /// Up to `max` bytes from `offset`, plus the total file size.
     fn read_range(&self, rel: &Path, offset: u64, max: usize) -> io::Result<(Vec<u8>, u64)>;
-    /// Entries sorted by name.
     fn list(&self, rel: &Path) -> io::Result<Vec<Entry>>;
 }
 
@@ -48,8 +36,6 @@ fn not_found(what: &str) -> io::Error {
         format!("{what}: no such file or directory"),
     )
 }
-
-// ---------------------------------------------------------------- scoped (direct)
 
 pub struct Scoped<'a> {
     pub root: &'a str,
@@ -131,8 +117,6 @@ mod scoped_impl {
     }
 
     impl Scoped<'_> {
-        // WASI resolves these through the host's preopened directory capability,
-        // including link resolution at open time.
         fn full(&self, rel: &Path) -> std::path::PathBuf {
             Path::new(self.root).join(rel)
         }
@@ -171,15 +155,12 @@ mod scoped_impl {
     }
 }
 
-// ---------------------------------------------------------------- brokered (staged)
-
 pub struct Brokered<'a> {
     pub root: &'a str,
     pub broker: &'a dyn Broker,
 }
 
 impl Brokered<'_> {
-    /// Absolute broker path for a root-relative path.
     pub fn abs(&self, rel: &Path) -> String {
         let root = self.root.replace('\\', "/");
         let mut path = root.trim_end_matches('/').to_string();
@@ -223,7 +204,6 @@ impl Brokered<'_> {
         self.request("remove_directory", rel, None).map(|_| ())
     }
 
-    /// `mkdir -p` below the root: one `create_directory` per level, shallowest first.
     pub fn create_dir_all(&self, rel: &Path) -> io::Result<()> {
         let mut current = std::path::PathBuf::new();
         for part in rel.components() {

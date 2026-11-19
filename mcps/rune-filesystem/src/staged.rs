@@ -1,12 +1,3 @@
-//! Staged mode: Kit gives this plugin no preopen of the real folder, so every operation
-//! (reads included, so they see staged content) goes through `host_file_access` with
-//! absolute paths under `rune_staged_root`. Writes become reviewable changes in Kit; the
-//! real folder is untouched until the host applies them.
-//!
-//! Composition from the broker's primitives (each step is its own reviewable item):
-//! * `mkdir -p`: `create_directory` per level, shallowest first.
-//! * move a file: `read_file` + `write_file` + `delete_file`.
-//! * move a folder: `create_directory`, recurse, `remove_directory` of the emptied source.
 use crate::access::{Broker, Brokered, ReadFs};
 use crate::output::Listing;
 use crate::pilot_reads::relative_path;

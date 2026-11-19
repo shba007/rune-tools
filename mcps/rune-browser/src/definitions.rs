@@ -3,7 +3,6 @@ use serde_json::json;
 
 pub fn tool_definitions() -> Vec<ToolDefinition> {
     vec![
-        // Session Management Tools
         ToolDefinition {
             name: "browser_session_start".to_string(),
             description: "Starts a persistent browser session with the specified configuration."
@@ -49,7 +48,6 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
             rules: Some(ToolRules::read_only_network(["127.0.0.1", "localhost"])),
         },
-        // Navigation & Interaction Tools
         ToolDefinition {
             name: "browser_navigate".to_string(),
             description: "Opens a URL in a managed browser session or active browser window."
@@ -167,7 +165,6 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 ["*"],
             )),
         },
-        // Content & Execution Tools
         ToolDefinition {
             name: "browser_execute_script".to_string(),
             description: "Evaluates arbitrary JavaScript in the context of the active page."
@@ -224,7 +221,6 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
                 ["*"],
             )),
         },
-        // Diagnostics Tools
         ToolDefinition {
             name: "browser_console_messages".to_string(),
             description: "Retrieves console log messages from the browser.".to_string(),
@@ -251,7 +247,6 @@ pub fn tool_definitions() -> Vec<ToolDefinition> {
             }),
             rules: Some(ToolRules::read_only_network(["127.0.0.1", "localhost"])),
         },
-        // CDP Tools
         ToolDefinition {
             name: "browser_cdp_connect".to_string(),
             description: "Connects to an existing Chrome DevTools session.".to_string(),

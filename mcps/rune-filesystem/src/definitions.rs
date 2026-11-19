@@ -13,7 +13,6 @@ fn approved_read() -> ToolRules {
     })
 }
 
-/// Publish output contracts without changing existing input-only definition users.
 pub fn published_tool_definitions() -> Vec<ToolDefinitionWithOutputSchema> {
     tool_definitions()
         .into_iter()
@@ -34,8 +33,6 @@ fn output_schema(name: &str) -> Option<Value> {
     let flag = |description: &str| json!({"type": "boolean", "description": description});
     let mut properties = json!({"content": content});
     match name {
-        // Kit caps structured results at 8 MiB, but media permits 20 MiB.
-        // Preserve this tool's legacy payload without outputSchema/structuredContent.
         "read_media_file" => return None,
         "read_text_file" => {
             properties["lineOffset"] = count("Zero-based line offset of the returned page.");

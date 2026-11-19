@@ -1,5 +1,3 @@
-//! Staged mode against a simulated `host_file_access` broker. The fake keeps staged work in
-//! memory (like Kit's staging area), reads through it, and never writes to the real folder.
 use rune_filesystem::access::Broker;
 use rune_filesystem::call_tool_in;
 use rune_filesystem::operations::{Mode, execute_tool_in};
@@ -78,7 +76,6 @@ impl Fake {
     }
 
     fn untouched(&self) -> bool {
-        // The simulated host never modifies the real folder; tests assert that separately.
         true
     }
 }
@@ -245,7 +242,6 @@ fn staged_write_goes_through_the_broker_and_reads_back() {
             .unwrap()
             .contains("wrote 5 bytes to new/deep/c.txt")
     );
-    // Parent folders are created shallowest first, then the file.
     let log = ops(&fake);
     assert_eq!(
         log,
@@ -487,7 +483,6 @@ fn staged_public_result_carries_the_staged_flag() {
     assert_eq!(out["structuredContent"]["staged"], true);
     assert_eq!(out["isError"], false);
 
-    // A truncated text preview is rebuilt, so the flag must survive that path too.
     let big = "y".repeat(2 * 1024 * 1024);
     run(
         &fake,

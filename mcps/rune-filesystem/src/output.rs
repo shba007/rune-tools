@@ -1,8 +1,5 @@
-//! Bound the serialized wire result, not just unescaped file names or row counts.
 use serde_json::{Value, json};
 
-/// Includes both text and structured data, JSON escaping, metadata and notices.
-/// Kit permits 8 MiB; this 1 MiB budget leaves 7 MiB of transport headroom.
 pub(crate) const MAX_RESULT_BYTES: usize = 1024 * 1024;
 
 pub(crate) struct Listing {
@@ -62,8 +59,6 @@ impl Listing {
                 .join("\n"),
             Kind::Directories => serde_json::to_string(&self.items[..count]).unwrap(),
             Kind::Tree(tree) => {
-                // A prefix in traversal order always includes each retained
-                // node's ancestors. Prune at node boundaries, never JSON bytes.
                 fn prune(node: &Value, remaining: &mut usize) -> Option<Value> {
                     if *remaining == 0 {
                         return None;
@@ -95,7 +90,6 @@ fn bytes(result: &Value) -> usize {
     serde_json::to_vec(result).unwrap().len()
 }
 
-/// Find the longest complete prefix that fits, measuring the actual wire bytes.
 fn bounded_prefix(max: usize, max_content_bytes: usize, build: impl Fn(usize) -> Value) -> Value {
     let fits = |result: &Value| {
         bytes(result) <= MAX_RESULT_BYTES
@@ -122,11 +116,8 @@ fn bounded_prefix(max: usize, max_content_bytes: usize, build: impl Fn(usize) ->
 }
 
 pub(crate) fn listing_result(legacy: Value, listing: &Listing) -> Value {
-    // Keep only the small metadata template; do not retain the old full content
-    // in a truncated result, where it could by itself exceed Kit's ceiling.
     let mut metadata = legacy.as_object().unwrap().clone();
     metadata.remove("content");
-    // The notice must also fit the existing pilot's 64 KiB content limit.
     let max_content_bytes = metadata
         .get("maxOutputBytes")
         .and_then(Value::as_u64)

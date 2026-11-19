@@ -1,14 +1,4 @@
 mod cocogitto;
-// xtask/src/main.rs
-//
-// Repo-local build orchestrator, invoked as `cargo xtask <command>` via the
-// `.cargo/config.toml` alias. It's a normal Rust binary, not a Cargo
-// built-in — which is the point: Cargo builds for exactly one --target per
-// invocation, so a wasm32-wasip1 cdylib build and a host-native binary
-// build are always two separate `cargo build` processes. This wraps both
-// into a single typed command instead of a shell `&&` chain, with real
-// error propagation (a failed wasm build stops the run instead of `&&`
-// silently skipping straight to reporting shell success/failure only).
 
 mod config;
 mod hooks;
@@ -64,7 +54,7 @@ fn discover_plugins(metadata: &Value, filter: Option<&str>) -> Vec<PluginTargets
                 && !manifest_path.contains("/plugins/")
                 && !manifest_path.contains("\\plugins\\")
             {
-                return None; // skip crates/rune-pdk, crates/rune-sidecar, xtask itself, etc.
+                return None;
             }
 
             let name = pkg["name"].as_str()?.to_string();

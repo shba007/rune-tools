@@ -20,7 +20,6 @@ fn validator(name: &str) -> jsonschema::Validator {
 fn assert_properties(schema: &Value) {
     if let Some(properties) = schema["properties"].as_object() {
         let required = schema["required"].as_array().unwrap();
-        // `staged` is the only optional property: present only on staged writes.
         let optional = usize::from(properties.contains_key("staged"));
         assert_eq!(required.len() + optional, properties.len());
         for (name, property) in properties {
@@ -64,7 +63,7 @@ fn captured_text_is_byte_identical_and_structured_results_validate() {
         let old: Value = serde_json::from_str(text).unwrap();
         if name == "read_media_file" {
             continue;
-        } // Dedicated live exception test below.
+        }
         let result = if old["status"] == "error" {
             let error = old["error"].as_str().unwrap().to_owned();
             tool_result(Err(error), false)
@@ -119,8 +118,6 @@ fn listing_with_rows(rows: &[String]) -> Value {
 
 #[test]
 fn listing_just_below_and_above_the_exact_byte_bound() {
-    // A plain character occurs three times: legacy text, structured content,
-    // and the explicit entry. Derive the largest complete single-item result.
     let overhead = serde_json::to_vec(&listing_with_rows(&[String::new()]))
         .unwrap()
         .len();
@@ -162,8 +159,6 @@ fn listing_just_below_and_above_the_exact_byte_bound() {
 
 #[test]
 fn escaped_worst_case_retains_complete_items_under_kits_ceiling() {
-    // Quotes, backslashes, control characters and multibyte UTF-8 expand
-    // differently in the nested legacy JSON text and the structured payload.
     let rows: Vec<_> = (0..20)
         .map(|i| format!("{i}:{}", "\"\\\n\t🦀".repeat(12_000)))
         .collect();

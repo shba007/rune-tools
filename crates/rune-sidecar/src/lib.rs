@@ -4,7 +4,6 @@ use serde_json::{Map, Value, json};
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 
-/// Trait implemented by native sidecar entry points to expose tool, resource, and prompt handling.
 pub trait SidecarHandler {
     fn info(&self) -> Value;
     fn list_tools(&self) -> Vec<ToolDefinition>;
@@ -43,7 +42,6 @@ struct SidecarRpcRequest {
     uri: Option<String>,
 }
 
-/// Runs a persistent newline-delimited stdio server for native sidecar binaries.
 pub fn run_stdio<H: SidecarHandler>(handler: H) -> io::Result<()> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
@@ -189,7 +187,6 @@ fn format_response(id: Option<Value>, result: Result<Value, String>) -> Value {
     }
 }
 
-/// Parses raw CLI string flags into a key-value dictionary.
 pub fn parse_cli_args(args: &[String]) -> HashMap<String, String> {
     let mut map = HashMap::new();
     let mut idx = 0;
@@ -212,7 +209,6 @@ pub fn parse_cli_args(args: &[String]) -> HashMap<String, String> {
     map
 }
 
-/// Resolves tool arguments prioritizing CLI values over environment variables (`CLI > ENV`) (§2.5).
 pub fn resolve_arguments(cli_args: &[String], tool_def: &ToolDefinition) -> Result<Value, String> {
     let cli_map = parse_cli_args(cli_args);
     let mut resolved_map = Map::new();

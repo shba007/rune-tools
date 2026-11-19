@@ -18,9 +18,9 @@ pub struct CmdExecResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrowserSessionConfig {
-    pub engine: String, // "agent-browser" | "cdp"
+    pub engine: String,
     pub session_id: Option<String>,
-    pub browser_type: Option<String>, // "brave" | "chrome" | "edge" | "auto"
+    pub browser_type: Option<String>,
     pub cdp_port: u16,
     pub headed: bool,
     pub output_dir: String,
@@ -33,7 +33,7 @@ pub struct SessionInfo {
     pub url: String,
     pub created_at: String,
     pub last_accessed: String,
-    pub status: String, // "active" | "stopped"
+    pub status: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

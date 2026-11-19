@@ -1,14 +1,3 @@
-// xtask/src/registry.rs
-//
-// Release-matrix detection and registry/index.json maintenance, used by
-// publish.yml. Replaces the former scripts/{detect-publishable,update-registry}.py
-// so the pipeline needs no Python.
-//
-// Release tag convention: "<plugin-name>-v<version>"
-// Asset naming convention:
-//   wasm:   "<plugin-name>-<version>.wasm"
-//   native: "<bin-name>-<version>-<target-triple>.<ext>"
-
 use serde_json::{Value, json};
 use std::{env, fs, io::Write, path::Path};
 
@@ -53,7 +42,6 @@ fn select_targets(name: &str, model: &str, targets: &[Value]) -> (Option<String>
     }
 }
 
-/// Native sidecar build targets — mirrors rune-kit's own deploy.yml matrix.
 pub(crate) const NATIVE_TARGETS: [(&str, &str, &str); 4] = [
     ("ubuntu-latest", "x86_64-unknown-linux-gnu", "tar.gz"),
     ("macos-latest", "aarch64-apple-darwin", "tar.gz"),
@@ -68,7 +56,6 @@ struct Plugin {
     bins: Vec<String>,
 }
 
-/// Every `mcps/*` package that produces a wasm or native artifact.
 fn discover(metadata: &Value) -> Vec<Plugin> {
     let packages = metadata["packages"].as_array().cloned().unwrap_or_default();
 
@@ -80,14 +67,14 @@ fn discover(metadata: &Value) -> Vec<Plugin> {
                 .components()
                 .any(|c| c.as_os_str() == "mcps" || c.as_os_str() == "plugins")
             {
-                return None; // crates/rune-pdk, crates/rune-sidecar, xtask, etc.
+                return None;
             }
 
             let targets = pkg["targets"].as_array().cloned().unwrap_or_default();
             let (cdylib, bins) =
                 select_targets(pkg["name"].as_str()?, &execution_model(manifest), &targets);
             if cdylib.is_none() && bins.is_empty() {
-                return None; // nothing buildable — e.g. a lib-only helper crate
+                return None;
             }
 
             Some(Plugin {
@@ -109,9 +96,6 @@ fn load_registry() -> Result<Value, String> {
     }
 }
 
-/// Diffs each plugin's Cargo.toml version against registry/index.json and emits
-/// wasm/native build matrices containing only versions that aren't published
-/// yet. Writes step outputs to `$GITHUB_OUTPUT` when set, else prints JSON.
 pub fn detect_publishable(metadata: &Value) -> Result<(), String> {
     let registry = load_registry()?;
     let (mut wasm, mut native) = (Vec::new(), Vec::new());

@@ -1,9 +1,3 @@
-// xtask/src/hooks.rs
-//
-// `cargo xtask hooks` installs .cargo-husky/hooks/* into the repo's git hooks
-// directory. cargo-husky does the same automatically when xtask's tests are
-// compiled; this is the explicit, no-test-run way to do it.
-
 use std::{fs, path::Path, process::Command};
 
 const SOURCE_DIR: &str = ".cargo-husky/hooks";

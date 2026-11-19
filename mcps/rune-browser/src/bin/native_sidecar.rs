@@ -33,7 +33,6 @@ impl SidecarHandler for BrowserSidecarHandler {
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
 
-    // One-shot execution invoked by WASM host_cmd_exec
     if args.len() >= 3 && args[1] == "--exec" {
         let raw_payload = &args[2];
         let request: ToolCallRequest = match serde_json::from_str(raw_payload) {
@@ -54,7 +53,6 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    // Default persistent stdio MCP mode
     run_stdio(BrowserSidecarHandler)
 }
 

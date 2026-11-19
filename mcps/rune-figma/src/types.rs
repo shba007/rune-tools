@@ -47,7 +47,6 @@ pub struct ConnectionItem {
     pub text: Option<String>,
 }
 
-/// WebSocket Relay Message Envelope
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RelayEnvelope {
     pub id: Option<String>,
@@ -58,7 +57,6 @@ pub struct RelayEnvelope {
     pub sender: Option<String>,
 }
 
-/// Sidecar IPC request structure
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SidecarIpcRequest {
     pub id: String,

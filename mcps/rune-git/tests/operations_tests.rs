@@ -79,7 +79,6 @@ fn test_validate_commit_message_exact_length_check() {
     assert_eq!(res["subjectLength"], 91);
     assert_eq!(res["issues"].as_array().unwrap().len(), 0);
 
-    // Default threshold is 72, which 91 exceeds
     let res_default = execute_tool(ToolCallRequest {
         name: "validate_commit_message".to_string(),
         arguments: json!({

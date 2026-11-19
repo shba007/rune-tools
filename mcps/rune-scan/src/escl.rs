@@ -37,7 +37,6 @@ impl EsclClient {
             format!("{}://{}:{}", scheme, scanner_ip, port)
         };
 
-        // Enforce HTTP/1.1 to match curl behavior and avoid HP embedded HTTP/2 POST failures
         let client = Client::builder()
             .http1_only()
             .danger_accept_invalid_certs(true)
@@ -266,7 +265,6 @@ impl EsclClient {
             (caps.platen_max_width, caps.platen_max_height)
         };
 
-        // Enforce STRICT \r\n (CRLF) line endings. HP firmwares often crash on standard \n.
         let ticket = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n\
 <scan:ScanSettings xmlns:scan=\"http://schemas.hp.com/imaging/escl/2011/05/03\" xmlns:pwg=\"http://www.pwg.org/schemas/2010/12/sm\">\r\n\
 <pwg:Version>2.63</pwg:Version>\r\n\
@@ -284,7 +282,7 @@ impl EsclClient {
 <scan:XResolution>300</scan:XResolution>\r\n\
 <scan:YResolution>300</scan:YResolution>\r\n\
 <scan:DocumentFormat>image/jpeg</scan:DocumentFormat>\r\n\
-</scan:ScanSettings>\r\n".to_string(); // Note the trailing \r\n required by some parsers
+</scan:ScanSettings>\r\n".to_string();
 
         let scan_jobs_url = format!("{}/eSCL/ScanJobs", self.base_url);
         println!(
@@ -296,7 +294,7 @@ impl EsclClient {
         let resp = self
             .client
             .post(&scan_jobs_url)
-            .header("User-Agent", "PostmanRuntime/7.56.1") // Matching working Postman UA
+            .header("User-Agent", "PostmanRuntime/7.56.1")
             .header("Accept", "*/*")
             .header("Connection", "keep-alive")
             .header("Content-Type", "text/xml")
@@ -400,10 +398,6 @@ impl EsclClient {
         Ok((px_width, px_height, is_gray_detected))
     }
 }
-
-// =========================================================================
-// Tag-Matched XML Parsers
-// =========================================================================
 
 pub fn find_tag_content<'a>(xml: &'a str, tag_name: &str) -> Option<&'a str> {
     let open_patterns: Vec<String> = if tag_name.contains(':') {

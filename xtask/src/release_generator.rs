@@ -1,4 +1,3 @@
-//! Cocogitto rendering with repository-owned dependency selection.
 use super::{Change, Plugin, Prepared, Result};
 use crate::cocogitto::{self, Commit};
 use std::path::Path;

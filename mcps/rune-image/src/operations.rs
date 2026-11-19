@@ -10,7 +10,6 @@ use serde_json::{Value, json};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// SVG rasterization constants
 const DEFAULT_SVG_WIDTH: u32 = 800;
 const DEFAULT_SVG_HEIGHT: u32 = 800;
 
