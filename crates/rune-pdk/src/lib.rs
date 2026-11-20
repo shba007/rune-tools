@@ -553,6 +553,42 @@ pub fn resolve_scoped_path(
     }
 }
 
+#[doc(hidden)]
+pub use serde_json as __serde_json;
+
+#[macro_export]
+macro_rules! export_plugin {
+    ($tools:path, $execute:path) => {
+        #[cfg(target_arch = "wasm32")]
+        #[$crate::plugin_fn]
+        pub fn mcp_info(_: ()) -> $crate::FnResult<String> {
+            let info = $crate::__serde_json::json!({
+                "name": env!("CARGO_PKG_NAME"),
+                "version": env!("CARGO_PKG_VERSION"),
+                "description": option_env!("CARGO_PKG_DESCRIPTION")
+            });
+            Ok($crate::__serde_json::to_string(&info)?)
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        #[$crate::plugin_fn]
+        pub fn mcp_list_tools(_: ()) -> $crate::FnResult<String> {
+            Ok($crate::__serde_json::to_string(&$tools())?)
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        #[$crate::plugin_fn]
+        pub fn mcp_call_tool(input: String) -> $crate::FnResult<String> {
+            let request: $crate::ToolCallRequest = $crate::__serde_json::from_str(&input)?;
+            let output = match $execute(request) {
+                Ok(val) => $crate::__serde_json::json!({ "status": "success", "result": val }),
+                Err(err) => $crate::__serde_json::json!({ "status": "error", "error": err }),
+            };
+            Ok($crate::__serde_json::to_string(&output)?)
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
