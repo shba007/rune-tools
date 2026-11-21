@@ -1,5 +1,7 @@
+mod command;
 pub mod testing;
 
+pub use command::{CmdExecRequest, CmdExecResponse, run_binary};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::{Component, Path, PathBuf};

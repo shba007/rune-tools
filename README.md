@@ -30,7 +30,7 @@ Full statement: [`Goal.md`](Goal.md). It describes direction; the rest of this R
 
 The **Rune Tools** ecosystem is a Rust-based suite of Model Context Protocol (MCP) plugins engineered for autonomous AI agents and supervisor runtimes (such as `rune-kit`). It cleanly isolates capability code from the trusted host using two first-class execution models: **Pure WASM plugins** (`wasm32-wasip1`) executing inside memory-isolated Extism/Wasmtime sandboxes for pure in-process compute, and **Direct Native plugins** communicating over Stdio JSON-RPC 2.0 to drive external binaries and OS-level operations without intermediate serialization hops.
 
-Every plugin enforces a strict internal separation between declarative MCP schemas (`definitions.rs`), pure domain operations (`operations.rs`), and data types (`types.rs`), backed by automated contract tests that validate parameter descriptions, camelCase properties, and required-field constraints.
+Every plugin enforces a strict internal separation between declarative MCP schemas (`definitions.rs`), pure domain operations (`operations.rs`), and data types (`types.rs`, where a plugin has its own), backed by automated contract tests that validate parameter descriptions, camelCase properties, and required-field constraints.
 
 ### Features
 

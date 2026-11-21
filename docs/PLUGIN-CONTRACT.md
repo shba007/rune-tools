@@ -14,7 +14,7 @@ the older released Kit compatibility checks below.
 | --- | --- | --- |
 | External client → `rune-kit run` stdio | Kit gateway, outside this repository | Public MCP 2026-07-28 |
 | Kit → `rune-<plugin>-native` / legacy standalone plugin CLI | `rune-sidecar::run_stdio`, handlers in plugin main/native_sidecar files | Private newline JSON request/response API, including old method aliases |
-| Kit → WASM `mcp_info`, `mcp_list_tools`, `mcp_call_tool` and optional resource/prompt exports | Plugin lib.rs files and Extism | Private FFI ABI, serialized definitions/calls and success/error envelopes |
+| Kit → WASM `mcp_info`, `mcp_list_tools`, `mcp_call_tool` and optional resource/prompt exports | `rune_pdk::export_plugin!` in plugin lib.rs files (hand-written exports where a plugin needs another envelope) and Extism | Private FFI ABI, serialized definitions/calls and success/error envelopes |
 | Native plugin → Figma WebSocket / external service / CLI | Plugin operations | Service-specific APIs, not public MCP endpoints |
 | In-process Rust operations and PDK definitions | Plugin operations.rs and rune-pdk | Internal library API, not a transport |
 
